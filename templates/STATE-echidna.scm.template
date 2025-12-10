@@ -1,0 +1,100 @@
+;;; STATE.scm --- echidna conversation checkpoint
+;;; Format: Guile Scheme S-expressions
+;;; Schema: RSR STATE v2.0
+;;;
+;;; ECHIDNA: Extensible Cognitive Hybrid Intelligence for Deductive Neural Assistance
+;;; Neurosymbolic theorem proving platform with multi-prover support.
+
+(define state
+  `((metadata
+     (format-version . "2.0")
+     (schema-version . "2025-12-10")
+     (project . "echidna")
+     (created . "{{CREATED}}")
+     (updated . "{{UPDATED}}"))
+
+    (position
+     (summary . "Neurosymbolic theorem proving platform with 12 provers across 4 tiers")
+     (phase . implementation)
+     (maturity . alpha)
+     (rsr-tier . 1)
+     (primary-language . "rust")
+     (domain . "Formal Verification"))
+
+    (context
+     (last-session . "{{DATE}}")
+     (focus-area . "Multi-prover abstraction layer")
+     (blockers . ())
+     (decisions-pending
+      ("Prover priority ordering"
+       "Neural model selection")))
+
+    (architecture
+     (pattern . "4-language")
+     (components
+      ((name . "Core Engine")
+       (language . "rust")
+       (status . in-progress)
+       (notes . "Prover abstraction, unified trait system"))
+      ((name . "ML Pipeline")
+       (language . "julia")
+       (status . planned)
+       (notes . "Neural proof synthesis (no Python)"))
+      ((name . "UI")
+       (language . "rescript")
+       (status . planned)
+       (notes . "Deno runtime, proof visualization"))
+      ((name . "Logic Reservoir")
+       (language . "mercury")
+       (status . optional)
+       (notes . "Mercury/Logtalk for logic programming"))))
+
+    (provers
+     (tier-1 . ("agda" "coq" "lean"))
+     (tier-2 . ("isabelle" "z3" "cvc5"))
+     (tier-3 . ("metamath" "hol-light" "mizar"))
+     (tier-4 . ("pvs" "acl2" "hol4")))
+
+    (ecosystem
+     (part-of . ("RSR Framework" "MAAF"))
+     (depends-on . ())
+     (integrates-with
+      . ("indieweb2-bastion"
+         "fogbinder"
+         "zotero-nsai"
+         "conative-gating")))
+
+    (maaf-integration
+     (proof-provenance . "SurrealDB graph storage")
+     (citation-export . "CITATION.cff, BibTeX, RIS")
+     (consent-tracking . "Proof usage permissions")
+     (knowledge-graph . "OpenCyc + indieweb2-bastion"))
+
+    (issues
+     (active . ("Tier 1 prover integration" "Rust core implementation"))
+     (resolved . ("Architecture design" "4-language pattern"))
+     (known-limitations . ("Julia ML not started" "No Tier 3/4 provers yet"))
+     (technical-debt . ()))
+
+    (roadmap
+     (current-version . "0.1.0")
+     (next-milestone . "Tier 1 provers complete")
+     (version-plan
+      ((version . "0.2.0")
+       (features . ("Agda" "Coq/Rocq" "Lean")))
+      ((version . "0.3.0")
+       (features . ("Z3" "CVC5" "Isabelle")))
+      ((version . "0.4.0")
+       (features . ("Julia ML" "Neural synthesis")))
+      ((version . "1.0.0")
+       (features . ("All 12 provers" "Full ML pipeline" "Production UI")))))
+
+    (notes
+     "Extends original Quill neural solver for Agda into comprehensive
+      multi-prover system. Combines neural proof synthesis with symbolic
+      verification. Integrates with MAAF for proof provenance tracking
+      and citation management via fogbinder/zotero-nsai.
+
+      Key principle: No Python. ML uses Julia exclusively.")))
+
+state

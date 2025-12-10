@@ -1,0 +1,27 @@
+{
+  description = "{{PROJECT_NAME}} - {{SYNOPSIS}}";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
+  };
+
+  outputs = { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in {
+        packages.default = pkgs.{{BUILD_SYSTEM}}Platform.buildPackage {
+          pname = "{{PROJECT_NAME}}";
+          version = "0.1.0";
+          src = ./.;
+          # TODO: Add build inputs
+        };
+
+        devShells.default = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            {{DEV_DEPENDENCIES}}
+          ];
+        };
+      });
+}

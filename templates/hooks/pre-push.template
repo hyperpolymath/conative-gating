@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+# RSR Standard Pre-push Hook
+# Future: #!/usr/bin/env vsh
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+#
+# Runs tests and security checks before pushing.
+# Install: cp hooks/pre-push .git/hooks/ && chmod +x .git/hooks/pre-push
+
+set -euo pipefail
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo_ok() { echo -e "${GREEN}✓${NC} $1"; }
+echo_warn() { echo -e "${YELLOW}⚠${NC} $1"; }
+echo_fail() { echo -e "${RED}✗${NC} $1"; }
+
+FAILED=0
+
+echo "Running pre-push checks..."
+echo ""
+
+# === 1. Run Tests ===
+
+# Rust
+if [ -f "Cargo.toml" ]; then
+    echo "Running Rust tests..."
+    if cargo test --quiet 2>/dev/null; then
+        echo_ok "Rust tests passed"
+    else
+        echo_fail "Rust tests failed"
+        FAILED=1
+    fi
+fi
+
+# Elixir
+if [ -f "mix.exs" ]; then
+    echo "Running Elixir tests..."
+    if mix test --quiet 2>/dev/null; then
+        echo_ok "Elixir tests passed"
+    else
+        echo_fail "Elixir tests failed"
+        FAILED=1
+    fi
+fi
+
+# ReScript
+if [ -f "rescript.json" ] || [ -f "bsconfig.json" ]; then
+    echo "Building ReScript..."
+    if npx rescript 2>/dev/null; then
+        echo_ok "ReScript build passed"
+        if [ -f "package.json" ] && grep -q '"test"' package.json; then
+            if npm test --quiet 2>/dev/null; then
+                echo_ok "ReScript tests passed"
+            else
+                echo_warn "ReScript tests failed (non-blocking)"
+            fi
+        fi
+    else
+        echo_fail "ReScript build failed"
+        FAILED=1
+    fi
+fi
+
+# Zig
+if [ -f "build.zig" ]; then
+    echo "Running Zig tests..."
+    if zig build test 2>/dev/null; then
+        echo_ok "Zig tests passed"
+    else
+        echo_fail "Zig tests failed"
+        FAILED=1
+    fi
+fi
+
+# Ada
+if ls *.gpr 2>/dev/null | head -1 > /dev/null; then
+    echo "Building Ada project..."
+    if gprbuild -p -q *.gpr 2>/dev/null; then
+        echo_ok "Ada build passed"
+    else
+        echo_fail "Ada build failed"
+        FAILED=1
+    fi
+fi
+
+# Haskell (Stack)
+if [ -f "stack.yaml" ]; then
+    echo "Running Haskell tests..."
+    if stack test --quiet 2>/dev/null; then
+        echo_ok "Haskell tests passed"
+    else
+        echo_fail "Haskell tests failed"
+        FAILED=1
+    fi
+fi
+
+# === 2. Security Checks ===
+
+# Rust security audit
+if [ -f "Cargo.toml" ] && command -v cargo-audit &> /dev/null; then
+    echo "Running Rust security audit..."
+    if cargo audit --quiet 2>/dev/null; then
+        echo_ok "No known vulnerabilities"
+    else
+        echo_warn "Security vulnerabilities found (review required)"
+    fi
+fi
+
+# Check for hardcoded secrets
+echo "Scanning for secrets..."
+SECRET_PATTERNS='(password|secret|api_key|apikey|token|credential|private_key)\s*[:=]\s*["\x27][^"\x27]{8,}'
+if git diff --cached -U0 | grep -iE "$SECRET_PATTERNS" > /dev/null 2>&1; then
+    echo_warn "Potential secrets detected - review before pushing"
+fi
+
+# === 3. Validate Metadata ===
+
+# STATE.scm
+if [ -f "STATE.scm" ]; then
+    if command -v guile &> /dev/null; then
+        if guile -c '(primitive-load "STATE.scm")' 2>/dev/null; then
+            echo_ok "STATE.scm valid"
+        else
+            echo_fail "STATE.scm invalid"
+            FAILED=1
+        fi
+    fi
+fi
+
+# AIBDP
+if [ -f ".well-known/aibdp.json" ]; then
+    if command -v jq &> /dev/null; then
+        if jq empty .well-known/aibdp.json 2>/dev/null; then
+            echo_ok "AIBDP manifest valid"
+        else
+            echo_fail "AIBDP manifest invalid JSON"
+            FAILED=1
+        fi
+    fi
+fi
+
+# === 4. Check Branch Protection ===
+
+# Warn on direct push to main/master
+remote="$1"
+url="$2"
+
+while read local_ref local_sha remote_ref remote_sha; do
+    if [ -z "$local_ref" ]; then
+        continue
+    fi
+
+    branch="${remote_ref#refs/heads/}"
+
+    case "$branch" in
+        main|master)
+            echo_warn "Pushing directly to protected branch: $branch"
+            echo "  Consider using a feature branch and pull request"
+            ;;
+    esac
+done
+
+# === Summary ===
+echo ""
+if [ $FAILED -eq 0 ]; then
+    echo_ok "Pre-push checks passed"
+    exit 0
+else
+    echo_fail "Pre-push checks failed"
+    echo "Fix issues above before pushing"
+    exit 1
+fi

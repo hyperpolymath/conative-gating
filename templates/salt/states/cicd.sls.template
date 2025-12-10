@@ -1,0 +1,84 @@
+# {{PROJECT_NAME}} - Salt CI/CD State
+# Offline CI/CD pipeline support
+
+# CI runner setup
+ci-runner:
+  pkg.installed:
+    - pkgs:
+      - gitlab-runner
+  service.running:
+    - name: gitlab-runner
+    - enable: True
+    - require:
+      - pkg: ci-runner
+
+# Container runtime
+containerd:
+  pkg.installed:
+    - name: containerd
+  service.running:
+    - name: containerd
+    - enable: True
+
+# nerdctl for container operations
+nerdctl:
+  archive.extracted:
+    - name: /usr/local/bin
+    - source: https://github.com/containerd/nerdctl/releases/download/v1.7.0/nerdctl-1.7.0-linux-amd64.tar.gz
+    - skip_verify: True
+    - enforce_toplevel: False
+    - if_missing: /usr/local/bin/nerdctl
+
+# CI scripts
+ci-scripts:
+  file.recurse:
+    - name: /srv/{{PROJECT_NAME}}/ci
+    - source: salt://{{PROJECT_NAME}}/ci
+    - makedirs: True
+    - dir_mode: 755
+    - file_mode: 755
+
+# Run CI pipeline locally
+ci-local:
+  cmd.run:
+    - name: |
+        cd /srv/{{PROJECT_NAME}}
+        just ci
+    - cwd: /srv/{{PROJECT_NAME}}
+    - require:
+      - file: ci-scripts
+
+# Build container image
+container-build:
+  cmd.run:
+    - name: |
+        cd /srv/{{PROJECT_NAME}}
+        nerdctl build -t {{PROJECT_NAME}}:local .
+    - cwd: /srv/{{PROJECT_NAME}}
+    - require:
+      - archive: nerdctl
+
+# Security scans
+security-scan:
+  cmd.run:
+    - name: |
+        cd /srv/{{PROJECT_NAME}}
+        cargo audit 2>/dev/null || true
+        trivy fs --scanners vuln,secret,config . 2>/dev/null || true
+    - cwd: /srv/{{PROJECT_NAME}}
+
+# Test execution
+test-run:
+  cmd.run:
+    - name: |
+        cd /srv/{{PROJECT_NAME}}
+        just test
+    - cwd: /srv/{{PROJECT_NAME}}
+
+# Coverage report
+coverage-run:
+  cmd.run:
+    - name: |
+        cd /srv/{{PROJECT_NAME}}
+        just test-coverage 2>/dev/null || just test
+    - cwd: /srv/{{PROJECT_NAME}}

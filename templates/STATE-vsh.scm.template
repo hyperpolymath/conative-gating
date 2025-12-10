@@ -1,0 +1,106 @@
+;;; STATE.scm --- vsh (Valence Shell) conversation checkpoint
+;;; Format: Guile Scheme S-expressions
+;;; Schema: RSR STATE v2.0
+;;;
+;;; vsh: Thermodynamic-based shell for cross-platform use
+;;; Python-free alternative to Oil shell
+
+(define state
+  `((metadata
+     (format-version . "2.0")
+     (schema-version . "2025-12-10")
+     (project . "vsh")
+     (created . "2025-11-09")
+     (updated . "{{UPDATED}}"))
+
+    (position
+     (summary . "Thermodynamic-based shell, Python-free Oil shell alternative")
+     (phase . research-design)
+     (maturity . pre-alpha)
+     (rsr-tier . 1)
+     (primary-language . "{{LANGUAGE}}")
+     (domain . "Developer Tools"))
+
+    (context
+     (last-session . "{{DATE}}")
+     (focus-area . "Initial architecture")
+     (blockers . ("Early development stage"))
+     (decisions-pending
+      ("Core language implementation"
+       "Oil shell compatibility level"
+       "FFI strategy")))
+
+    (design-principles
+     (no-python . "Save the world from a little bit of Python")
+     (cross-platform . "Works on all major platforms")
+     (oil-heritage . "Built on Oil shell design principles")
+     (thermodynamic . "Thermodynamic-based shell architecture"))
+
+    (rsr-relevance
+     (language-policy . "RSR prohibits Python except in salt/")
+     (migration-target . "Current bash/Python scripts → vsh")
+     (tier-alignment . "Aligns with RSR Tier 1 preference"))
+
+    (future-integration-points
+     (justfile . "Execute Justfile recipes natively")
+     (git-hooks . "Replace Python irkerhook")
+     (build-scripts . "Cross-platform build automation")
+     (ci-cd . "Shell-based pipeline automation"))
+
+    (potential-improvements
+     (nickel-integration . "Native Nickel config parsing via bunsenite FFI")
+     (aibdp-support . "Built-in .well-known/ management commands")
+     (rsr-awareness . "Tier-aware tooling commands")
+     (guix-nix . "Native package management primitives")
+     (irc-notifications . "Built-in irker/vext protocol")
+     (git-workflow . "Native git hooks without Python")
+     (justfile-compat . "Parse and execute Justfile recipes"))
+
+    (ecosystem
+     (part-of . ("RSR Framework"))
+     (depends-on . ())
+     (integrates-with . ("all-rsr-repos"))
+     (future-replaces . ("bash-scripts" "python-hooks")))
+
+    (adoption-roadmap
+     ((phase . "current")
+      (action . "Monitor vsh development, track API stability"))
+     ((phase . "short-term")
+      (action . "Create vsh compat layer for RSR Justfile recipes"))
+     ((phase . "medium-term")
+      (action . "Port irkerhook.py to vsh native"))
+     ((phase . "long-term")
+      (action . "Full RSR tooling in vsh, deprecate bash/Python")))
+
+    (issues
+     (active . ("Early development - not production ready"))
+     (resolved . ())
+     (known-limitations . ("Only 3 commits" "No stable release"))
+     (technical-debt . ()))
+
+    (roadmap
+     (current-version . "0.0.1")
+     (next-milestone . "First usable release")
+     (version-plan
+      ((version . "0.1.0")
+       (features . ("Basic shell functionality" "Oil compatibility")))
+      ((version . "0.5.0")
+       (features . ("Cross-platform support" "Basic scripting")))
+      ((version . "1.0.0")
+       (features . ("Full Oil compatibility" "RSR integration ready")))))
+
+    (notes
+     "vsh is the future shell standard for RSR. Currently in very early
+      development (3 commits as of 2025-12-10). Monitor progress and
+      plan for gradual adoption as it matures.
+
+      Key value: Eliminates Python dependency from shell scripts,
+      aligning with RSR's language tier policy.
+
+      Improvements to propose to vsh developers:
+      1. Nickel config parsing via bunsenite
+      2. Built-in AIBDP/.well-known/ support
+      3. Justfile recipe execution
+      4. Native git hook support")))
+
+state

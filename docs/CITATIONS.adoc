@@ -1,0 +1,36 @@
+= conative-gating - Citation Guide
+:toc:
+
+== BibTeX
+
+[source,bibtex]
+----
+@software{conative-gating_2025,
+  author = {Jewell, Jonathan D.A.},
+  title = {conative-gating},
+  year = {2025},
+  url = {https://github.com/hyperpolymath/conative-gating},
+  license = {AGPL-3.0-or-later}
+}
+----
+
+== Harvard Style
+
+Jewell, J.D.A. (2025) _conative-gating_ [Computer software]. Available at: https://github.com/hyperpolymath/conative-gating
+
+== OSCOLA
+
+Jonathan D.A. Jewell, 'conative-gating' (2025) <https://github.com/hyperpolymath/conative-gating>
+
+== MLA
+
+Jewell, Jonathan D.A.. "conative-gating." 2025, github.com/hyperpolymath/conative-gating.
+
+== APA 7
+
+Jewell, J.D.A. (2025). _conative-gating_ [Computer software]. GitHub. https://github.com/hyperpolymath/conative-gating
+
+== See Also
+
+* link:../CITATION.cff[CITATION.cff]
+* link:../codemeta.json[codemeta.json]

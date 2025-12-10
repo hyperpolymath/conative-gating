@@ -1,0 +1,529 @@
+= Hyperpolymath Badge Schema
+:toc:
+:sectnums:
+:badges-url: https://img.shields.io/badge
+
+== Overview
+
+Comprehensive badge structure for the 139-repo ecosystem, capturing:
+
+* Project status and maturity
+* Language tiers and compliance
+* Cross-project relationships
+* Infrastructure and tooling
+* Security and governance
+
+== Badge Categories
+
+=== 1. Project Identity
+
+[cols="1,2,3"]
+|===
+|Badge |Purpose |Example
+
+|**RSR Tier**
+|Language compliance level
+|image:{badges-url}/RSR-Tier%201-gold[]
+
+|**Project Phase**
+|Development lifecycle
+|image:{badges-url}/Phase-Implementation-blue[]
+
+|**Maturity**
+|Production readiness
+|image:{badges-url}/Maturity-Production-brightgreen[]
+|===
+
+==== RSR Tier Badges
+[source,asciidoc]
+----
+// Tier 1 (Gold) - Rust, Elixir, Zig, Ada, Haskell, ReScript
+image:https://img.shields.io/badge/RSR-Tier%201-gold[RSR Tier 1]
+
+// Tier 2 (Silver) - Nickel, Racket, Guile, Nix
+image:https://img.shields.io/badge/RSR-Tier%202-silver[RSR Tier 2]
+
+// Infrastructure (Bronze) - Guix channels, derivations
+image:https://img.shields.io/badge/RSR-Infrastructure-cd7f32[RSR Infrastructure]
+----
+
+==== Phase Badges
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/Phase-Design-lightgrey[Design]
+image:https://img.shields.io/badge/Phase-Implementation-blue[Implementation]
+image:https://img.shields.io/badge/Phase-Testing-yellow[Testing]
+image:https://img.shields.io/badge/Phase-Maintenance-brightgreen[Maintenance]
+image:https://img.shields.io/badge/Phase-Archived-red[Archived]
+----
+
+==== Maturity Badges
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/Maturity-Experimental-orange[Experimental]
+image:https://img.shields.io/badge/Maturity-Alpha-yellow[Alpha]
+image:https://img.shields.io/badge/Maturity-Beta-blue[Beta]
+image:https://img.shields.io/badge/Maturity-Production-brightgreen[Production]
+image:https://img.shields.io/badge/Maturity-LTS-green[LTS]
+----
+
+=== 2. Language & Stack
+
+[cols="1,2,3"]
+|===
+|Badge |Purpose |Example
+
+|**Primary Language**
+|Main implementation language
+|image:{badges-url}/Rust-1.75-orange[]
+
+|**Secondary Languages**
+|Supporting languages
+|image:{badges-url}/Also-ReScript%20%7C%20Nickel-blue[]
+
+|**Build System**
+|Package/build tooling
+|image:{badges-url}/Guix-Primary-purple[]
+|===
+
+==== Language Badges (Tier 1)
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/Rust-1.75+-orange?logo=rust[Rust]
+image:https://img.shields.io/badge/Elixir-1.16+-purple?logo=elixir[Elixir]
+image:https://img.shields.io/badge/ReScript-11+-pink?logo=rescript[ReScript]
+image:https://img.shields.io/badge/Zig-0.13-yellow?logo=zig[Zig]
+image:https://img.shields.io/badge/Ada-2022-blue[Ada]
+image:https://img.shields.io/badge/Haskell-GHC%209-purple?logo=haskell[Haskell]
+----
+
+==== Language Badges (Tier 2)
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/Nickel-1.5+-teal[Nickel]
+image:https://img.shields.io/badge/Guile-3.0+-green[Guile Scheme]
+image:https://img.shields.io/badge/Racket-8.12+-red?logo=racket[Racket]
+image:https://img.shields.io/badge/Nix-Flakes-5277C3?logo=nixos[Nix]
+----
+
+==== Build System Badges
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/Guix-Primary-purple?logo=gnu[Guix Primary]
+image:https://img.shields.io/badge/Nix-Fallback-5277C3?logo=nixos[Nix Fallback]
+image:https://img.shields.io/badge/Cargo-Workspace-orange?logo=rust[Cargo]
+image:https://img.shields.io/badge/Mix-Project-purple?logo=elixir[Mix]
+----
+
+=== 3. Cross-Project Relationships
+
+[cols="1,2,3"]
+|===
+|Badge |Purpose |Example
+
+|**Depends On**
+|Runtime/build dependency
+|image:{badges-url}/Depends-conative--gating-blue[]
+
+|**Part Of**
+|Component of larger system
+|image:{badges-url}/Part%20Of-STATE.scm-green[]
+
+|**Supersedes**
+|Replaces older project
+|image:{badges-url}/Supersedes-echomesh-red[]
+
+|**Integrates**
+|Works with (bidirectional)
+|image:{badges-url}/Integrates-fogbinder-yellow[]
+|===
+
+==== Relationship Badges
+[source,asciidoc]
+----
+// Dependency chain
+image:https://img.shields.io/badge/Depends-conative--gating-blue[Depends: conative-gating]
+image:https://img.shields.io/badge/Depends-elegant--STATE-blue[Depends: elegant-STATE]
+image:https://img.shields.io/badge/Depends-wharf-blue[Depends: wharf]
+
+// Composition
+image:https://img.shields.io/badge/Part%20Of-STATE.scm%20Ecosystem-green[Part Of: STATE.scm]
+image:https://img.shields.io/badge/Part%20Of-RSR%20Framework-green[Part Of: RSR Framework]
+image:https://img.shields.io/badge/Part%20Of-Consent%20Aware%20HTTP-green[Part Of: Consent-Aware-HTTP]
+
+// Evolution
+image:https://img.shields.io/badge/Supersedes-echomesh-red[Supersedes: echomesh]
+image:https://img.shields.io/badge/Superseded%20By-conative--gating-grey[Superseded By: conative-gating]
+
+// Integration
+image:https://img.shields.io/badge/Integrates-Zotero-yellow[Integrates: Zotero]
+image:https://img.shields.io/badge/Integrates-WordPress-yellow[Integrates: WordPress]
+----
+
+=== 4. Domain & Capability
+
+[cols="1,2,3"]
+|===
+|Badge |Purpose |Example
+
+|**Domain**
+|Problem space
+|image:{badges-url}/Domain-Misinformation%20Defence-red[]
+
+|**Capability**
+|What it provides
+|image:{badges-url}/Capability-Policy%20Enforcement-blue[]
+
+|**Stack Position**
+|Infrastructure layer
+|image:{badges-url}/Layer-Application-green[]
+|===
+
+==== Domain Badges
+[source,asciidoc]
+----
+// Core Domains
+image:https://img.shields.io/badge/Domain-AI%20Safety-critical[AI Safety]
+image:https://img.shields.io/badge/Domain-Misinformation%20Defence-red[Misinformation Defence]
+image:https://img.shields.io/badge/Domain-Developer%20Tools-blue[Developer Tools]
+image:https://img.shields.io/badge/Domain-Citation%20Management-purple[Citation Management]
+image:https://img.shields.io/badge/Domain-WordPress%20Ecosystem-informational[WordPress]
+image:https://img.shields.io/badge/Domain-IndieWeb-green[IndieWeb]
+image:https://img.shields.io/badge/Domain-IoT%2FRobotics-orange[IoT/Robotics]
+image:https://img.shields.io/badge/Domain-Accessibility-blueviolet[Accessibility]
+----
+
+==== Capability Badges
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/Capability-Policy%20Enforcement-blue[Policy Enforcement]
+image:https://img.shields.io/badge/Capability-Validation-green[Validation]
+image:https://img.shields.io/badge/Capability-Transformation-yellow[Transformation]
+image:https://img.shields.io/badge/Capability-Orchestration-purple[Orchestration]
+image:https://img.shields.io/badge/Capability-Analysis-orange[Analysis]
+----
+
+==== Stack Layer Badges
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/Layer-Infrastructure-grey[Infrastructure]
+image:https://img.shields.io/badge/Layer-Library-blue[Library]
+image:https://img.shields.io/badge/Layer-Service-green[Service]
+image:https://img.shields.io/badge/Layer-Application-brightgreen[Application]
+image:https://img.shields.io/badge/Layer-CLI-orange[CLI]
+----
+
+=== 5. Infrastructure & Compliance
+
+[cols="1,2,3"]
+|===
+|Badge |Purpose |Example
+
+|**Container**
+|Container runtime
+|image:{badges-url}/Container-nerdctl%20%2B%20Wolfi-blue[]
+
+|**CI/CD**
+|Pipeline platform
+|image:{badges-url}/CI-GitHub%20Actions%20%2B%20GitLab-green[]
+
+|**License**
+|Dual license
+|image:{badges-url}/License-AGPL%20%2B%20Palimpsest-blue[]
+|===
+
+==== Container Badges
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/Container-nerdctl-blue?logo=containerd[nerdctl]
+image:https://img.shields.io/badge/Base-Wolfi-purple?logo=chainguard[Wolfi Base]
+image:https://img.shields.io/badge/Base-Distroless-black[Distroless]
+image:https://img.shields.io/badge/OCI-Compliant-green[OCI Compliant]
+----
+
+==== CI/CD Badges
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=github-actions[GitHub Actions]
+image:https://img.shields.io/badge/CI-GitLab%20CI-FC6D26?logo=gitlab[GitLab CI]
+image:https://img.shields.io/badge/Security-Trivy%20%2B%20GitLeaks-green[Security Scanning]
+----
+
+==== License Badges
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/License-AGPL%203.0-blue[AGPL 3.0]
+image:https://img.shields.io/badge/License-Palimpsest%200.5-green[Palimpsest 0.5]
+image:https://img.shields.io/badge/License-AGPL%20OR%20Palimpsest-blue[Dual License]
+----
+
+=== 6. Security & Governance
+
+[cols="1,2,3"]
+|===
+|Badge |Purpose |Example
+
+|**Security**
+|Security posture
+|image:{badges-url}/Security-RFC%209116-green[]
+
+|**Privacy**
+|Privacy compliance
+|image:{badges-url}/Privacy-GDPR%20Ready-brightgreen[]
+
+|**Governance**
+|Decision model
+|image:{badges-url}/Governance-BDFL-blue[]
+|===
+
+==== Security Badges
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/Security-RFC%209116-green[RFC 9116]
+image:https://img.shields.io/badge/Security-Verified-brightgreen[Verified]
+image:https://img.shields.io/badge/Vulnerability-None%20Known-brightgreen[No Known CVEs]
+image:https://img.shields.io/badge/SBOM-Available-blue[SBOM Available]
+----
+
+==== Privacy Badges
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/Privacy-GDPR%20Ready-brightgreen[GDPR Ready]
+image:https://img.shields.io/badge/Privacy-Offline%20First-green[Offline First]
+image:https://img.shields.io/badge/Privacy-No%20Telemetry-blue[No Telemetry]
+image:https://img.shields.io/badge/Consent-Required-yellow[Consent Required]
+----
+
+==== Governance Badges
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/Governance-BDFL-blue[BDFL]
+image:https://img.shields.io/badge/Governance-Meritocracy-green[Meritocracy]
+image:https://img.shields.io/badge/TPCF-Perimeter%203-orange[TPCF Perimeter 3]
+----
+
+== Standard Badge Block Template
+
+=== Minimal (All Projects)
+[source,asciidoc]
+----
+// Identity
+image:https://img.shields.io/badge/RSR-Tier%201-gold[RSR Tier]
+image:https://img.shields.io/badge/Phase-Implementation-blue[Phase]
+image:https://img.shields.io/badge/Maturity-Beta-blue[Maturity]
+
+// License
+image:https://img.shields.io/badge/License-AGPL%20OR%20Palimpsest-blue[License]
+
+// Build
+image:https://img.shields.io/badge/Guix-Primary-purple?logo=gnu[Guix]
+image:https://img.shields.io/badge/CI-Passing-brightgreen[CI Status]
+----
+
+=== Standard (Active Projects)
+[source,asciidoc]
+----
+// Identity
+image:https://img.shields.io/badge/RSR-Tier%201-gold[RSR Tier]
+image:https://img.shields.io/badge/Phase-Implementation-blue[Phase]
+image:https://img.shields.io/badge/Maturity-Beta-blue[Maturity]
+
+// Language
+image:https://img.shields.io/badge/Rust-1.75+-orange?logo=rust[Rust]
+image:https://img.shields.io/badge/Also-Nickel%20%7C%20Guile-blue[Also]
+
+// Ecosystem
+image:https://img.shields.io/badge/Part%20Of-STATE.scm-green[Part Of]
+image:https://img.shields.io/badge/Depends-wharf-blue[Depends]
+
+// Domain
+image:https://img.shields.io/badge/Domain-AI%20Safety-critical[Domain]
+image:https://img.shields.io/badge/Layer-Service-green[Layer]
+
+// Infrastructure
+image:https://img.shields.io/badge/Guix-Primary-purple?logo=gnu[Guix]
+image:https://img.shields.io/badge/Container-nerdctl-blue[Container]
+image:https://img.shields.io/badge/CI-GitHub%20%2B%20GitLab-green[CI]
+
+// Compliance
+image:https://img.shields.io/badge/License-AGPL%20OR%20Palimpsest-blue[License]
+image:https://img.shields.io/badge/Security-RFC%209116-green[Security]
+image:https://img.shields.io/badge/Privacy-GDPR%20Ready-brightgreen[Privacy]
+----
+
+=== Full (Flagship Projects)
+[source,asciidoc]
+----
+// Identity Row
+image:https://img.shields.io/badge/RSR-Tier%201-gold[RSR]
+image:https://img.shields.io/badge/Phase-Production-brightgreen[Phase]
+image:https://img.shields.io/badge/Maturity-LTS-green[Maturity]
+image:https://img.shields.io/badge/v1.0.0-stable-brightgreen[Version]
+
+// Language Row
+image:https://img.shields.io/badge/Rust-1.75+-orange?logo=rust[Rust]
+image:https://img.shields.io/badge/Elixir-1.16+-purple?logo=elixir[Elixir]
+image:https://img.shields.io/badge/Nickel-Config-teal[Nickel]
+image:https://img.shields.io/badge/Guile-State-green[Guile]
+
+// Ecosystem Row
+image:https://img.shields.io/badge/Part%20Of-STATE.scm-green[Part Of]
+image:https://img.shields.io/badge/Depends-wharf%20%7C%20file--soup-blue[Dependencies]
+image:https://img.shields.io/badge/Supersedes-echomesh-red[Supersedes]
+image:https://img.shields.io/badge/Integrates-Zotero%20%7C%20WordPress-yellow[Integrates]
+
+// Domain Row
+image:https://img.shields.io/badge/Domain-AI%20Safety-critical[Domain]
+image:https://img.shields.io/badge/Capability-Policy%20Enforcement-blue[Capability]
+image:https://img.shields.io/badge/Layer-Service-green[Layer]
+
+// Infrastructure Row
+image:https://img.shields.io/badge/Guix-Primary-purple?logo=gnu[Guix]
+image:https://img.shields.io/badge/Nix-Fallback-5277C3?logo=nixos[Nix]
+image:https://img.shields.io/badge/Container-nerdctl%20%2B%20Wolfi-blue[Container]
+
+// CI/CD Row
+image:https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=github-actions[GitHub]
+image:https://img.shields.io/badge/CI-GitLab%20CI-FC6D26?logo=gitlab[GitLab]
+image:https://img.shields.io/badge/Security-Trivy%20%2B%20GitLeaks-green[Scanning]
+
+// Compliance Row
+image:https://img.shields.io/badge/License-AGPL%20OR%20Palimpsest-blue[License]
+image:https://img.shields.io/badge/Security-RFC%209116-green[Security.txt]
+image:https://img.shields.io/badge/Privacy-GDPR%20Ready-brightgreen[GDPR]
+image:https://img.shields.io/badge/SBOM-Available-blue[SBOM]
+----
+
+== Dynamic Badge Generation
+
+=== Justfile Recipe
+[source,makefile]
+----
+# Generate badge block from project metadata
+badges:
+    @./scripts/generate-badges.sh > docs/BADGES.adoc
+    @echo "Badges generated in docs/BADGES.adoc"
+
+# Update README with current badges
+update-readme-badges:
+    @./scripts/update-readme-badges.sh README.adoc
+----
+
+=== Generation Script Pattern
+[source,bash]
+----
+#!/bin/bash
+# scripts/generate-badges.sh
+
+# Read from STATE.scm or project config
+PHASE=$(grep -oP "phase\s*\.\s*\"\K[^\"]*" STATE.scm 2>/dev/null || echo "development")
+TIER=$(detect_rsr_tier)
+MATURITY=$(grep -oP "maturity\s*\.\s*\"\K[^\"]*" STATE.scm 2>/dev/null || echo "experimental")
+
+# Generate badge URLs
+echo "image:https://img.shields.io/badge/RSR-Tier%20${TIER}-${TIER_COLOR}[RSR Tier ${TIER}]"
+echo "image:https://img.shields.io/badge/Phase-${PHASE}-blue[Phase: ${PHASE}]"
+echo "image:https://img.shields.io/badge/Maturity-${MATURITY}-${MAT_COLOR}[Maturity: ${MATURITY}]"
+----
+
+== Cross-Reference Matrix
+
+Projects can be tracked via their relationships in ECOSYSTEM.scm:
+
+[source,scheme]
+----
+(relationships
+  ;; Core Framework
+  ((from . "STATE.scm") (to . "elegant-STATE") (kind . defines))
+  ((from . "STATE.scm") (to . "conative-gating") (kind . defines))
+
+  ;; Dependency Graph
+  ((from . "conative-gating") (to . "wharf") (kind . depends))
+  ((from . "conative-gating") (to . "file-soup") (kind . depends))
+  ((from . "zotero-nsai") (to . "fogbinder") (kind . integrates))
+
+  ;; Evolution
+  ((from . "conative-gating") (to . "echomesh") (kind . supersedes))
+  ((from . "conative-gating") (to . "UPM") (kind . supersedes)))
+----
+
+== Badge Color Scheme
+
+[cols="1,1,2"]
+|===
+|Color Code |Hex |Usage
+
+|`brightgreen`
+|#4c1
+|Production, LTS, Passing, Compliant
+
+|`green`
+|#97ca00
+|Maintenance, Security OK, Privacy
+
+|`blue`
+|#007ec6
+|Implementation, Dependencies, Info
+
+|`yellow`
+|#dfb317
+|Testing, Integrations, Warnings
+
+|`orange`
+|#fe7d37
+|Alpha, Rust, Experimental
+
+|`red`
+|#e05d44
+|Archived, Superseded, Critical
+
+|`gold`
+|#ffd700
+|Tier 1 RSR
+
+|`silver`
+|#c0c0c0
+|Tier 2 RSR
+
+|`purple`
+|#9f4f9f
+|Guix, Elixir
+
+|`grey`
+|#555
+|Design, Infrastructure
+|===
+
+== Integration with ECOSYSTEM.scm
+
+The badge schema should be machine-readable from ECOSYSTEM.scm:
+
+[source,scheme]
+----
+((name . "conative-gating")
+ (badges
+  ((category . identity)
+   (rsr-tier . 1)
+   (phase . implementation)
+   (maturity . beta))
+  ((category . languages)
+   (primary . rust)
+   (secondary . (elixir nickel guile)))
+  ((category . ecosystem)
+   (part-of . "STATE.scm")
+   (depends . (wharf file-soup))
+   (supersedes . (echomesh UPM)))
+  ((category . domain)
+   (domain . "AI Safety")
+   (capability . "Policy Enforcement")
+   (layer . service))
+  ((category . infrastructure)
+   (build-primary . guix)
+   (build-fallback . nix)
+   (container . (nerdctl wolfi))
+   (ci . (github-actions gitlab-ci)))
+  ((category . compliance)
+   (license . (agpl-3 palimpsest-0.5))
+   (security . rfc-9116)
+   (privacy . gdpr-ready))))
+----

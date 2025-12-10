@@ -1,0 +1,63 @@
+# {{PROJECT_NAME}} - Git Ignore
+
+# Build artifacts
+/target/
+/_build/
+/build/
+/dist/
+/out/
+
+# Dependencies
+/deps/
+/node_modules/
+/.zig-cache/
+/lib/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Rust
+*.pdb
+Cargo.lock
+
+# Elixir
+*.beam
+*.ez
+erl_crash.dump
+
+# Zig
+*.o
+*.a
+
+# ReScript
+*.bs.js
+.bsb.lock
+
+# Nickel
+*.json.ncl.out
+
+# Guix/Nix
+/result
+/result-*
+
+# Coverage
+/coverage/
+*.lcov
+lcov.info
+
+# Environment
+.env
+.env.local
+.envrc
+
+# Secrets (NEVER COMMIT)
+*.pem
+*.key
+*.crt
+id_rsa*
+*.secret

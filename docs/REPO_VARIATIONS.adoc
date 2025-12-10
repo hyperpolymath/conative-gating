@@ -1,0 +1,268 @@
+= Repository Variations Reference
+:toc:
+:toc-placement!:
+:sectnums:
+
+This document tracks what VARIES between repositories and needs per-project customization.
+
+toc::[]
+
+== Language Distribution
+
+Based on primary build system detection:
+
+[cols="1,1,3"]
+|===
+|Language |Count |Repos (sample)
+
+|Rust (binary) |~10 |conflow, echidna, ipv6-only, dicti0nary-attack
+|Rust (library) |~11 |conative-gating, absolute-zero, modshells
+|ReScript |~18 |idaptiky, broad-spectrum, UbiCity, fogbinder
+|Elixir |~3 |bofig, tma-mark2, hybrid-automation-router
+|JavaScript/TS |~5 |7-tentacles, sinople-wharf, accessibility-everywhere
+|Python (to convert) |~2 |vext, jtv-playground (experiments)
+|Nix-only |~35 |STATE.scm, gitvisor, wp-praxis
+|===
+
+== Per-Repository Variations
+
+=== Project Identity (ALL UNIQUE)
+
+[cols="2,4"]
+|===
+|Field |Notes
+
+|`name` |Unique project name
+|`description` |One-line description for GitHub/README
+|`tagline` |Optional marketing phrase
+|`version` |Semantic versioning, project-specific
+|`repository` |GitHub URL
+|`homepage` |Landing page URL (if exists)
+|===
+
+=== GitHub Topics (Per Project)
+
+==== Standard Topics (Include Where Applicable)
+- `rhodium-standard` - All RSR-compliant repos
+- `tier-1` or `tier-2` - RSR language tier
+
+==== Language Topics
+- `rust`, `rescript`, `elixir`, `zig`, `ada`, `haskell`, `racket`, `nickel`
+
+==== Domain Topics (Choose Applicable)
+- `security`, `automation`, `devtools`, `cli`
+- `web`, `api`, `browser-extension`
+- `wordpress`, `zotero`, `n8n`
+- `ai`, `llm`, `machine-learning`
+- `networking`, `ipv6`, `dns`
+- `data-processing`, `etl`, `pipeline`
+
+=== Build Configuration
+
+==== Rust Projects (Cargo.toml)
+[source,toml]
+----
+[package]
+name = "project-name"           # VARIES
+version = "0.1.0"               # VARIES
+description = "..."             # VARIES
+keywords = ["...", "..."]       # VARIES
+categories = ["..."]            # VARIES
+
+[dependencies]
+# VARIES per project
+----
+
+==== ReScript Projects (rescript.json)
+[source,json]
+----
+{
+  "name": "project-name",       // VARIES
+  "version": "0.1.0",           // VARIES
+  "sources": { ... },           // VARIES
+  "bs-dependencies": [ ... ]    // VARIES
+}
+----
+
+==== Elixir Projects (mix.exs)
+[source,elixir]
+----
+def project do
+  [
+    app: :project_name,         # VARIES
+    version: "0.1.0",           # VARIES
+    deps: deps()                # VARIES
+  ]
+end
+----
+
+=== CI/CD Variations
+
+==== justfile Recipes (Language-Specific)
+
+[cols="1,3"]
+|===
+|Recipe |Variations
+
+|`build` |`cargo build`, `rescript build`, `mix compile`
+|`test` |`cargo test`, `npm test`, `mix test`
+|`lint` |`cargo clippy`, `npm run lint`, `mix format --check-formatted`
+|`dev` |`cargo watch`, `npm run dev`, `mix phx.server`
+|===
+
+==== GitHub Actions Matrix
+
+[source,yaml]
+----
+# Rust projects
+strategy:
+  matrix:
+    os: [ubuntu-latest, macos-latest]
+    rust: [stable, nightly]
+
+# ReScript projects
+strategy:
+  matrix:
+    node: [18, 20]
+
+# Elixir projects
+strategy:
+  matrix:
+    otp: [25, 26]
+    elixir: [1.15, 1.16]
+----
+
+=== Containerfile Variations
+
+==== Base Image Selection
+- `cgr.dev/chainguard/rust:latest` - Rust projects
+- `cgr.dev/chainguard/node:latest` - JS/TS/ReScript
+- `cgr.dev/chainguard/elixir:latest` - Elixir projects
+
+==== Multi-stage Build Targets
+- Rust: Build with `cargo build --release`, copy binary
+- ReScript: Build with `npm run build`, copy dist
+- Elixir: Build with `mix release`, copy release
+
+=== Documentation Variations
+
+==== README.adoc Sections
+
+[cols="1,1,3"]
+|===
+|Section |Common/Varies |Notes
+
+|Title |VARIES |Project name
+|Badges |PARTIAL |CI badge URL varies, license badge common
+|Description |VARIES |Project-specific
+|Features |VARIES |Feature list
+|Installation |VARIES |Language-specific instructions
+|Usage |VARIES |Examples
+|Configuration |VARIES |If applicable
+|License |COMMON |Reference to LICENSE.txt
+|Contributing |COMMON |Reference to CONTRIBUTING.adoc
+|===
+
+==== CLAUDE.adoc Content
+
+[cols="1,3"]
+|===
+|Section |Variations
+
+|Build Commands |Language-specific: `cargo`, `npm`, `mix`
+|Test Commands |Language-specific test runners
+|Architecture |Project-specific structure
+|Common Issues |Project-specific troubleshooting
+|Key Files |Important files for that project
+|===
+
+=== State/Configuration Variations
+
+==== STATE.scm (Guile)
+
+[source,scheme]
+----
+(define-module (project-name state)   ; VARIES: module name
+  #:export (
+    project-name                       ; VARIES
+    project-version                    ; VARIES
+    project-status                     ; VARIES: active/maintenance/archived
+    dependencies                       ; VARIES
+    build-targets                      ; VARIES
+  ))
+----
+
+==== .rsr/config.toml
+
+[source,toml]
+----
+[project]
+name = "project-name"           # VARIES
+tier = 1                        # VARIES: 1 or 2
+status = "compliant"            # VARIES: compliant/partial/exempt
+
+[compliance]
+rust = true                     # VARIES per language
+rescript = false
+elixir = false
+
+[exemptions]
+# VARIES: project-specific exemptions
+python_salt = true              # Only for salt/ directories
+legacy_js = false
+----
+
+== Variation Matrix by Project Type
+
+[cols="1,1,1,1,1,1"]
+|===
+|Aspect |Rust Binary |Rust Library |ReScript |Elixir |Nix-only
+
+|Entry point |src/main.rs |src/lib.rs |src/Main.res |lib/app.ex |flake.nix
+|Build cmd |cargo build |cargo build |npm run build |mix compile |nix build
+|Test cmd |cargo test |cargo test |npm test |mix test |nix check
+|Package file |Cargo.toml |Cargo.toml |package.json |mix.exs |flake.nix
+|Container base |chainguard/rust |chainguard/rust |chainguard/node |chainguard/elixir |chainguard/static
+|CI matrix |rust: stable/nightly |rust: stable |node: 18/20 |elixir: 1.15/1.16 |nixos-unstable
+|===
+
+== Per-Repo Tracking Spreadsheet
+
+For detailed per-repo tracking, maintain in separate file:
+`docs/REPO_TRACKER.csv`
+
+[source,csv]
+----
+repo,language,tier,ci_status,compliance_status,topics,description
+conative-gating,rust,1,passing,compliant,"rust,security,ai",Policy enforcement oracle
+ipv6-only,rust,1,passing,compliant,"rust,networking,ipv6",IPv6 tools
+dicti0nary-attack,rust,1,passing,compliant,"rust,security",Password tools
+idaptiky,rescript,1,pending,partial,"rescript,web",Web app
+...
+----
+
+== Sync Process
+
+=== GitHub → GitLab → Bitbucket Mirror
+
+1. GitHub is source of truth
+2. GitLab mirrors via scheduled job
+3. Bitbucket mirrors via webhook
+
+=== Local → GitHub Push
+
+[source,bash]
+----
+# For each repo in unified/
+cd $repo
+git remote set-url origin git@github.com:hyperpolymath/$repo.git
+git push -u origin main
+----
+
+== Next Steps
+
+1. Generate `REPO_TRACKER.csv` with all repos
+2. Apply common files (Phase 1-3 from REPO_STANDARDIZATION.adoc)
+3. Create language-specific templates
+4. Configure GitHub settings via API
+5. Set up GitLab/Bitbucket mirrors

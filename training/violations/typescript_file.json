@@ -1,0 +1,14 @@
+{
+  "proposal": {
+    "id": "550e8400-e29b-41d4-a716-446655440003",
+    "action_type": {"CreateFile": {"path": "src/utils.ts"}},
+    "content": "export interface User {\n  id: string;\n  name: string;\n  email: string;\n}\n\nexport function validateEmail(email: string): boolean {\n  return email.includes('@');\n}\n",
+    "files_affected": ["src/utils.ts"],
+    "llm_confidence": 0.88
+  },
+  "expected_verdict": "HardViolation",
+  "violation_type": "ForbiddenLanguage",
+  "reasoning": "TypeScript is a forbidden language",
+  "spirit_violation": false,
+  "category": "language"
+}

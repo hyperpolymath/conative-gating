@@ -1,0 +1,132 @@
+;;; STATE.scm - Project State Checkpoint for zoterho-template
+;;; SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+;;; Generated: {{GENERATED_DATE}}
+
+(define-module (zoterho-template state)
+  #:export (project-state))
+
+(define project-state
+  '((metadata
+     (name . "zoterho-template")
+     (slug . "zoterho-template")
+     (version . "{{VERSION}}")
+     (author . "Jonathan D.A. Jewell")
+     (license . "MIT OR LicenseRef-Palimpsest-0.8")
+     (created . "2024"))
+
+    (rsr
+     (tier . 1)
+     (compliance . "{{RSR_COMPLIANCE}}")  ; bronze | silver | gold
+     (color-scheme . "zotero")
+     (languages . ("ReScript" "Guile Scheme")))
+
+    (description
+     "Production-ready template for building modern Zotero 7+ extensions
+      using RSR-compliant technologies: ReScript, Deno, and Guile Scheme.
+      No TypeScript, no Node.js, no CUE.")
+
+    (ecosystem
+     (part-of . ("RSR Framework" "extensions-library"))
+     (depends-on . ("rescript" "deno" "guile"))
+     (integrates-with . ("zotero-nsai" "fogbinder" "echidna")))
+
+    (zotero
+     (min-version . "7.0")
+     (extension-type . "bootstrap")
+     (api-version . "3"))
+
+    (stack
+     (language . "ReScript")
+     (config . "Guile Scheme")
+     (runtime . "Deno")
+     (build . "just")
+     (formerly . ("TypeScript" "CUE" "Node.js")))
+
+    (migration
+     (cue-to-guile . "{{CUE_MIGRATION_STATUS}}")  ; pending | in-progress | complete
+     (typescript-to-rescript . "{{TS_MIGRATION_STATUS}}"))
+
+    (repositories
+     (canonical . "gitlab.com/extensions-library/zotero/zoterho-template")
+     (mirror . "github.com/hyperpolymath/zoterho-template")
+     (sync-status . "{{SYNC_STATUS}}"))  ; synced | diverged | pending
+
+    (structure
+     (config-dir . "config/")
+     (source-dir . "src/")
+     (output-dir . "dist/")
+     (manifest . "manifest.json"))
+
+    (configs
+     (extension . "config/extension.scm")
+     (validation . "config/validation.scm")
+     (manifest . "config/manifest.scm"))
+
+    (build
+     (tool . "just")
+     (compiler . "rescript")
+     (packager . "web-ext")
+     (output . "dist/extension.xpi"))
+
+    (features
+     (tractarian-validation . #t)
+     (fogbinder-handoff . #t)
+     (aibdp-support . #t)
+     (citation-export . #t))
+
+    (status
+     (phase . "{{PHASE}}")  ; development | alpha | beta | stable
+     (last-checkpoint . "{{LAST_CHECKPOINT}}")
+     (next-milestone . "{{NEXT_MILESTONE}}"))))
+
+;;; Configuration Templates
+
+;; Extension manifest (config/extension.scm)
+(define extension-template
+  '((metadata
+     (name . "{{EXTENSION_NAME}}")
+     (version . "{{EXTENSION_VERSION}}")
+     (description . "{{EXTENSION_DESCRIPTION}}")
+     (author . "Jonathan D.A. Jewell")
+     (license . "AGPL-3.0-or-later"))
+
+    (zotero
+     (min-version . "7.0")
+     (max-version . #f)
+     (strict-compatibility . #f))
+
+    (permissions . ("zotero" "tabs" "storage"))
+
+    (background
+     (scripts . ("background.js"))
+     (persistent . #f))
+
+    (content-scripts
+     . (((matches . ("*://www.zotero.org/*"))
+         (js . ("content.js"))
+         (run-at . "document_idle"))))
+
+    (browser-action
+     (default-popup . "popup.html")
+     (default-icon . "icons/icon-48.png"))))
+
+;; Validation rules (config/validation.scm)
+(define validation-template
+  '((structural
+     (required-fields . ("title" "authors"))
+     (recommended-fields . ("date" "publisher" "doi"))
+     (optional-fields . ("isbn" "url" "abstract")))
+
+    (certainty
+     (base-score . 1.0)
+     (missing-required-penalty . 0.3)
+     (missing-recommended-penalty . 0.1)
+     (missing-optional-penalty . 0.0)
+     (handoff-threshold . 0.7))
+
+    (fogbinder
+     (enable-handoff . #t)
+     (handoff-version . "1.0.0")
+     (use-mystery-clustering . #t))))
+
+;;; End of STATE.scm

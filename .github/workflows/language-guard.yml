@@ -1,0 +1,41 @@
+# Language Guard - Fire extinguisher when SLM unavailable
+# ~20 lines of grep. Zero cost. Catches obvious violations.
+name: Language Guard
+
+on:
+  pull_request:
+    paths:
+      - '**.ts'
+      - '**.tsx'
+      - '**.py'
+      - '**.go'
+      - '**.java'
+      - 'package.json'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for forbidden languages
+        run: |
+          # TypeScript files (not allowed)
+          if find . -name "*.ts" -o -name "*.tsx" | grep -q .; then
+            echo "::error::TypeScript files detected. Use ReScript instead."
+            exit 1
+          fi
+
+          # Python outside salt/ or training/ (not allowed)
+          if find . -name "*.py" ! -path "*/salt/*" ! -path "*/training/*" | grep -q .; then
+            echo "::error::Python files outside salt/ or training/ detected."
+            exit 1
+          fi
+
+          # npm without deno.json (not allowed)
+          if [ -f "package.json" ] && [ ! -f "deno.json" ]; then
+            echo "::error::package.json without deno.json detected."
+            exit 1
+          fi
+
+          echo "Language guard passed"

@@ -1,0 +1,194 @@
+{{!--
+  Sinople WordPress Deployment Template
+  SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+
+  This template generates WordPress deployment configs for RSR projects.
+  Uses Sinople theme with project-specific color schemes.
+
+  Variables:
+    PROJECT_NAME    - Project identifier
+    PROJECT_SLUG    - URL-safe project name
+    DOMAIN          - Project domain
+    RSR_TIER        - RSR tier (1, 2, etc.)
+    COLOR_SCHEME    - Color scheme name
+--}}
+
+# Sinople WordPress Deployment for {{PROJECT_NAME}}
+# Generated from RSR template
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+## Project Configuration
+project:
+  name: "{{PROJECT_NAME}}"
+  slug: "{{PROJECT_SLUG}}"
+  domain: "{{DOMAIN}}"
+  rsr_tier: {{RSR_TIER}}
+
+## Theme Configuration
+theme:
+  name: "sinople"
+  version: "1.0.0"
+  parent: null  # Standalone theme
+
+  ## Color Scheme (per-project)
+  colors:
+    scheme: "{{COLOR_SCHEME}}"  # See color schemes below
+
+    # Override individual colors if needed
+    overrides:
+      # primary: "#custom"
+      # secondary: "#custom"
+      # accent: "#custom"
+
+## Accessibility (WCAG 2.3 AAA)
+accessibility:
+  wcag_level: "AAA"
+  features:
+    - skip_links: true
+    - aria_landmarks: true
+    - focus_indicators: true
+    - color_contrast: "7:1"  # AAA requirement
+    - text_resize: "200%"
+    - keyboard_navigation: true
+    - screen_reader_optimized: true
+    - reduced_motion: true
+    - high_contrast_mode: true
+
+## Semantic Web / IndieWeb
+semantic:
+  json_ld: true
+  open_graph: true
+  twitter_cards: true
+  microformats2: true
+  webmention: true
+  rel_me: true
+  h_card: true
+  h_entry: true
+
+## MAAF Integration
+maaf:
+  consent_aware_http: true
+  aibdp_manifest: true
+  http_430_support: true
+
+  ## .well-known files
+  well_known:
+    - aibdp.json
+    - security.txt
+    - ai.txt
+    - humans.txt
+    - dc.xml
+
+## Infrastructure (Wharf Architecture)
+infrastructure:
+  ## Deployment mode
+  mode: "sealed"  # sealed | docked | development
+
+  ## Security
+  security:
+    csp_enabled: true
+    strict_csp: true
+    hsts: true
+    x_content_type: "nosniff"
+    x_frame_options: "DENY"
+    referrer_policy: "strict-origin-when-cross-origin"
+
+  ## Container
+  container:
+    runtime: "nerdctl"
+    base_image: "cgr.dev/chainguard/wordpress:latest"
+    read_only_root: true
+
+  ## Database (Virtual Sharding)
+  database:
+    sharding: true
+    mutable_tables:
+      - wp_comments
+      - wp_commentmeta
+    immutable_tables:
+      - wp_users
+      - wp_options
+      - wp_posts  # Content sealed at deploy
+
+  ## Cache
+  cache:
+    type: "redis"
+    ephemeral: true
+
+## Build Configuration
+build:
+  tool: "just"
+
+  recipes:
+    - name: "build"
+      deps: ["validate-config", "compile-assets"]
+
+    - name: "deploy"
+      deps: ["build", "package"]
+      mode: "sealed"
+
+    - name: "dev"
+      mode: "docked"
+      hot_reload: true
+
+---
+# Color Schemes Reference
+#
+# Each RSR project domain has a suggested color scheme.
+# Override in theme.colors.overrides if needed.
+#
+# SCHEME: rhodium (Default - Infrastructure)
+#   primary:   #cd7f32  (Bronze/Rhodium)
+#   secondary: #2d3436  (Dark gray)
+#   accent:    #00cec9  (Teal)
+#   bg:        #ffffff
+#   text:      #2d3436
+#
+# SCHEME: conative (AI Safety)
+#   primary:   #6c5ce7  (Purple)
+#   secondary: #2d3436
+#   accent:    #00b894  (Green)
+#   bg:        #f8f9fa
+#   text:      #2d3436
+#
+# SCHEME: zotero (Research/Citations)
+#   primary:   #cc2936  (Zotero red)
+#   secondary: #2d3436
+#   accent:    #0984e3  (Blue)
+#   bg:        #ffffff
+#   text:      #2d3436
+#
+# SCHEME: fogbinder (Uncertainty/Mystery)
+#   primary:   #9b59b6  (Purple)
+#   secondary: #1a1a2e  (Dark)
+#   accent:    #e17055  (Orange)
+#   bg:        #0f0f23
+#   text:      #f8f9fa
+#
+# SCHEME: echidna (Formal Verification)
+#   primary:   #2980b9  (Blue)
+#   secondary: #2d3436
+#   accent:    #f39c12  (Gold)
+#   bg:        #ffffff
+#   text:      #2d3436
+#
+# SCHEME: wharf (Security)
+#   primary:   #27ae60  (Green)
+#   secondary: #2c3e50
+#   accent:    #e74c3c  (Red - warnings)
+#   bg:        #ecf0f1
+#   text:      #2c3e50
+#
+# SCHEME: bastion (Identity/DNS)
+#   primary:   #8e44ad  (Purple)
+#   secondary: #2c3e50
+#   accent:    #3498db  (Blue)
+#   bg:        #ffffff
+#   text:      #2c3e50
+#
+# SCHEME: vext (Notifications/IRC)
+#   primary:   #1abc9c  (Teal)
+#   secondary: #2d3436
+#   accent:    #e74c3c  (Red)
+#   bg:        #f8f9fa
+#   text:      #2d3436

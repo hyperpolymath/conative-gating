@@ -1,0 +1,511 @@
+= STATE.scm & ECOSYSTEM.scm Schema Documentation
+:toc:
+:sectnums:
+
+== Overview
+
+The STATE.scm and ECOSYSTEM.scm files form the backbone of project state management and cross-repository relationship tracking in the RSR ecosystem.
+
+* **STATE.scm**: Per-repository conversation checkpoint (127+ repos)
+* **ECOSYSTEM.scm**: Global ecosystem relationship graph (1 authoritative file)
+
+Both use Guile Scheme S-expressions for:
+
+* Machine-readable structure
+* Human-editable format
+* Integration with Guix tooling
+* Homoiconic manipulation
+
+== STATE.scm Schema (v2.0)
+
+=== Structure
+
+[source,scheme]
+----
+(define state
+  `((metadata ...)
+    (position ...)
+    (context ...)
+    (implementations ...)
+    (issues ...)
+    (roadmap ...)
+    (ecosystem ...)
+    (session-files ...)
+    (notes ...)))
+----
+
+=== Section: metadata
+
+[cols="1,1,3"]
+|===
+|Field |Type |Description
+
+|`format-version`
+|string
+|Schema version ("2.0")
+
+|`schema-version`
+|string
+|Date of schema (ISO 8601)
+
+|`project`
+|string
+|Repository name
+
+|`created`
+|string
+|Creation timestamp (ISO 8601)
+
+|`updated`
+|string
+|Last update timestamp (ISO 8601)
+|===
+
+=== Section: position
+
+[cols="1,1,3"]
+|===
+|Field |Type |Description
+
+|`summary`
+|string
+|One-line project description
+
+|`phase`
+|symbol
+|`design` \| `implementation` \| `testing` \| `maintenance` \| `archived`
+
+|`maturity`
+|symbol
+|`experimental` \| `alpha` \| `beta` \| `production` \| `lts`
+
+|`rsr-tier`
+|integer
+|1 (Tier 1), 2 (Tier 2), or `infrastructure`
+
+|`primary-language`
+|string
+|Main implementation language
+
+|`domain`
+|string
+|Problem domain (e.g., "AI Safety", "Developer Tools")
+|===
+
+=== Section: context
+
+[cols="1,1,3"]
+|===
+|Field |Type |Description
+
+|`last-session`
+|string
+|Date of last AI conversation
+
+|`focus-area`
+|string
+|Current development focus
+
+|`blockers`
+|list
+|Current blocking issues
+
+|`decisions-pending`
+|list
+|Decisions awaiting resolution
+|===
+
+=== Section: implementations
+
+List of implementation records:
+
+[source,scheme]
+----
+((name . "feature-name")
+ (status . complete)  ; complete | in-progress | planned
+ (files . ("src/file.rs" "src/other.rs"))
+ (notes . "Implementation details"))
+----
+
+=== Section: issues
+
+[cols="1,1,3"]
+|===
+|Field |Type |Description
+
+|`active`
+|list
+|Current open issues
+
+|`resolved`
+|list
+|Recently resolved issues
+
+|`known-limitations`
+|list
+|Documented limitations
+
+|`technical-debt`
+|list
+|Identified tech debt items
+|===
+
+=== Section: roadmap
+
+[source,scheme]
+----
+(roadmap
+ (current-version . "0.1.0")
+ (next-milestone . "MVP")
+ (version-plan
+  ((version . "0.2.0")
+   (features . ("feature-a" "feature-b"))
+   (target . "2025-Q1"))))
+----
+
+=== Section: ecosystem
+
+[cols="1,1,3"]
+|===
+|Field |Type |Description
+
+|`part-of`
+|list
+|Parent ecosystems (e.g., "STATE.scm", "RSR Framework")
+
+|`depends-on`
+|list
+|Runtime/build dependencies
+
+|`integrates-with`
+|list
+|Integration targets
+
+|`supersedes`
+|list
+|Replaced projects
+|===
+
+=== Section: session-files
+
+List of files modified in the most recent session:
+[source,scheme]
+----
+(session-files
+ ("src/main.rs"
+  "justfile"
+  "README.adoc"))
+----
+
+=== Section: notes
+
+Free-form string for additional context.
+
+== ECOSYSTEM.scm Schema
+
+=== Location
+
+Single authoritative file:
+`/elegant-STATE/examples/ECOSYSTEM.scm`
+
+=== Structure
+
+[source,scheme]
+----
+(define ecosystem
+  '((metadata ...)
+    (projects ...)
+    (relationships ...)
+    (domains ...)
+    (statistics ...)))
+----
+
+=== Section: metadata
+
+[source,scheme]
+----
+(metadata
+ (name . "hyperpolymath")
+ (version . "1.0")
+ (updated . "2025-12-10")
+ (total-repos . 139))
+----
+
+=== Section: projects
+
+List of all ecosystem projects:
+
+[source,scheme]
+----
+(projects
+ ((name . "conative-gating")
+  (status . active)  ; active | maintenance | archived | deprecated
+  (phase . implementation)
+  (maturity . beta)
+  (description . "SLM-as-Cerebellum for LLM Policy Enforcement")
+  (repository . "https://github.com/hyperpolymath/conative-gating")
+  (languages . (rust elixir nickel))
+  (domain . "AI Safety")
+  (tier . 1)
+  (badges
+   ((category . identity)
+    (rsr-tier . 1)
+    (phase . implementation)
+    (maturity . beta))))
+
+ ((name . "echomesh")
+  (status . archived)
+  (archive-date . "2025-12-09")
+  (superseded-by . "conative-gating")
+  (description . "Context capture - superseded by prevention approach")))
+----
+
+=== Section: relationships
+
+Relationship graph between projects:
+
+[source,scheme]
+----
+(relationships
+ ;; Dependency relationships
+ ((from . "conative-gating")
+  (to . "wharf")
+  (kind . depends))
+
+ ;; Composition
+ ((from . "elegant-STATE")
+  (to . "conative-gating")
+  (kind . part-of))
+
+ ;; Evolution
+ ((from . "conative-gating")
+  (to . "echomesh")
+  (kind . supersedes))
+
+ ;; Integration
+ ((from . "zotero-nsai")
+  (to . "fogbinder")
+  (kind . integrates)))
+----
+
+==== Relationship Types
+
+[cols="1,3"]
+|===
+|Kind |Description
+
+|`depends`
+|A depends on B (build/runtime)
+
+|`part-of`
+|A is a component of B
+
+|`supersedes`
+|A replaces B
+
+|`integrates`
+|A works with B (bidirectional)
+
+|`extends`
+|A extends functionality of B
+
+|`forks`
+|A is a fork of B
+|===
+
+=== Section: domains
+
+Domain categorization:
+
+[source,scheme]
+----
+(domains
+ ((name . "AI Safety")
+  (projects . ("conative-gating" "llm-antidote" "llm-verify"))
+  (color . "#ff6b6b"))
+
+ ((name . "Developer Tools")
+  (projects . ("gitvisor" "git-rsr-certified" "scaffoldia"))
+  (color . "#4ecdc4"))
+
+ ((name . "Citation Management")
+  (projects . ("zotero-nsai" "fogbinder" "zotero-voyant-export"))
+  (color . "#9b59b6")))
+----
+
+=== Section: statistics
+
+Aggregate ecosystem statistics:
+
+[source,scheme]
+----
+(statistics
+ (total-repos . 139)
+ (by-tier
+  ((tier . 1) (count . 47))
+  ((tier . 2) (count . 10))
+  ((tier . infrastructure) (count . 82)))
+ (by-phase
+  ((phase . design) (count . 20))
+  ((phase . implementation) (count . 45))
+  ((phase . testing) (count . 15))
+  ((phase . maintenance) (count . 50))
+  ((phase . archived) (count . 9)))
+ (by-language
+  ((language . rust) (count . 21))
+  ((language . rescript) (count . 26))
+  ((language . guix) (count . 82))
+  ((language . elixir) (count . 3))
+  ((language . javascript) (count . 6))
+  ((language . python) (count . 1))))
+----
+
+== Tooling Integration
+
+=== Justfile Recipes
+
+[source,makefile]
+----
+# Validate STATE.scm syntax
+validate-state:
+    guile -c '(primitive-load "STATE.scm")'
+
+# Update timestamp
+state-touch:
+    sed -i 's/(updated . "[^"]*")/(updated . "'"$(date -Iseconds)"'")/' STATE.scm
+
+# Export to JSON
+state-export:
+    guile -c '(use-modules (json)) (primitive-load "STATE.scm") (display (scm->json state))'
+
+# Show current phase
+state-phase:
+    grep -oP '\(phase\s+\.\s+\K[^)]+' STATE.scm | head -1
+----
+
+=== CI/CD Integration
+
+[source,yaml]
+----
+# .github/workflows/state-check.yml
+- name: Validate STATE.scm
+  run: |
+    if [ -f STATE.scm ]; then
+      guile -c '(primitive-load "STATE.scm")'
+    fi
+----
+
+=== Badge Generation
+
+STATE.scm provides metadata for badge generation:
+
+[source,bash]
+----
+#!/bin/bash
+# Extract phase for badge
+PHASE=$(grep -oP '\(phase\s+\.\s+\K[^)]+' STATE.scm)
+echo "image:https://img.shields.io/badge/Phase-${PHASE}-blue[Phase]"
+----
+
+== Migration Guide
+
+=== From Legacy Formats
+
+If migrating from other state tracking:
+
+[source,bash]
+----
+# Generate STATE.scm from project metadata
+./scripts/generate-state.sh > STATE.scm
+
+# Validate
+just validate-state
+----
+
+=== Updating Schema Versions
+
+When schema changes:
+
+1. Update `format-version` in metadata
+2. Run migration script
+3. Validate all STATE.scm files
+
+== Best Practices
+
+1. **Update regularly**: Touch STATE.scm at end of each session
+2. **Keep focused**: `context.focus-area` should be specific
+3. **Track decisions**: Document pending decisions for continuity
+4. **Link ecosystems**: Maintain `ecosystem` section for relationships
+5. **Archive cleanly**: Set `phase . archived` with supersession info
+
+== Example: Complete STATE.scm
+
+[source,scheme]
+----
+;;; STATE.scm --- conative-gating conversation checkpoint
+
+(define state
+  `((metadata
+     (format-version . "2.0")
+     (schema-version . "2025-12-10")
+     (project . "conative-gating")
+     (created . "2025-12-01T00:00:00Z")
+     (updated . "2025-12-10T12:00:00Z"))
+
+    (position
+     (summary . "SLM-as-Cerebellum for LLM Policy Enforcement")
+     (phase . implementation)
+     (maturity . beta)
+     (rsr-tier . 1)
+     (primary-language . "rust")
+     (domain . "AI Safety"))
+
+    (context
+     (last-session . "2025-12-10")
+     (focus-area . "Oracle training pipeline")
+     (blockers . ())
+     (decisions-pending
+      ("Training data format"
+       "Deployment architecture")))
+
+    (implementations
+     ((name . "Policy Oracle")
+      (status . complete)
+      (files . ("src/oracle/mod.rs" "src/oracle/model.rs"))
+      (notes . "ONNX-based SLM for policy classification"))
+     ((name . "Arbiter")
+      (status . in-progress)
+      (files . ("src/arbiter/mod.rs"))
+      (notes . "Decision aggregation layer")))
+
+    (issues
+     (active . ("Training data collection"))
+     (resolved . ("ONNX inference latency"))
+     (known-limitations . ("Single-turn only"))
+     (technical-debt . ()))
+
+    (roadmap
+     (current-version . "0.1.0")
+     (next-milestone . "MVP")
+     (version-plan
+      ((version . "0.2.0")
+       (features . ("Multi-turn context" "Streaming inference"))
+       (target . "2025-Q1"))))
+
+    (ecosystem
+     (part-of . ("STATE.scm" "RSR Framework"))
+     (depends-on . ("wharf" "file-soup"))
+     (integrates-with . ("zotero-nsai" "fogbinder"))
+     (supersedes . ("echomesh" "UPM" "rhodibot")))
+
+    (session-files
+     ("src/oracle/training.rs"
+      "training/README.adoc"
+      "justfile"))
+
+    (notes
+     "Focus on training pipeline for Q4 2025.
+      Oracle inference working, need arbiter integration.")))
+
+state
+----

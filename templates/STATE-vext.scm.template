@@ -1,0 +1,78 @@
+;;; STATE.scm --- vext conversation checkpoint
+;;; Format: Guile Scheme S-expressions
+;;; Schema: RSR STATE v2.0
+;;;
+;;; vext: IRC notification daemon based on irker/irkerd
+;;; for commit notifications across RSR repositories.
+
+(define state
+  `((metadata
+     (format-version . "2.0")
+     (schema-version . "2025-12-10")
+     (project . "vext")
+     (created . "2025-11-08")
+     (updated . "{{UPDATED}}"))
+
+    (position
+     (summary . "IRC notification daemon for commit notifications across RSR repos")
+     (phase . implementation)
+     (maturity . stable)
+     (rsr-tier . 2)
+     (primary-language . "python")
+     (domain . "Developer Tools"))
+
+    (context
+     (last-session . "{{DATE}}")
+     (focus-area . "RSR ecosystem integration")
+     (blockers . ())
+     (decisions-pending . ()))
+
+    (implementations
+     ((name . "irkerd")
+      (status . complete)
+      (files . ("irkerd"))
+      (notes . "IRC daemon maintaining persistent connections"))
+     ((name . "irkerhook.py")
+      (status . complete)
+      (files . ("irkerhook.py"))
+      (notes . "Git/Hg/SVN hook scripts"))
+     ((name . "irker")
+      (status . complete)
+      (files . ("irker"))
+      (notes . "Command-line client")))
+
+    (ecosystem
+     (part-of . ("RSR Framework" "MAAF"))
+     (depends-on . ())
+     (integrates-with . ("all-rsr-repos")))
+
+    (configuration
+     (default-port . 6659)
+     (default-channels . ("irc://irc.libera.chat/#rsr-commits"
+                          "irc://irc.libera.chat/#rhodium"))
+     (template . "[{{project}}] {{author}}: {{message}} ({{branch}})"))
+
+    (issues
+     (active . ())
+     (resolved . ("Initial setup" "Channel configuration"))
+     (known-limitations . ("Python codebase - exception to RSR language rules"))
+     (technical-debt . ()))
+
+    (roadmap
+     (current-version . "1.0.0")
+     (next-milestone . "RSR hook templates")
+     (version-plan
+      ((version . "1.1.0")
+       (features . ("Justfile integration" "RSR templates" "Multi-channel routing")))))
+
+    (notes
+     "Based on Eric S. Raymond's irker project. Provides persistent IRC
+      connections for commit notifications without spam from reconnects.
+
+      NOTE: Python is allowed here as it's upstream irker code and exists
+      in the notification/infrastructure layer, not application code.
+
+      Integration: All RSR repos should add irkerhook.py to their
+      .git/hooks/post-receive for automatic commit notifications.")))
+
+state

@@ -1,0 +1,70 @@
+= RSR Compliance: {{PROJECT_NAME}}
+:toc:
+:sectnums:
+
+== Overview
+
+This document describes the Rhodium Standard Repository (RSR) compliance status for *{{PROJECT_NAME}}*.
+
+== Classification
+
+[cols="1,2"]
+|===
+|Attribute |Value
+
+|Project |{{PROJECT_NAME}}
+|Primary Language |{{PRIMARY_LANGUAGE}}
+|RSR Tier |{{TIER}}
+|Compliance Status |{{STATUS}}
+|Last Updated |{{DATE}}
+|===
+
+== Language Tier Classification
+
+=== Tier 1 Languages (Preferred)
+* Rust
+* Elixir
+* Zig
+* Ada
+* Haskell
+* ReScript
+
+=== Tier 2 Languages (Acceptable)
+* Nickel (configuration)
+* Racket (scripting)
+* Guile Scheme (state management)
+
+=== Restricted Languages
+* Python - Only allowed in `salt/` directories for SaltStack
+* TypeScript/JavaScript - Legacy only, convert to ReScript
+* CUE - Not permitted, use Nickel or Guile
+
+== Compliance Checklist
+
+[cols="1,1,2"]
+|===
+|Requirement |Status |Notes
+
+|Primary language is Tier 1/2 |{{LANG_CHECK}} |{{PRIMARY_LANGUAGE}}
+|No restricted languages outside exemptions |{{RESTRICTED_CHECK}} |
+|.editorconfig present |{{EDITORCONFIG_CHECK}} |
+|.well-known/ directory |{{WELLKNOWN_CHECK}} |
+|justfile present |{{JUSTFILE_CHECK}} |
+|LICENSE.txt (AGPL + Palimpsest) |{{LICENSE_CHECK}} |
+|Containerfile present |{{CONTAINER_CHECK}} |
+|flake.nix present |{{FLAKE_CHECK}} |
+|===
+
+== Exemptions
+
+{{EXEMPTIONS}}
+
+== Action Items
+
+{{ACTION_ITEMS}}
+
+== References
+
+* link:https://github.com/hyperpolymath/RSR-template-repo[RSR Template Repository]
+* link:../CONTRIBUTING.adoc[Contributing Guidelines]
+* link:../CODE_OF_CONDUCT.adoc[Code of Conduct]

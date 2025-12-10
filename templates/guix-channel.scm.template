@@ -1,0 +1,26 @@
+;; {{PROJECT_NAME}} - Guix Channel Definition
+;; Add to ~/.config/guix/channels.scm:
+;;   (channel
+;;     (name '{{PROJECT_NAME}})
+;;     (url "https://github.com/hyperpolymath/{{PROJECT_NAME}}")
+;;     (branch "main"))
+
+(define-module ({{PROJECT_NAME_SNAKE}})
+  #:use-module (guix packages)
+  #:use-module (guix gexp)
+  #:use-module (guix build-system {{BUILD_SYSTEM}})
+  #:use-module (guix licenses)
+  #:use-module (gnu packages base))
+
+(define-public {{PROJECT_NAME_SNAKE}}
+  (package
+    (name "{{PROJECT_NAME}}")
+    (version "0.1.0")
+    (source (local-file "." "{{PROJECT_NAME}}-source"
+                        #:recursive? #t
+                        #:select? (git-predicate ".")))
+    (build-system {{BUILD_SYSTEM}}-build-system)
+    (synopsis "{{SYNOPSIS}}")
+    (description "{{DESCRIPTION}}")
+    (home-page "https://github.com/hyperpolymath/{{PROJECT_NAME}}")
+    (license agpl3+)))

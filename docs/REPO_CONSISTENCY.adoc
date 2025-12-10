@@ -1,0 +1,437 @@
+= GitHub/GitLab Repository Consistency Guide
+:toc:
+:sectnums:
+// SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+
+== Overview
+
+RSR projects are distributed across GitHub and GitLab. This guide documents the synchronization requirements, reconciliation needs, and consistency standards for maintaining parity across platforms.
+
+== Repository Mapping
+
+=== Primary Canonical Locations
+
+[cols="2,2,2,1"]
+|===
+|Project |Canonical |Mirror |Status
+
+|conative-gating
+|GitLab (maa-framework)
+|GitHub (hyperpolymath)
+|✓ Synced
+
+|consent-aware-http
+|GitLab (maa-framework/2-web-protocols)
+|—
+|GitLab Only
+
+|indieweb2-bastion
+|GitLab (maa-framework/2-web-protocols)
+|GitHub (hyperpolymath)
+|✓ Synced
+
+|cadre-router
+|GitLab (maa-framework/2-web-protocols)
+|—
+|GitLab Only
+
+|kith
+|GitLab (maa-framework/3-applications)
+|—
+|GitLab Only
+
+|echidna
+|GitHub (hyperpolymath)
+|—
+|GitHub Only
+
+|wordpress-wharf
+|GitLab (maa-framework/3-applications)
+|GitHub (hyperpolymath/wharf)
+|⚠️ NEEDS RECONCILIATION
+
+|vext
+|GitLab (non-initiate/rhodinised)
+|—
+|GitLab Only
+
+|vsh
+|GitLab (non-initiate/rhodinised)
+|—
+|GitLab Only
+
+|bunsenite
+|GitLab (cccp)
+|—
+|GitLab Only
+
+|zoterho-template
+|GitLab (extensions-library/zotero)
+|GitHub (hyperpolymath)
+|⚠️ NEEDS RECONCILIATION
+
+|nickel-config-reporter
+|GitLab (overarch-underpin)
+|—
+|GitLab Only
+
+|sinople-theme
+|GitLab (extensions-library/wordpress)
+|—
+|GitLab Only
+
+|grimrepo-scripts
+|GitLab (extensions-library/monkey-scripts)
+|—
+|GitLab Only
+
+|cicd-hyper-a
+|GitLab (overarch-underpin)
+|—
+|GitLab Only
+|===
+
+== Repos Requiring Reconciliation
+
+=== 1. Wharf Repository Triad
+
+**Problem**: THREE related but distinct repositories exist with similar names.
+
+[cols="1,2,2,2"]
+|===
+|Repo |Location |Type |Purpose
+
+|`wharf`
+|github.com/hyperpolymath/wharf
+|Rust (Cargo.toml, crates/)
+|**Infrastructure tooling** - deployment orchestration, build pipelines
+
+|`sinople-wharf`
+|gitlab.com/hyperpolymath/sinople-wharf
+|WordPress (wp-content/, dock-agent-ada/)
+|**WordPress MVP scaffold** - sinople theme deployment
+
+|`wordpress-wharf`
+|gitlab.com/maa-framework/3-applications/wordpress-wharf
+|WordPress (wp-content/, dock-agent-ada/)
+|**WordPress MVP scaffold** - DUPLICATE of sinople-wharf
+|===
+
+**Analysis**:
+
+* `wharf` (GitHub) is a **completely different project** - Rust-based infrastructure
+* `sinople-wharf` and `wordpress-wharf` are **effectively duplicates** with only metadata differences
+
+**Resolution Plan**:
+
+. **Keep** `wharf` (GitHub) as standalone Rust infrastructure project
+. **Consolidate** `sinople-wharf` and `wordpress-wharf` → keep `wordpress-wharf` as canonical
+. **Archive** `sinople-wharf` with deprecation notice redirecting to `wordpress-wharf`
+. **Rename** GitHub repo consideration: `wharf` → `wharf-infra` for clarity (optional)
+
+**Action Items**:
+[source]
+----
+[x] Compare file structures ← DONE (only metadata differs)
+[x] Identify unique features in each ← DONE (none unique)
+[ ] Merge sinople-wharf → wordpress-wharf (if any divergence)
+[ ] Add deprecation notice to sinople-wharf README
+[ ] Update all ecosystem references
+[ ] Consider renaming GitHub wharf → wharf-infra
+----
+
+=== 2. zoterho-template (KEEP SEPARATE)
+
+**Analysis**: These are **two completely different projects** with the same name.
+
+[cols="1,2,2"]
+|===
+|Aspect |GitLab |GitHub
+
+|URL
+|gitlab.com/extensions-library/zotero/zoterho-template
+|github.com/hyperpolymath/zoterho-template
+
+|Purpose
+|**Zotero 7 extension template**
+|**Generic RSR template demo**
+
+|Stack
+|ReScript + Deno + CUE
+|Minimal RSR compliance files
+
+|Content
+|extension/, slm/, ui/, manifest.json
+|Just .well-known/, justfile
+
+|Use Case
+|Building real Zotero extensions
+|Demonstrating RSR framework
+|===
+
+**Resolution**: ✅ **KEEP SEPARATE** - valuable disaggregation
+
+These serve completely different purposes:
+
+* **GitLab zoterho-template**: Production template for Zotero 7 extension development
+* **GitHub zoterho-template**: Minimal reference implementation of RSR Bronze compliance
+
+**Recommendations**:
+
+. Consider renaming GitHub repo to `rsr-template-minimal` for clarity
+. Add cross-reference in each README pointing to the other
+. Apply STATE.scm to GitLab version (already done in unified/)
+
+**Action Items**:
+[source]
+----
+[x] Analyze both repositories ← DONE (different projects)
+[x] Determine reconciliation strategy ← DONE (keep separate)
+[ ] Optional: Rename GitHub repo for clarity
+[ ] Add cross-reference documentation
+----
+
+== Synchronization Standards
+
+=== Required Files (Both Platforms)
+
+All RSR repositories must maintain these files identically:
+
+[source]
+----
+.well-known/
+├── aibdp.json        # AI Boundary Declaration
+├── security.txt      # Security contact
+├── dc.xml           # Dublin Core metadata
+└── ai.txt           # AI training preferences
+
+Root files:
+├── LICENSE          # SPDX-compliant
+├── CITATION.cff     # Citation metadata
+├── STATE.scm        # Guile state checkpoint
+├── codemeta.json    # CodeMeta metadata
+└── justfile         # Build automation
+----
+
+=== Platform-Specific Files
+
+**GitLab Only**:
+[source]
+----
+.gitlab-ci.yml       # GitLab CI configuration
+.gitlab/             # GitLab-specific configs
+----
+
+**GitHub Only**:
+[source]
+----
+.github/
+├── workflows/       # GitHub Actions
+├── ISSUE_TEMPLATE/
+├── PULL_REQUEST_TEMPLATE.md
+└── FUNDING.yml
+----
+
+=== Mirroring Configuration
+
+==== GitLab → GitHub (Recommended)
+
+For GitLab-canonical repositories:
+
+[source,yaml]
+----
+# .gitlab-ci.yml
+mirror-to-github:
+  stage: deploy
+  only:
+    - main
+  script:
+    - git remote add github https://github.com/hyperpolymath/${CI_PROJECT_NAME}.git || true
+    - git push github HEAD:main --force
+  tags:
+    - mirror
+----
+
+==== GitHub → GitLab (Alternative)
+
+For GitHub-canonical repositories:
+
+[source,yaml]
+----
+# .github/workflows/mirror.yml
+name: Mirror to GitLab
+on:
+  push:
+    branches: [main]
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Push to GitLab
+        run: |
+          git remote add gitlab https://gitlab.com/.../${GITHUB_REPOSITORY#*/}.git
+          git push gitlab HEAD:main --force
+----
+
+== Color Scheme Consistency
+
+Each project has an assigned sinople color scheme that should be consistent across platforms:
+
+[cols="1,1,2"]
+|===
+|Project |Scheme |Hex Values
+
+|conative-gating
+|conative
+|#6c5ce7 (primary), #00b894 (accent)
+
+|echidna
+|echidna
+|#2980b9 (primary), #f39c12 (accent)
+
+|wordpress-wharf
+|wharf
+|#27ae60 (primary), #e74c3c (accent)
+
+|indieweb2-bastion
+|bastion
+|#8e44ad (primary), #3498db (accent)
+
+|vext
+|vext
+|#1abc9c (primary), #e74c3c (accent)
+
+|zoterho-template
+|zotero
+|#cc2936 (primary), #0984e3 (accent)
+
+|fogbinder
+|fogbinder
+|#9b59b6 (primary), #e17055 (accent)
+
+|default (others)
+|rhodium
+|#cd7f32 (primary), #00cec9 (accent)
+|===
+
+== Verification Checklist
+
+=== Per-Repository Checks
+
+[source]
+----
+# Run for each repository
+just check-consistency
+
+# Or manually:
+[ ] LICENSE matches SPDX identifier
+[ ] CITATION.cff valid
+[ ] STATE.scm parseable
+[ ] AIBDP manifest present
+[ ] codemeta.json valid
+[ ] README format consistent (AsciiDoc preferred)
+[ ] Color scheme matches assigned
+[ ] Author: Jonathan D.A. Jewell
+----
+
+=== Cross-Platform Checks
+
+[source]
+----
+[ ] Same commit hash on main branch
+[ ] Same tag versions
+[ ] Same release artifacts
+[ ] Same license text
+[ ] Same .well-known/ contents
+----
+
+== Automation Scripts
+
+=== Check All Repos
+
+[source,bash]
+----
+#!/bin/bash
+# scripts/check-consistency.sh
+
+REPOS=(
+  "conative-gating"
+  "indieweb2-bastion"
+  "echidna"
+  # ...
+)
+
+for repo in "${REPOS[@]}"; do
+  echo "=== $repo ==="
+
+  # Check GitLab
+  GL_SHA=$(curl -s "https://gitlab.com/api/v4/projects/hyperpolymath%2F$repo/repository/branches/main" | jq -r '.commit.id')
+
+  # Check GitHub
+  GH_SHA=$(curl -s "https://api.github.com/repos/hyperpolymath/$repo/branches/main" | jq -r '.commit.sha')
+
+  if [ "$GL_SHA" = "$GH_SHA" ]; then
+    echo "  ✓ Synced: $GL_SHA"
+  else
+    echo "  ✗ Out of sync!"
+    echo "    GitLab: $GL_SHA"
+    echo "    GitHub: $GH_SHA"
+  fi
+done
+----
+
+=== Sync Single Repo
+
+[source,bash]
+----
+#!/bin/bash
+# scripts/sync-repo.sh
+
+REPO=$1
+CANONICAL=$2  # "gitlab" or "github"
+
+if [ "$CANONICAL" = "gitlab" ]; then
+  git clone "https://gitlab.com/hyperpolymath/$REPO"
+  cd "$REPO"
+  git remote add github "https://github.com/hyperpolymath/$REPO"
+  git push github main --force
+else
+  git clone "https://github.com/hyperpolymath/$REPO"
+  cd "$REPO"
+  git remote add gitlab "https://gitlab.com/hyperpolymath/$REPO"
+  git push gitlab main --force
+fi
+----
+
+== Justfile Recipe
+
+Add to each repository's justfile:
+
+[source,makefile]
+----
+# Check consistency with canonical
+check-consistency:
+    @echo "Checking repository consistency..."
+    @[ -f ".well-known/aibdp.json" ] && echo "  ✓ AIBDP present" || echo "  ✗ AIBDP missing"
+    @[ -f "STATE.scm" ] && echo "  ✓ STATE.scm present" || echo "  ✗ STATE.scm missing"
+    @[ -f "CITATION.cff" ] && echo "  ✓ CITATION.cff present" || echo "  ✗ CITATION.cff missing"
+    @[ -f "codemeta.json" ] && echo "  ✓ codemeta.json present" || echo "  ✗ codemeta.json missing"
+    @grep -q "Jonathan D.A. Jewell" CITATION.cff 2>/dev/null && \
+        echo "  ✓ Author correct" || echo "  ✗ Author needs update"
+
+# Sync to mirror (requires setup)
+sync-mirror platform="github":
+    @echo "Syncing to {{platform}}..."
+    @git push {{platform}} main --force
+    @echo "✓ Synced"
+----
+
+== See Also
+
+* link:MAAF_INTEGRATION.adoc[MAAF Integration Guide]
+* link:ZOTERHO_INTEGRATION.adoc[ZoteRho Template Guide]
+* link:CICD_HYPER_A_INTEGRATION.adoc[CI/CD Integration Guide]
+* link:../templates/STATE.scm.template[STATE.scm Template]

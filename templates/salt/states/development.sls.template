@@ -1,0 +1,91 @@
+# {{PROJECT_NAME}} - Salt Development Environment
+# Offline development support via robot-vacuum-cleaner
+
+# Ensure development tools are installed
+dev-tools:
+  pkg.installed:
+    - pkgs:
+      - git
+      - just
+      - nickel
+
+# Rust toolchain (if Rust project)
+{% if pillar.get('language') == 'rust' %}
+rust-toolchain:
+  cmd.run:
+    - name: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source $HOME/.cargo/env
+        rustup component add rustfmt clippy
+    - unless: which cargo
+
+rust-deps:
+  cmd.run:
+    - name: cargo fetch
+    - cwd: /srv/{{PROJECT_NAME}}
+    - require:
+      - cmd: rust-toolchain
+{% endif %}
+
+# Elixir toolchain (if Elixir project)
+{% if pillar.get('language') == 'elixir' %}
+elixir-toolchain:
+  pkg.installed:
+    - pkgs:
+      - erlang
+      - elixir
+
+elixir-deps:
+  cmd.run:
+    - name: mix deps.get
+    - cwd: /srv/{{PROJECT_NAME}}
+    - require:
+      - pkg: elixir-toolchain
+{% endif %}
+
+# ReScript toolchain (if ReScript project)
+{% if pillar.get('language') == 'rescript' %}
+rescript-deps:
+  cmd.run:
+    - name: |
+        deno cache mod.ts
+    - cwd: /srv/{{PROJECT_NAME}}
+{% endif %}
+
+# Git configuration
+git-config:
+  file.managed:
+    - name: /srv/{{PROJECT_NAME}}/.git/config
+    - source: salt://{{PROJECT_NAME}}/git-config
+    - makedirs: True
+
+# Pre-commit hooks
+pre-commit:
+  file.managed:
+    - name: /srv/{{PROJECT_NAME}}/.git/hooks/pre-commit
+    - source: salt://{{PROJECT_NAME}}/hooks/pre-commit
+    - mode: 755
+
+# Environment setup
+env-setup:
+  file.managed:
+    - name: /srv/{{PROJECT_NAME}}/.envrc
+    - contents: |
+        # {{PROJECT_NAME}} development environment
+        export PROJECT_ROOT=/srv/{{PROJECT_NAME}}
+        export PATH="$PROJECT_ROOT/target/debug:$PATH"
+
+        # Language-specific
+        {% if pillar.get('language') == 'rust' %}
+        source $HOME/.cargo/env
+        {% endif %}
+    - mode: 644
+
+# Sync from robot-vacuum-cleaner state
+sync-from-vacuum:
+  cmd.run:
+    - name: |
+        if [ -d /srv/robot-vacuum-cleaner ]; then
+          cp -r /srv/robot-vacuum-cleaner/templates/* /srv/{{PROJECT_NAME}}/
+        fi
+    - unless: test -f /srv/{{PROJECT_NAME}}/.synced

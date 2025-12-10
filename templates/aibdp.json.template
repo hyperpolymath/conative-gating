@@ -1,0 +1,62 @@
+{
+  "aibdp_version": "0.2",
+  "contact": "mailto:hyperpolymath@proton.me",
+  "manifest_url": "https://github.com/hyperpolymath/{{PROJECT_NAME}}/.well-known/aibdp.json",
+  "expires": "2026-12-31T23:59:59Z",
+  "policies": {
+    "training": {
+      "status": "conditional",
+      "conditions": [
+        "Attribution required (cite CITATION.cff)",
+        "Non-commercial use or AGPL-3.0+ compliance",
+        "Share-alike derivative works"
+      ],
+      "exceptions": [
+        "Research and educational use",
+        "Security analysis"
+      ]
+    },
+    "indexing": {
+      "status": "allowed"
+    },
+    "summarization": {
+      "status": "allowed",
+      "conditions": [
+        "Attribution required"
+      ]
+    },
+    "generative_reuse": {
+      "status": "conditional",
+      "conditions": [
+        "Link to original repository",
+        "Preserve AGPL or Palimpsest license",
+        "No deceptive or misleading use"
+      ]
+    },
+    "embedding": {
+      "status": "allowed"
+    },
+    "code_completion": {
+      "status": "allowed",
+      "conditions": [
+        "Preserve license headers"
+      ]
+    }
+  },
+  "provenance": {
+    "repository": "https://github.com/hyperpolymath/{{PROJECT_NAME}}",
+    "license": "AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5",
+    "citation": "CITATION.cff"
+  },
+  "extensions": {
+    "rsr": {
+      "tier": "{{RSR_TIER}}",
+      "domain": "{{DOMAIN}}",
+      "ecosystem": "RSR Framework"
+    },
+    "maaf": {
+      "indieweb2_integration": true,
+      "consent_aware_http": true
+    }
+  }
+}

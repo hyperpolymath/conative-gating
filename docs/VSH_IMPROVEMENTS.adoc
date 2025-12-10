@@ -1,0 +1,707 @@
+= vsh (Valence Shell) Improvement Proposals
+:toc:
+:sectnums:
+// SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+
+== Overview
+
+This document contains detailed improvement proposals for vsh (Valence Shell) development. These proposals aim to make vsh the ideal shell for the RSR ecosystem while benefiting the broader developer community.
+
+**vsh Repository**: https://gitlab.com/non-initiate/rhodinised/vsh
+
+**Status**: vsh is in early development. These proposals are forward-looking roadmap items.
+
+== Proposal 1: Nickel Integration via bunsenite
+
+=== Rationale
+
+Nickel is a configuration language designed for generating JSON, YAML, and TOML. RSR uses Nickel for policy configuration (CURPS, consent policies). Native Nickel support in vsh would enable:
+
+* Direct configuration loading in shell scripts
+* Policy validation without external tools
+* Type-safe configuration access
+
+=== Implementation
+
+==== FFI Integration
+
+[source,c]
+----
+// vsh/src/ffi/bunsenite.h
+// Link against bunsenite's Zig-provided C ABI
+
+typedef struct NickelConfig NickelConfig;
+
+NickelConfig* bunsenite_load(const char* path);
+const char* bunsenite_get_string(NickelConfig* cfg, const char* key);
+int bunsenite_get_int(NickelConfig* cfg, const char* key);
+bool bunsenite_get_bool(NickelConfig* cfg, const char* key);
+void bunsenite_free(NickelConfig* cfg);
+----
+
+==== Shell Syntax
+
+[source,bash]
+----
+# Load Nickel configuration
+ncl load policy/consent.ncl as consent
+
+# Access nested values
+echo $consent.policies.training.status
+# Output: conditional
+
+# Conditional based on config
+if $consent.policies.indexing.status == "allowed"; then
+    echo "Indexing permitted"
+fi
+
+# Export to JSON
+ncl export policy/consent.ncl --format json > config.json
+
+# Validate against schema
+ncl validate policy/consent.ncl --schema schemas/curps.ncl
+----
+
+==== Built-in Commands
+
+[cols="1,3"]
+|===
+|Command |Description
+
+|`ncl load <file> [as <var>]`
+|Load Nickel file into shell variable
+
+|`ncl export <file> --format <json\|toml\|yaml>`
+|Export Nickel to other formats
+
+|`ncl validate <file> --schema <schema>`
+|Validate Nickel against schema
+
+|`ncl eval <expression>`
+|Evaluate inline Nickel expression
+
+|`ncl merge <file1> <file2> ...`
+|Merge multiple Nickel configs
+|===
+
+=== Dependencies
+
+* bunsenite (https://gitlab.com/campaign-for-cooler-coding-and-programming/bunsenite)
+* Zig 0.11+ (for FFI layer)
+
+== Proposal 2: AIBDP / .well-known Support
+
+=== Rationale
+
+The AI Boundary Declaration Protocol (AIBDP) requires `.well-known/` directory management. Currently this requires external tools (kith). Native shell support would:
+
+* Simplify consent management in scripts
+* Enable CI/CD integration without dependencies
+* Standardize AIBDP handling across projects
+
+=== Implementation
+
+==== Built-in Commands
+
+[source,bash]
+----
+# Initialize .well-known structure
+wellknown init
+
+# Generate AIBDP manifest
+wellknown aibdp generate \
+    --contact "mailto:dev@example.com" \
+    --training conditional \
+    --indexing allowed
+
+# Validate all manifests
+wellknown validate
+# Output:
+# aibdp.json: valid (v0.2)
+# security.txt: valid (RFC 9116)
+# ai.txt: valid
+
+# Check specific file
+wellknown check aibdp.json
+
+# Update expiry date
+wellknown aibdp set-expiry "2027-01-01"
+
+# Generate security.txt
+wellknown security generate \
+    --contact "security@example.com" \
+    --encryption "https://example.com/pgp-key.txt"
+----
+
+==== Directory Structure Generation
+
+[source,bash]
+----
+# Full initialization
+wellknown init --full
+
+# Creates:
+# .well-known/
+# ├── aibdp.json      # AI Boundary Declaration
+# ├── ai.txt          # AI training preferences
+# ├── dc.xml          # Dublin Core metadata
+# ├── humans.txt      # Team information
+# └── security.txt    # RFC 9116 security contact
+----
+
+==== AIBDP Policy DSL
+
+[source,bash]
+----
+# Inline policy definition
+wellknown aibdp policy {
+    training: conditional [
+        "Attribution required"
+        "Non-commercial use"
+    ]
+    indexing: allowed
+    summarization: allowed ["Attribution"]
+    embedding: allowed
+}
+----
+
+=== Integration with consent-aware-http
+
+[source,bash]
+----
+# Check if request should be blocked
+wellknown consent-check --user-agent "GPTBot/1.0"
+# Exit code 0 = allowed, 1 = blocked, 2 = conditional
+
+# In CI/CD
+if ! wellknown validate; then
+    echo "AIBDP validation failed"
+    exit 1
+fi
+----
+
+== Proposal 3: RSR Language Tier Awareness
+
+=== Rationale
+
+RSR defines language tiers for project standardization:
+
+* **Tier 1**: Rust, Elixir, Zig, Ada/SPARK, Haskell, ReScript
+* **Tier 2**: Nickel, Racket, Guile Scheme, Nix
+* **Prohibited**: TypeScript, JavaScript, Python (except salt/), Go, CUE
+
+Native tier awareness would help enforce standards and provide helpful tooling.
+
+=== Implementation
+
+==== Configuration
+
+[source,bash]
+----
+# ~/.config/vsh/rsr.conf or project .vshrc
+rsr_tier_1=(rust elixir zig ada haskell rescript)
+rsr_tier_2=(nickel racket guile nix)
+rsr_prohibited=(typescript javascript python go cue)
+----
+
+==== Built-in Commands
+
+[source,bash]
+----
+# Check project language compliance
+rsr check
+# Output:
+# ✓ Rust files: 45 (Tier 1)
+# ✓ Nickel files: 12 (Tier 2)
+# ✗ Python files: 3 (Prohibited - not in salt/)
+# ✗ TypeScript files: 8 (Prohibited)
+
+# Audit with details
+rsr audit --verbose
+# Lists all non-compliant files with paths
+
+# Check specific file
+rsr tier src/main.rs
+# Output: Tier 1 (Rust)
+
+# Project summary
+rsr summary
+# Output:
+# Primary language: Rust (Tier 1)
+# Config language: Nickel (Tier 2)
+# RSR Compliant: No (3 violations)
+
+# Generate STATE.scm
+rsr state generate
+----
+
+==== Build Tool Integration
+
+[source,bash]
+----
+# Tier-aware build
+rsr build
+# Automatically detects:
+# - Cargo.toml → cargo build
+# - mix.exs → mix compile
+# - build.zig → zig build
+# - *.gpr → gprbuild
+# - rescript.json → rescript
+
+# Run tests by tier
+rsr test --tier 1
+----
+
+== Proposal 4: Guix/Nix Package Management Primitives
+
+=== Rationale
+
+RSR uses Guix as primary package manager with Nix as fallback. Native primitives would:
+
+* Simplify reproducible builds
+* Enable declarative environment management
+* Support Guix channels workflow
+
+=== Implementation
+
+==== Guix Primitives
+
+[source,bash]
+----
+# Enter Guix shell
+guix shell rust cargo
+
+# With manifest
+guix shell -m guix.scm
+
+# Build package
+guix build -f guix.scm
+
+# Update channels
+guix pull --channels=channels.scm
+
+# Create development environment
+guix environment --pure --manifest=guix.scm
+
+# Check reproducibility
+guix challenge <package>
+----
+
+==== Nix Primitives (Fallback)
+
+[source,bash]
+----
+# Enter Nix shell
+nix shell nixpkgs#rust nixpkgs#cargo
+
+# With flake
+nix develop
+
+# Build
+nix build
+
+# Run
+nix run .#default
+----
+
+==== Unified Interface
+
+[source,bash]
+----
+# Auto-detect Guix vs Nix
+pkg shell rust cargo
+# Uses Guix if available, falls back to Nix
+
+# Environment management
+pkg env create dev
+pkg env activate dev
+pkg env list
+
+# Manifest operations
+pkg manifest add rust
+pkg manifest remove go  # Prohibited anyway!
+pkg manifest sync
+----
+
+==== Channel Management
+
+[source,bash]
+----
+# List channels
+channels list
+
+# Add RSR channel
+channels add rsr https://gitlab.com/rsr-framework/guix-channel
+
+# Update all
+channels pull
+
+# Pin version
+channels pin rsr v1.2.3
+----
+
+== Proposal 5: IRC/vext Protocol Support
+
+=== Rationale
+
+vext (irker) provides IRC notifications for commits. Native support would:
+
+* Eliminate Python dependency in git hooks
+* Enable richer notification workflows
+* Simplify CI/CD notification setup
+
+=== Implementation
+
+==== Built-in Commands
+
+[source,bash]
+----
+# Send IRC notification
+irc send "irc://irc.libera.chat/#rhodium" "Build complete!"
+
+# Multiple channels
+irc send \
+    "irc://irc.libera.chat/#rhodium" \
+    "irc://irc.libera.chat/#rsr-commits" \
+    "Release v1.0.0 published"
+
+# Using irker daemon
+irker notify "Build succeeded for $PROJECT"
+
+# With template
+irker commit \
+    --project "conative-gating" \
+    --author "hyperpolymath" \
+    --message "feat: add policy oracle" \
+    --branch "main"
+----
+
+==== Configuration
+
+[source,bash]
+----
+# ~/.config/vsh/irker.conf
+irker_host="localhost"
+irker_port=6659
+irker_channels=(
+    "irc://irc.libera.chat/#rsr-commits"
+    "irc://irc.libera.chat/#rhodium"
+)
+irker_template="[{project}] {author}: {message} ({branch})"
+----
+
+==== Git Hook Integration
+
+[source,bash]
+----
+#!/usr/bin/env vsh
+# .git/hooks/post-receive (native vsh, no Python!)
+
+while read oldrev newrev refname; do
+    branch=${refname#refs/heads/}
+
+    # Get commit info
+    author=$(git log -1 --format='%an' $newrev)
+    message=$(git log -1 --format='%s' $newrev)
+
+    # Send notification
+    irker commit \
+        --project "$PROJECT_NAME" \
+        --author "$author" \
+        --message "$message" \
+        --branch "$branch"
+done
+----
+
+== Proposal 6: Native Git Hooks (Python-Free)
+
+=== Rationale
+
+Current git hooks often use Python (irkerhook.py, pre-commit). Native vsh hooks would:
+
+* Eliminate Python dependency
+* Provide faster execution
+* Enable richer hook workflows
+
+=== Implementation
+
+==== Hook Management
+
+[source,bash]
+----
+# Install hook
+hooks install post-receive
+
+# List hooks
+hooks list
+# Output:
+# pre-commit: installed (vsh)
+# post-receive: installed (vsh)
+# pre-push: not installed
+
+# Edit hook
+hooks edit pre-commit
+
+# Enable/disable
+hooks disable pre-commit
+hooks enable pre-commit
+
+# Run manually
+hooks run pre-commit
+----
+
+==== Hook Templates
+
+[source,bash]
+----
+# Install RSR standard hooks
+hooks template rsr-standard
+
+# Installs:
+# - pre-commit: lint, format, validate-state
+# - post-receive: irker notification
+# - pre-push: test, security-scan
+----
+
+==== Pre-commit Hook Example
+
+[source,bash]
+----
+#!/usr/bin/env vsh
+# .git/hooks/pre-commit
+
+# Validate STATE.scm
+if exists STATE.scm; then
+    rsr state validate || exit 1
+fi
+
+# Check AIBDP
+if exists .well-known/aibdp.json; then
+    wellknown validate || exit 1
+fi
+
+# Run tier-appropriate linting
+rsr lint || exit 1
+
+# Check for prohibited languages
+violations=$(rsr check --quiet)
+if [ -n "$violations" ]; then
+    echo "RSR violations found:"
+    echo "$violations"
+    exit 1
+fi
+
+exit 0
+----
+
+==== Post-receive Hook Example
+
+[source,bash]
+----
+#!/usr/bin/env vsh
+# .git/hooks/post-receive
+
+# Configuration
+source ~/.config/vsh/irker.conf
+
+while read oldrev newrev refname; do
+    # Skip deletions
+    [ "$newrev" = "0000000000000000000000000000000000000000" ] && continue
+
+    branch=${refname#refs/heads/}
+    count=$(git rev-list --count $oldrev..$newrev)
+
+    for commit in $(git rev-list $oldrev..$newrev); do
+        author=$(git log -1 --format='%an' $commit)
+        message=$(git log -1 --format='%s' $commit)
+        short=$(git rev-parse --short $commit)
+
+        irker commit \
+            --project "$PROJECT_NAME" \
+            --author "$author" \
+            --message "$message" \
+            --branch "$branch" \
+            --commit "$short"
+    done
+
+    # Summary notification for multiple commits
+    if [ $count -gt 1 ]; then
+        irker notify "$count commits pushed to $branch"
+    fi
+done
+----
+
+== Proposal 7: Justfile Compatibility
+
+=== Rationale
+
+RSR standardizes on Justfile for build automation. Native compatibility would:
+
+* Allow vsh to directly execute Justfile recipes
+* Provide enhanced features over just
+* Enable migration path from just to native vsh
+
+=== Implementation
+
+==== Execution
+
+[source,bash]
+----
+# Run recipe (just-compatible)
+just build
+just test
+just deploy production
+
+# vsh enhanced mode
+just build --parallel
+just test --verbose --fail-fast
+
+# List recipes
+just --list
+
+# Show recipe
+just --show build
+----
+
+==== Native Justfile Parsing
+
+[source,bash]
+----
+# Parse Justfile into vsh functions
+source justfile
+
+# Now recipes are available as functions
+build
+test
+deploy production
+----
+
+==== Enhanced Features
+
+[source,bash]
+----
+# Dependency graph
+just --deps build
+# Output:
+# build
+# ├── compile
+# │   └── generate
+# └── lint
+
+# Parallel execution
+just --parallel build test lint
+
+# Dry run
+just --dry-run deploy
+
+# Recipe timing
+just --time build
+# Output:
+# build completed in 12.3s
+#   compile: 8.1s
+#   lint: 4.2s
+
+# Watch mode
+just --watch test
+# Re-runs test on file changes
+----
+
+==== Justfile DSL in vsh
+
+[source,bash]
+----
+# Native vsh justfile syntax
+recipe build {
+    cargo build --release
+}
+
+recipe test: build {
+    cargo test
+}
+
+recipe deploy env: test {
+    if [ "$env" = "production" ]; then
+        ./deploy-prod.sh
+    else
+        ./deploy-staging.sh
+    fi
+}
+
+# With documentation
+@doc "Build the project in release mode"
+recipe build {
+    cargo build --release
+}
+----
+
+==== Migration Tool
+
+[source,bash]
+----
+# Convert Justfile to native vsh
+just2vsh convert justfile > recipes.vsh
+
+# Validate conversion
+just2vsh validate justfile
+
+# Diff original vs converted
+just2vsh diff justfile recipes.vsh
+----
+
+== Implementation Priority
+
+[cols="1,1,2,1"]
+|===
+|Priority |Proposal |Rationale |Complexity
+
+|1
+|Native Git Hooks
+|Immediate Python elimination
+|Medium
+
+|2
+|Justfile Compatibility
+|Core build workflow
+|Medium
+
+|3
+|AIBDP/.well-known Support
+|MAAF compliance
+|Low
+
+|4
+|IRC/vext Protocol
+|Notification workflow
+|Low
+
+|5
+|RSR Language Tier Awareness
+|Standards enforcement
+|Medium
+
+|6
+|Guix/Nix Primitives
+|Package management
+|High
+
+|7
+|Nickel/bunsenite Integration
+|Config management
+|High
+|===
+
+== Contributing to vsh
+
+To propose these improvements to vsh:
+
+1. Fork https://gitlab.com/non-initiate/rhodinised/vsh
+2. Create branch: `feature/rsr-integration`
+3. Implement proposals incrementally
+4. Submit MRs with this document as reference
+
+== See Also
+
+* link:MAAF_INTEGRATION.adoc[MAAF Integration Guide]
+* link:CICD_HYPER_A_INTEGRATION.adoc[CI/CD Integration Analysis]
+* https://gitlab.com/non-initiate/rhodinised/vsh[vsh Repository]
+* https://gitlab.com/campaign-for-cooler-coding-and-programming/bunsenite[bunsenite Repository]

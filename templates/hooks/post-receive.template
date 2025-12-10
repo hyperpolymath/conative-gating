@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+# RSR Standard Post-receive Hook - IRC Notifications
+# Future: #!/usr/bin/env vsh
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+#
+# Sends commit notifications to IRC via irker/vext.
+# Install: cp hooks/post-receive .git/hooks/ && chmod +x .git/hooks/post-receive
+#
+# Requires: irker daemon running (irkerd) or netcat (nc)
+
+# === Configuration ===
+# Override these in .git/hooks/post-receive.local or environment
+
+IRKER_HOST="${IRKER_HOST:-localhost}"
+IRKER_PORT="${IRKER_PORT:-6659}"
+
+# Default channels - override per-project
+IRKER_CHANNELS="${IRKER_CHANNELS:-irc://irc.libera.chat/#rsr-commits}"
+
+# Project name - auto-detect from directory or set explicitly
+PROJECT_NAME="${PROJECT_NAME:-$(basename "$(pwd)" | sed 's/\.git$//')}"
+
+# Template for commit messages
+# Available: {project}, {author}, {message}, {branch}, {commit}, {url}
+IRKER_TEMPLATE="${IRKER_TEMPLATE:-[{project}] {author}: {message} ({branch})}"
+
+# Maximum commits to notify individually (batch rest)
+MAX_INDIVIDUAL="${MAX_INDIVIDUAL:-5}"
+
+# Repository URL for links (optional)
+REPO_URL="${REPO_URL:-}"
+
+# === Load Local Config ===
+if [ -f ".git/hooks/post-receive.local" ]; then
+    source ".git/hooks/post-receive.local"
+fi
+
+# === Functions ===
+
+send_irker() {
+    local message="$1"
+    local channels="$2"
+
+    # Build JSON payload
+    local json="{\"to\": ["
+    local first=1
+    for channel in $channels; do
+        if [ $first -eq 0 ]; then
+            json+=", "
+        fi
+        json+="\"$channel\""
+        first=0
+    done
+    json+="], \"privmsg\": \"$message\"}"
+
+    # Send via netcat
+    if command -v nc &> /dev/null; then
+        echo "$json" | nc -q0 "$IRKER_HOST" "$IRKER_PORT" 2>/dev/null || true
+    elif command -v ncat &> /dev/null; then
+        echo "$json" | ncat "$IRKER_HOST" "$IRKER_PORT" 2>/dev/null || true
+    else
+        echo "Warning: Neither nc nor ncat available for IRC notification" >&2
+    fi
+}
+
+format_message() {
+    local template="$1"
+    local project="$2"
+    local author="$3"
+    local message="$4"
+    local branch="$5"
+    local commit="$6"
+    local url="$7"
+
+    # Escape special characters
+    message="${message//\"/\\\"}"
+    message="${message//$'\n'/ }"
+
+    # Truncate long messages
+    if [ ${#message} -gt 100 ]; then
+        message="${message:0:97}..."
+    fi
+
+    # Replace placeholders
+    local result="$template"
+    result="${result//\{project\}/$project}"
+    result="${result//\{author\}/$author}"
+    result="${result//\{message\}/$message}"
+    result="${result//\{branch\}/$branch}"
+    result="${result//\{commit\}/$commit}"
+    result="${result//\{url\}/$url}"
+
+    echo "$result"
+}
+
+# === Main ===
+
+while read oldrev newrev refname; do
+    # Skip deletions
+    if [ "$newrev" = "0000000000000000000000000000000000000000" ]; then
+        continue
+    fi
+
+    # Skip non-branch refs (tags handled separately if desired)
+    case "$refname" in
+        refs/heads/*) ;;
+        *) continue ;;
+    esac
+
+    branch="${refname#refs/heads/}"
+
+    # Handle new branches
+    if [ "$oldrev" = "0000000000000000000000000000000000000000" ]; then
+        send_irker "[${PROJECT_NAME}] New branch created: ${branch}" "$IRKER_CHANNELS"
+        # Get first commit on branch
+        oldrev=$(git rev-list --max-parents=0 HEAD 2>/dev/null | head -1)
+    fi
+
+    # Count commits
+    commit_count=$(git rev-list --count "$oldrev..$newrev" 2>/dev/null || echo "0")
+
+    if [ "$commit_count" -eq 0 ]; then
+        continue
+    fi
+
+    # Notify individual commits (up to MAX_INDIVIDUAL)
+    notified=0
+    for commit in $(git rev-list --reverse "$oldrev..$newrev" | head -n "$MAX_INDIVIDUAL"); do
+        author=$(git log -1 --format='%an' "$commit")
+        message=$(git log -1 --format='%s' "$commit")
+        short=$(git rev-parse --short "$commit")
+
+        # Build URL if available
+        url=""
+        if [ -n "$REPO_URL" ]; then
+            url="${REPO_URL}/commit/${commit}"
+        fi
+
+        formatted=$(format_message "$IRKER_TEMPLATE" "$PROJECT_NAME" "$author" "$message" "$branch" "$short" "$url")
+        send_irker "$formatted" "$IRKER_CHANNELS"
+
+        notified=$((notified + 1))
+    done
+
+    # Summary for remaining commits
+    remaining=$((commit_count - notified))
+    if [ "$remaining" -gt 0 ]; then
+        send_irker "[${PROJECT_NAME}] ... and ${remaining} more commits to ${branch}" "$IRKER_CHANNELS"
+    fi
+
+    # Summary line for large pushes
+    if [ "$commit_count" -gt 1 ]; then
+        # Get authors
+        authors=$(git log --format='%an' "$oldrev..$newrev" | sort -u | head -3 | tr '\n' ', ' | sed 's/,$//')
+        send_irker "[${PROJECT_NAME}] ${commit_count} commits pushed to ${branch} by ${authors}" "$IRKER_CHANNELS"
+    fi
+done

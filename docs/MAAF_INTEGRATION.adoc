@@ -1,0 +1,839 @@
+= MAAF Ecosystem Integration Guide
+:toc:
+:sectnums:
+// SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+
+== Overview
+
+The **Mutually Assured Accountability Framework (MAAF)** provides consent-first web infrastructure for the RSR ecosystem. This guide documents integration with the seven core MAAF components:
+
+**Protocol Layer**:
+
+* **consent-aware-http** — HTTP 430 + AIBDP protocol layer
+* **indieweb2-bastion** — Consent-first DNS/identity platform
+* **cadre-router** — OCaml-typed CRDT router
+
+**Applications**:
+
+* **kith** — `.well-known/` directory management CLI (Ada)
+* **echidna** — Neurosymbolic theorem proving (proof provenance)
+* **wordpress-wharf** — Security-focused CMS architecture
+* **vext** — IRC notification daemon for commit notifications
+
+**Supporting Libraries**:
+
+* **bunsenite** — Nickel configuration loader with cross-language FFI
+* **zoterho-template** — Zotero 7+ extension template (ReScript, Deno, Guile)
+* **nickel-config-reporter** — Config→Nickel+AsciiDoc documentation generator
+* **sinople-theme** — Accessible WordPress theme for RSR project sites
+* **grimrepo-scripts** — ReScript-first userscripts for browser automation
+
+== Core Components
+
+=== 1. consent-aware-http
+
+**Purpose**: Declarative AI usage boundaries via HTTP 430 + AIBDP manifests.
+
+**Repository**: https://gitlab.com/maa-framework/2-web-protocols/consent-aware-http
+
+**Key Features**:
+* HTTP Status Code 430 (Consent Required)
+* AI Boundary Declaration Protocol (AIBDP)
+* `/.well-known/aibdp.json` manifest
+* Reference implementations (Node.js, Python, Rust planned)
+
+**Integration Points**:
+[source]
+----
+/.well-known/aibdp.json  → AI consent declarations
+HTTP 430 responses       → Consent violation handling
+COSE signatures         → Cryptographic verification
+----
+
+=== 2. indieweb2-bastion
+
+**Purpose**: Consent-first DNS/identity platform with oDNS, GraphQL, and blockchain anchoring.
+
+**Repository**: https://gitlab.com/maa-framework/2-web-protocols/indieweb2-bastion
+
+**Key Features**:
+* Bastion Gateway (Envoy, mTLS, WASM policies)
+* oDNS (Oblivious DNS with HPKE encryption)
+* GraphQL DNS API
+* SurrealDB provenance graphs
+* Multi-chain identity (Ethereum, Polygon, Internet Computer)
+
+**Integration Points**:
+[source]
+----
+/api/consent    → Consent checking endpoints
+/api/identity   → DID/blockchain identity
+/api/dns        → GraphQL DNS management
+/.well-known/   → RFC-compliant metadata
+/provenance     → SurrealDB graph queries
+----
+
+=== 3. cadre-router
+
+**Purpose**: OCaml-typed Deno router with CRDTs for distributed state.
+
+**Repository**: https://gitlab.com/maa-framework/2-web-protocols/cadre-router
+
+**Key Features**:
+* OCaml-level type safety
+* Conflict-Free Replicated Data Types (CRDTs)
+* Distributed state management
+* Deno runtime integration
+
+**Integration Points**:
+[source]
+----
+Router handlers  → Type-safe route definitions
+CRDT stores     → Distributed state sync
+Middleware      → consent-aware-http integration
+----
+
+=== 4. kith
+
+**Purpose**: CLI tool for managing `.well-known/` directories with ethical governance.
+
+**Repository**: https://gitlab.com/maa-framework/3-applications/kith
+
+**Key Features**:
+* AIBDP manifest management and validation
+* security.txt (RFC 9116) generation
+* ACME certificate automation support
+* WebFinger user discovery
+* DID (Decentralized Identifiers) management
+* Ethical AI and labor policy documentation
+* Ada/SPARK core with Nushell automation
+
+**Technical Stack**:
+* **Ada**: Interactive interface and validation logic
+* **Nushell**: Automation scripts
+* **SaltStack**: Infrastructure deployment (salt/ directory)
+* **JSON Schemas**: Configuration validation
+
+**Integration Points**:
+[source]
+----
+kith init           → Initialize .well-known/ structure
+kith validate       → Validate all manifests
+kith generate aibdp → Generate AIBDP from template
+kith sync           → Sync with indieweb2-bastion
+----
+
+**Build & Run**:
+[source,bash]
+----
+# Build Ada components
+gprbuild -p src/ada/kith.gpr
+
+# Launch interactive interface
+./bin/kith
+
+# Validate installation
+just test
+----
+
+=== 5. echidna
+
+**Purpose**: Neurosymbolic theorem proving platform with multi-prover support for proof provenance.
+
+**Repository**: https://github.com/hyperpolymath/echidna
+
+**Key Features**:
+* 12 theorem provers across 4 implementation tiers
+* Neural proof synthesis + symbolic verification
+* Aspect tagging for proof categorization
+* OpenCyc ontological integration
+* DeepProbLog probabilistic logic programming
+
+**Supported Provers** (by tier):
+[cols="1,3"]
+|===
+|Tier 1 |Agda, Coq/Rocq, Lean
+|Tier 2 |Isabelle, Z3, CVC5
+|Tier 3 |Metamath, HOL Light, Mizar
+|Tier 4 |PVS, ACL2, HOL4
+|===
+
+**4-Language Architecture**:
+* **Rust**: Core engine and prover abstraction
+* **Julia**: ML/neural proof synthesis (no Python)
+* **ReScript**: UI with Deno runtime
+* **Mercury/Logtalk**: Logic reservoir (optional)
+
+**MAAF Integration Points**:
+[source]
+----
+Proof provenance    → SurrealDB graph storage
+Citation export     → CITATION.cff, BibTeX
+Consent tracking    → Proof usage permissions
+Knowledge graph     → OpenCyc + indieweb2-bastion
+----
+
+**RSR Integration**:
+[source,rescript]
+----
+// src/ProofProvenance.res
+module Echidna = {
+  type proverTier = Tier1 | Tier2 | Tier3 | Tier4
+
+  let exportProvenance = async (proofId: string) => {
+    let proof = await EchidnaCore.getProof(proofId)
+    let provenance = {
+      "proof_hash": proof.hash,
+      "prover": proof.prover,
+      "tier": proof.tier,
+      "aspects": proof.aspects,
+      "timestamp": Date.now(),
+    }
+    await IndieWeb2.storeProvenance(provenance)
+  }
+}
+----
+
+=== 6. wordpress-wharf / wharf
+
+**Purpose**: Security-focused CMS architecture separating admin from runtime ("The gun should not be in the safe").
+
+**Repositories**:
+* https://gitlab.com/maa-framework/3-applications/wordpress-wharf[wordpress-wharf] — WordPress MVP implementation
+* https://github.com/hyperpolymath/wharf[wharf] — Core architecture (needs reconciliation)
+
+**Key Features**:
+* **Sinople MVP**: Sealed/Docked operational modes
+* **Database Virtual Sharding**: SQL AST proxy with table-level policies
+* **Filesystem Immutability**: Read-only runtime with ephemeral overlay
+* **HTTP Header Airlock**: Rust proxy stripping leaky headers
+* **Zero Trust Networking**: Nebula mesh certificates
+* **Strict CSP**: Content Security Policy enforcement
+* **Ada Dock Agent**: Private management operations
+* **Tauri Wharf Client**: Offline build, sign, deploy
+
+**Architecture**:
+[source]
+----
+┌──────────────┐     ┌──────────────┐
+│   Wharf      │     │    Yacht     │
+│ (Offline)    │────▶│  (Runtime)   │
+│ Admin/Build  │     │  Read-only   │
+└──────────────┘     └──────────────┘
+     │                     │
+     │ Encrypted           │ Public
+     │ Management          │ HTTP
+     ▼                     ▼
+┌──────────────┐     ┌──────────────┐
+│ Ada Dock     │     │ HTTP Airlock │
+│ Agent        │     │ (Rust)       │
+└──────────────┘     └──────────────┘
+----
+
+**Security Zones**:
+* **Mutable**: Comments, orders (runtime writable)
+* **Immutable**: Users, plugins, config (sealed at deploy)
+* **Ephemeral**: Cache (RAM, discarded on restart)
+* **Persistent**: Uploads (no PHP execution)
+
+**Integration Points**:
+[source]
+----
+consent-aware-http  → CSP/AIBDP enforcement
+kith               → .well-known/ management
+indieweb2-bastion  → Identity/consent checking
+vext               → Deployment notifications
+----
+
+**MAAF Compliance**:
+[source,rescript]
+----
+// src/WharfConsent.res
+module Consent = {
+  let checkAIBDP = async (request: Request.t) => {
+    let manifest = await Kith.loadManifest(".well-known/aibdp.json")
+    let userAgent = Request.header(request, "User-Agent")
+    if (Consent.isBlockedBot(manifest, userAgent)) {
+      Response.make(~status=430, "Consent Required")
+    } else {
+      Response.continue(request)
+    }
+  }
+}
+----
+
+NOTE: The `wordpress-wharf` (gitlab) and `wharf` (github) repositories need reconciliation into a unified codebase.
+
+=== 7. bunsenite
+
+**Purpose**: Cross-language Nickel configuration loader with FFI bindings.
+
+**Repository**: https://gitlab.com/campaign-for-cooler-coding-and-programming/bunsenite
+
+**Key Features**:
+* Robust Nickel parsing via `nickel-lang-core`
+* Zero-copy operations where possible
+* Stable C ABI through Zig layer
+* Multi-format export (JSON, TOML)
+* Memory-safe, type-safe implementation
+
+**Architecture**:
+[source]
+----
+Rust (nickel-lang-core) → Zig (C ABI) → Bindings (Deno, ReScript, C)
+----
+
+**RSR Integration Points**:
+* **conative-gating**: Load CURPS policies from Rust arbiter
+* **consent-aware-http**: Parse AIBDP policy schemas
+* **indieweb2-bastion**: Load Nickel configuration
+* **cadre-router**: Parse routing policies
+
+**Usage** (ReScript):
+[source,rescript]
+----
+module Bunsenite = {
+  @module("bunsenite") external loadNickel: string => Js.Json.t = "load"
+}
+
+let loadConsentPolicy = path => Bunsenite.loadNickel(path)
+----
+
+**Licensing**: MIT OR Palimpsest v0.6 (RSR compatible)
+
+=== 8. vext
+
+**Purpose**: IRC notification daemon for commit notifications across RSR repositories.
+
+**Repository**: https://gitlab.com/non-initiate/rhodinised/vext
+
+**Key Features**:
+* Persistent IRC daemon (irkerd) for notification delivery
+* Git, Mercurial, and Subversion hook support
+* JSON-based notification API via socket
+* Persistent channel connections (no spam from reconnects)
+* Commit notification templating
+* Multi-channel broadcast support
+
+**Architecture**:
+* **irkerd**: IRC daemon maintaining persistent connections
+* **irkerhook.py**: VCS hook scripts (git/hg/svn)
+* **JSON API**: Socket-based notification submission
+
+**Integration Points**:
+[source]
+----
+irkerd socket     → JSON notification submission
+Git hooks         → Post-commit/post-receive notifications
+IRC channels      → #rhodium, #rsr-commits, project channels
+----
+
+**Justfile Integration**:
+[source,makefile]
+----
+# Send IRC notification on release
+notify-release version:
+    echo '{"to": ["irc://irc.libera.chat/#rhodium"], "privmsg": "Released {{PROJECT_NAME}} v{{version}}"}' | \
+    nc localhost 6659
+
+# Configure git hook
+setup-irc-hook:
+    @cp hooks/irkerhook.py .git/hooks/post-receive
+    @chmod +x .git/hooks/post-receive
+----
+
+**Commit Hook Configuration**:
+[source,python]
+----
+# .git/hooks/post-receive (irkerhook.py)
+# Configuration for RSR projects
+irker_host = "localhost"
+irker_port = 6659
+channels = ["irc://irc.libera.chat/#rsr-commits"]
+template = "[{{project}}] {{author}}: {{message}} ({{branch}})"
+----
+
+=== 9. vsh (Valence Shell) — Future Shell Standard
+
+**Purpose**: Thermodynamic-based shell for cross-platform use, Python-free alternative to Oil shell.
+
+**Repository**: https://gitlab.com/non-initiate/rhodinised/vsh
+
+**Status**: Early development (3 commits) — future RSR shell preference
+
+**Key Goals**:
+* Cross-platform shell without Python dependencies
+* Based on Oil shell design principles
+* "Save the world from a little bit of Python"
+
+**RSR Relevance**:
+* RSR prohibits Python except in `salt/` directories
+* Current shell scripts (Justfile, git hooks) could migrate to vsh
+* Aligns with RSR Tier 1 language preference
+
+**Future Integration Points**:
+[source]
+----
+Justfile recipes    → vsh syntax when mature
+Git hooks           → Replace Python irkerhook
+Build scripts       → Cross-platform vsh scripts
+CI/CD pipelines     → vsh-based automation
+----
+
+**Potential Improvements for vsh Development**:
+
+. **Nickel Integration**: Native Nickel config parsing via bunsenite FFI
+. **AIBDP Support**: Built-in commands for .well-known/ management (kith-like)
+. **RSR Language Awareness**: Tier-aware tooling commands
+. **Guix/Nix Integration**: Native package management primitives
+. **IRC Notifications**: Built-in irker/vext protocol support
+. **Git Workflow**: Native git hooks without Python
+. **Justfile Compatibility**: Parse/execute Justfile recipes
+
+**Roadmap**:
+[cols="1,3"]
+|===
+|Phase |Milestone
+
+|Current
+|Monitor vsh development, track API stability
+
+|Short-term
+|Create vsh compat layer for RSR Justfile recipes
+
+|Medium-term
+|Port irkerhook.py to vsh native
+
+|Long-term
+|Full RSR tooling in vsh, deprecate bash/Python scripts
+|===
+
+=== 10. sinople-theme — Accessible WordPress Theme
+
+**Purpose**: WCAG 2.3 AAA compliant WordPress theme for RSR project documentation sites.
+
+**Repository**: https://gitlab.com/extensions-library/wordpress/sinople-theme
+
+**Key Features**:
+* WCAG 2.3 AAA accessibility compliance
+* 10 RSR project-specific color schemes
+* MAAF integration (HTTP 430, AIBDP headers)
+* Wharf architecture support (sealed/docked modes)
+* Responsive and print-optimized
+
+**Color Schemes**:
+[cols="1,2,3"]
+|===
+|Scheme |Domain |Colors
+
+|rhodium
+|Infrastructure (default)
+|Bronze primary, teal accent
+
+|conative
+|AI Safety
+|Purple primary, green accent
+
+|zotero
+|Research/Citations
+|Red primary, blue accent
+
+|fogbinder
+|Uncertainty (dark theme)
+|Purple/orange on dark
+
+|echidna
+|Formal Verification
+|Blue primary, gold accent
+
+|wharf
+|Security
+|Green primary, red accent
+
+|bastion
+|Identity/DNS
+|Purple primary, blue accent
+
+|vext
+|Notifications/IRC
+|Teal primary, red accent
+
+|palimpsest
+|Licensing
+|Purple primary, orange accent
+
+|kith
+|Well-Known
+|Green primary, red accent
+|===
+
+**MAAF Integration**:
+[source,php]
+----
+// HTTP 430 for AI scrapers
+function check_consent() {
+    $blocked_bots = ['GPTBot', 'CCBot', 'anthropic-ai'];
+    foreach ($blocked_bots as $bot) {
+        if (stripos($_SERVER['HTTP_USER_AGENT'], $bot) !== false) {
+            $aibdp = json_decode(file_get_contents('.well-known/aibdp.json'));
+            if ($aibdp->policies->training->status === 'refused') {
+                status_header(430);
+                exit("HTTP 430 Consent Required");
+            }
+        }
+    }
+}
+----
+
+**Accessibility Features**:
+* Skip links for keyboard navigation
+* ARIA landmarks on all semantic regions
+* 7:1 contrast ratio for AAA compliance
+* `prefers-reduced-motion` support
+* High contrast mode detection
+* Screen reader optimized
+
+**Deployment Templates**:
+* `templates/wordpress/sinople-deployment.template` — Deployment config
+* `templates/wordpress/functions.php.template` — Theme functions
+* `templates/wordpress/style.css.template` — Stylesheet with all color schemes
+* `templates/wordpress/justfile.template` — Build automation
+
+**Usage**:
+[source,bash]
+----
+# Apply sinople to RSR WordPress project
+just apply-sinople scheme=conative
+
+# Validate accessibility
+just a11y-audit
+
+# Deploy in sealed mode
+just deploy-sealed
+----
+
+== RSR Integration Pattern
+
+=== .well-known/ Directory Structure
+
+All RSR repos should include MAAF-compatible `.well-known/` files:
+
+[source]
+----
+.well-known/
+├── aibdp.json      # AI Boundary Declaration Protocol
+├── ai.txt          # AI training preferences
+├── dc.xml          # Dublin Core metadata
+├── humans.txt      # Team information
+└── security.txt    # Security contact (RFC 9116)
+----
+
+=== AIBDP Manifest Template
+
+[source,json]
+----
+{
+  "aibdp_version": "0.2",
+  "contact": "mailto:hyperpolymath@proton.me",
+  "manifest_url": "https://github.com/hyperpolymath/{{PROJECT_NAME}}/.well-known/aibdp.json",
+  "expires": "2026-01-01T00:00:00Z",
+  "policies": {
+    "training": {
+      "status": "conditional",
+      "conditions": [
+        "Attribution required",
+        "Non-commercial use only",
+        "Share-alike"
+      ],
+      "exceptions": []
+    },
+    "indexing": {
+      "status": "allowed"
+    },
+    "summarization": {
+      "status": "allowed",
+      "conditions": ["Attribution required"]
+    },
+    "generative_reuse": {
+      "status": "conditional",
+      "conditions": [
+        "Link to original",
+        "Preserve license",
+        "No deceptive use"
+      ]
+    },
+    "embedding": {
+      "status": "allowed"
+    }
+  },
+  "provenance": {
+    "blockchain": "ethereum",
+    "contract": "0x...",
+    "signature_method": "COSE-ES256"
+  },
+  "extensions": {
+    "rsr": {
+      "tier": 1,
+      "domain": "{{DOMAIN}}"
+    }
+  }
+}
+----
+
+=== STATE.scm Integration
+
+Include MAAF dependencies in STATE.scm:
+
+[source,scheme]
+----
+(ecosystem
+ (part-of . ("RSR Framework" "MAAF"))
+ (depends-on . ("consent-aware-http"))
+ (integrates-with . ("indieweb2-bastion" "cadre-router")))
+----
+
+== Implementation Guide
+
+=== Step 1: Add AIBDP Manifest
+
+[source,bash]
+----
+cat > .well-known/aibdp.json << 'EOF'
+{
+  "aibdp_version": "0.2",
+  "contact": "mailto:hyperpolymath@proton.me",
+  "policies": {
+    "training": { "status": "conditional", "conditions": ["Attribution"] },
+    "indexing": { "status": "allowed" }
+  }
+}
+EOF
+----
+
+=== Step 2: Configure Justfile
+
+Add MAAF validation recipes:
+
+[source,makefile]
+----
+# Validate AIBDP manifest
+validate-aibdp:
+    @if [ -f ".well-known/aibdp.json" ]; then \
+        jq empty .well-known/aibdp.json && echo "AIBDP: valid"; \
+    else \
+        echo "AIBDP: missing"; \
+    fi
+
+# Check consent-aware-http compliance
+check-consent:
+    @curl -s -o /dev/null -w "%{http_code}" https://example.com/.well-known/aibdp.json
+----
+
+=== Step 3: Integrate with indieweb2-bastion
+
+For projects requiring identity/DNS:
+
+[source,rescript]
+----
+// src/Identity.res
+module IndieWeb2 = {
+  let apiEndpoint = "https://bastion.rhodium.sh/api"
+
+  let registerIdentity = async (did: string) => {
+    let response = await Fetch.post(
+      `${apiEndpoint}/identity`,
+      {"did": did}
+    )
+    response
+  }
+
+  let checkConsent = async (url: string) => {
+    let response = await Fetch.get(
+      `${apiEndpoint}/consent/check?url=${url}`
+    )
+    response.json()
+  }
+}
+----
+
+=== Step 4: Use cadre-router for Routing
+
+[source,typescript]
+----
+// routes/consent.ts
+import { Router } from "cadre-router";
+import { ConsentMiddleware } from "consent-aware-http";
+
+const router = new Router();
+
+router.use(ConsentMiddleware({
+  manifestPath: "/.well-known/aibdp.json",
+  blockBots: ["GPTBot", "CCBot", "anthropic-ai"]
+}));
+
+router.get("/api/data", async (ctx) => {
+  // Route handler with consent enforcement
+  return ctx.json({ data: "protected" });
+});
+----
+
+== Nickel Policy Integration
+
+=== CURPS Policy Schema
+
+[source,nickel]
+----
+# policy/consent.ncl
+let ConsentPolicy = {
+  aibdp_version | String,
+  policies | {
+    training | { status | [| "allowed", "refused", "conditional" |] },
+    indexing | { status | [| "allowed", "refused" |] },
+    ..
+  },
+  ..
+}
+
+let validate_consent : ConsentPolicy -> Bool =
+  fun policy => policy.aibdp_version == "0.2"
+----
+
+== SurrealDB Provenance Schema
+
+[source,surql]
+----
+-- Identity with consent preferences
+DEFINE TABLE consent_identity SCHEMAFULL;
+DEFINE FIELD did ON consent_identity TYPE string;
+DEFINE FIELD aibdp_manifest ON consent_identity TYPE string;
+DEFINE FIELD blockchain_anchor ON consent_identity TYPE string;
+DEFINE FIELD created_at ON consent_identity TYPE datetime DEFAULT time::now();
+
+-- Consent event tracking
+DEFINE TABLE consent_event SCHEMAFULL TYPE RELATION FROM consent_identity TO resource;
+DEFINE FIELD event_type ON consent_event TYPE string;  -- "granted" | "revoked" | "violated"
+DEFINE FIELD timestamp ON consent_event TYPE datetime;
+DEFINE FIELD signature ON consent_event TYPE string;
+----
+
+== Ecosystem Dependencies
+
+[cols="1,2,2"]
+|===
+|Project |Depends On |Integrates With
+
+|conative-gating
+|consent-aware-http, wharf, kith
+|indieweb2-bastion, zotero-nsai, echidna
+
+|zotero-nsai
+|fogbinder, echidna
+|indieweb2-bastion (provenance)
+
+|wordpress-wharf
+|consent-aware-http, kith
+|indieweb2-bastion (WordPress plugin)
+
+|wp-sinople-theme
+|consent-aware-http, kith
+|indieweb2-bastion
+
+|fogbinder
+|echidna
+|indieweb2-bastion (citations)
+
+|kith
+|consent-aware-http
+|indieweb2-bastion, cadre-router
+
+|echidna
+|
+|indieweb2-bastion (provenance), fogbinder
+
+|vext
+|
+|All RSR repos (IRC notifications)
+
+|cadre-router
+|consent-aware-http
+|indieweb2-bastion, kith
+
+|wordpress-wharf
+|consent-aware-http, kith
+|indieweb2-bastion, vext, wp-sinople-theme
+
+|wharf (core)
+|
+|wordpress-wharf, consent-aware-http
+
+|bunsenite
+|nickel-lang-core
+|conative-gating, consent-aware-http, indieweb2-bastion, cadre-router
+
+|vsh (future)
+|
+|All RSR repos (shell replacement)
+|===
+
+NOTE: `wordpress-wharf` (GitLab) and `wharf` (GitHub) require reconciliation.
+
+NOTE: `vsh` is in early development — monitor for maturity before adoption.
+
+== Testing Integration
+
+=== Validate AIBDP
+
+[source,bash]
+----
+# Test manifest accessibility
+curl -s https://yourproject.example/.well-known/aibdp.json | jq .
+
+# Test HTTP 430 response
+curl -s -w "\nHTTP Status: %{http_code}\n" \
+  -H "User-Agent: GPTBot/1.0" \
+  https://yourproject.example/protected
+----
+
+=== Test indieweb2-bastion Connection
+
+[source,bash]
+----
+# Query identity
+curl -X POST https://bastion.rhodium.sh/api/identity \
+  -H "Content-Type: application/json" \
+  -d '{"did": "did:web:example.com"}'
+
+# Query provenance
+curl https://bastion.rhodium.sh/provenance?did=did:web:example.com
+----
+
+== Badges
+
+Add MAAF compliance badges to README.adoc:
+
+[source,asciidoc]
+----
+image:https://img.shields.io/badge/AIBDP-v0.2-blue[AIBDP]
+image:https://img.shields.io/badge/HTTP_430-Supported-green[HTTP 430]
+image:https://img.shields.io/badge/IndieWeb2-Integrated-purple[IndieWeb2]
+image:https://img.shields.io/badge/MAAF-Compliant-cd7f32[MAAF]
+----
+
+== References
+
+=== MAAF Protocol Layer
+* https://consent-aware-http.org[Consent-Aware HTTP Specification]
+* https://gitlab.com/maa-framework/2-web-protocols/consent-aware-http[consent-aware-http Repository]
+* https://gitlab.com/maa-framework/2-web-protocols/indieweb2-bastion[indieweb2-bastion Repository]
+* https://gitlab.com/maa-framework/2-web-protocols/cadre-router[cadre-router Repository]
+
+=== MAAF Applications
+* https://gitlab.com/maa-framework/3-applications/kith[kith Repository] — `.well-known/` CLI
+* https://github.com/hyperpolymath/echidna[echidna Repository] — Neurosymbolic theorem proving
+* https://gitlab.com/non-initiate/rhodinised/vext[vext Repository] — IRC notification daemon
+
+=== RSR Documentation
+* link:STATE_ECOSYSTEM_SCHEMA.adoc[STATE.scm Schema Documentation]
+* link:BADGE_SCHEMA.adoc[Badge Schema Documentation]
+* link:../templates/aibdp.json.template[AIBDP Template]
+* link:../templates/STATE.scm.template[STATE.scm Template]

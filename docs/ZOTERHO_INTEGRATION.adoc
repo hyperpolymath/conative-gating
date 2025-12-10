@@ -1,0 +1,546 @@
+= ZoteRho Template Integration Guide
+:toc:
+:sectnums:
+// SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+
+== Overview
+
+**zoterho-template** provides a production-ready, type-safe template for building modern Zotero 7+ extensions using RSR-compliant technologies.
+
+**Repositories** (need reconciliation):
+
+* https://gitlab.com/extensions-library/zotero/zoterho-template[GitLab] — Original
+* https://github.com/hyperpolymath/zoterho-template[GitHub] — RSR-compliant fork
+
+**Target Stack** (RSR-compliant):
+
+* **ReScript** — Type-safe language (Tier 1)
+* **Deno** — Runtime (no npm/Node.js)
+* **Guile Scheme** — Configuration (replaces CUE)
+* **Justfile** — Build automation
+
+== CUE → Guile Migration
+
+=== Rationale
+
+RSR prohibits CUE (Tier 2 alternative: Nickel, Guile Scheme). The zoterho-template currently uses CUE for configuration. Migration to Guile Scheme aligns with RSR standards.
+
+=== Migration Plan
+
+==== Current CUE Structure
+
+[source,cue]
+----
+// config/manifest.cue
+package manifest
+
+name: "my-extension"
+version: "1.0.0"
+zotero_min_version: "7.0"
+author: "Jonathan D.A. Jewell"
+
+permissions: [
+    "tabs",
+    "storage"
+]
+
+content_scripts: [{
+    matches: ["*://www.zotero.org/*"]
+    js: ["content.js"]
+}]
+----
+
+==== Target Guile Structure
+
+[source,scheme]
+----
+;;; config/manifest.scm
+;;; Zotero Extension Manifest Configuration
+
+(define-module (zoterho manifest)
+  #:export (manifest))
+
+(define manifest
+  `((name . "my-extension")
+    (version . "1.0.0")
+    (zotero-min-version . "7.0")
+    (author . "Jonathan D.A. Jewell")
+
+    (permissions . ("tabs" "storage"))
+
+    (content-scripts
+     . (((matches . ("*://www.zotero.org/*"))
+         (js . ("content.js")))))))
+
+;;; Export to JSON for Zotero
+(define (manifest->json)
+  (scm->json manifest))
+----
+
+==== Migration Commands
+
+[source,bash]
+----
+# Convert CUE configs to Guile
+just cue-to-guile
+
+# Validate Guile configs
+just validate-config
+
+# Generate manifest.json from Guile
+just build-manifest
+----
+
+==== Justfile Recipes
+
+[source,makefile]
+----
+# Build manifest.json from Guile config
+build-manifest:
+    guile -c '
+      (use-modules (zoterho manifest) (json))
+      (with-output-to-file "manifest.json"
+        (lambda () (display (scm->json-string manifest))))
+    '
+
+# Validate all Guile configs
+validate-config:
+    @for f in config/*.scm; do \
+        guile -c "(primitive-load \"$$f\")" && echo "✓ $$f"; \
+    done
+
+# Convert CUE to Guile (one-time migration)
+cue-to-guile:
+    @echo "Manual migration required - see docs/ZOTERHO_INTEGRATION.adoc"
+----
+
+== Relevant RSR Projects
+
+=== Projects for zoterho-template Integration
+
+[cols="1,2,3"]
+|===
+|Project |Relevance |Integration Notes
+
+|**zotero-nsai**
+|Direct use - Zotero extension
+|Migrate from TypeScript to ReScript via zoterho-template
+
+|**fogbinder**
+|Companion to zotero-nsai
+|Citation handoff, uncertainty navigation
+
+|**echidna**
+|Proof provenance
+|Citation export for formal proofs
+
+|**indieweb2-bastion**
+|Identity/provenance
+|Citation identity anchoring
+
+|**conative-gating**
+|Policy enforcement
+|AIBDP for citation consent
+|===
+
+=== zotero-nsai Migration Path
+
+**Current State**: TypeScript + Node.js + Vite
+**Target State**: ReScript + Deno + Guile (via zoterho-template)
+
+==== Phase 1: Scaffolding
+
+[source,bash]
+----
+# Clone zoterho-template
+git clone https://gitlab.com/extensions-library/zotero/zoterho-template
+
+# Create zotero-nsai-v2 branch
+cd zotero-nsai
+git checkout -b v2-rescript
+
+# Copy zoterho structure
+cp -r ../zoterho-template/src/rescript src/
+cp -r ../zoterho-template/config config/
+cp ../zoterho-template/justfile .
+----
+
+==== Phase 2: Type Migration
+
+[source,rescript]
+----
+// src/Types.res
+// Migrate from TypeScript atomic.ts
+
+type citationState =
+  | Valid
+  | Uncertain
+  | Invalid
+
+type validationResult = {
+  state: citationState,
+  certainty: float,
+  issues: array<string>,
+  requiresUncertaintyNavigation: bool,
+}
+
+type atomicCitation = {
+  id: string,
+  title: string,
+  authors: array<string>,
+  date: option<string>,
+  doi: option<string>,
+  isbn: option<string>,
+}
+----
+
+==== Phase 3: Logic Migration
+
+[source,rescript]
+----
+// src/Validator.res
+// Migrate from TypeScript validator.ts
+
+module TractarianValidator = {
+  let validateStructure = (citation: Types.atomicCitation) => {
+    let issues = []
+
+    if citation.title == "" {
+      Js.Array.push("Missing title", issues)->ignore
+    }
+
+    if Js.Array.length(citation.authors) == 0 {
+      Js.Array.push("Missing authors", issues)->ignore
+    }
+
+    issues
+  }
+
+  let calculateCertainty = (issues: array<string>) => {
+    let base = 1.0
+    let penalty = 0.1 *. Js.Int.toFloat(Js.Array.length(issues))
+    Js.Math.max_float(0.0, base -. penalty)
+  }
+
+  let validate = (citation: Types.atomicCitation): Types.validationResult => {
+    let issues = validateStructure(citation)
+    let certainty = calculateCertainty(issues)
+
+    {
+      state: certainty >= 0.7 ? Valid : Uncertain,
+      certainty,
+      issues,
+      requiresUncertaintyNavigation: certainty < 0.7,
+    }
+  }
+}
+----
+
+==== Phase 4: Fogbinder Handoff
+
+[source,rescript]
+----
+// src/FogbinderHandoff.res
+// ReScript version of handoff.ts
+
+type uncertaintyRegion = {
+  citationId: string,
+  certainty: float,
+  issues: array<string>,
+}
+
+type handoffPayload = {
+  version: string,
+  timestamp: float,
+  sourcePlugin: string,
+  regions: array<uncertaintyRegion>,
+}
+
+let createHandoff = (validationResults: array<(string, Types.validationResult)>) => {
+  let regions = validationResults
+    ->Js.Array.filter(((_, result)) => result.requiresUncertaintyNavigation)
+    ->Js.Array.map(((id, result)) => {
+      citationId: id,
+      certainty: result.certainty,
+      issues: result.issues,
+    })
+
+  {
+    version: "1.0.0",
+    timestamp: Js.Date.now(),
+    sourcePlugin: "zotero-nsai",
+    regions,
+  }
+}
+----
+
+== Configuration Schema (Guile)
+
+=== Extension Manifest
+
+[source,scheme]
+----
+;;; config/extension.scm
+(define extension-config
+  `((metadata
+     (name . "zotero-nsai")
+     (version . "2.0.0")
+     (description . "Neurosymbolic Research Validator for Zotero")
+     (author . "Jonathan D.A. Jewell")
+     (license . "AGPL-3.0-or-later"))
+
+    (zotero
+     (min-version . "7.0")
+     (max-version . #f)
+     (strict-compatibility . #f))
+
+    (permissions
+     . ("zotero" "tabs" "storage"))
+
+    (background
+     (scripts . ("background.js"))
+     (persistent . #f))
+
+    (content-scripts
+     . (((matches . ("*://www.zotero.org/*"))
+         (js . ("content.js"))
+         (run-at . "document_idle"))))
+
+    (browser-action
+     (default-popup . "popup.html")
+     (default-icon . "icons/nsai-48.png"))))
+----
+
+=== Validation Rules
+
+[source,scheme]
+----
+;;; config/validation.scm
+(define validation-rules
+  `((structural
+     (required-fields . ("title" "authors"))
+     (recommended-fields . ("date" "publisher" "doi"))
+     (optional-fields . ("isbn" "url" "abstract")))
+
+    (certainty
+     (base-score . 1.0)
+     (missing-required-penalty . 0.3)
+     (missing-recommended-penalty . 0.1)
+     (missing-optional-penalty . 0.0)
+     (handoff-threshold . 0.7))
+
+    (fogbinder
+     (enable-handoff . #t)
+     (handoff-version . "1.0.0")
+     (use-mystery-clustering . #t))))
+----
+
+== Build System
+
+=== Justfile
+
+[source,makefile]
+----
+# zoterho-template Justfile
+# RSR-compliant Zotero extension build
+
+# Default recipe
+default: build
+
+# Build extension
+build: validate-config
+    npx rescript
+    just build-manifest
+    deno task build
+
+# Development mode
+dev:
+    npx rescript -w &
+    deno task dev
+
+# Clean build
+rebuild: clean build
+
+# Clean artifacts
+clean:
+    rm -rf lib/ dist/ manifest.json
+
+# Package for distribution
+package: build
+    mkdir -p dist
+    zip -r dist/extension.xpi manifest.json lib/ icons/ _locales/
+
+# Run in Firefox/Zotero
+run: build
+    web-ext run --source-dir=.
+
+# CI verification
+ci-verify: validate-config build test lint
+
+# Run tests
+test:
+    deno test
+
+# Lint
+lint:
+    npx rescript format -check src/**/*.res
+
+# Validate configurations
+validate-config:
+    @echo "Validating Guile configs..."
+    @for f in config/*.scm; do \
+        guile -c "(primitive-load \"$$f\")" && echo "✓ $$f" || exit 1; \
+    done
+
+# Build manifest from Guile
+build-manifest:
+    guile scripts/build-manifest.scm > manifest.json
+    @echo "✓ manifest.json generated"
+
+# Version bump
+bump-version level="patch":
+    @echo "Bumping {{level}} version..."
+    @# Update version in config/extension.scm
+----
+
+== AIBDP for Citation Data
+
+=== Citation-Specific AIBDP
+
+[source,json]
+----
+{
+  "aibdp_version": "0.2",
+  "contact": "mailto:hyperpolymath@proton.me",
+  "policies": {
+    "training": {
+      "status": "conditional",
+      "conditions": [
+        "Citation metadata only (no full text)",
+        "Attribution to original authors required",
+        "Academic/research use"
+      ]
+    },
+    "indexing": {
+      "status": "allowed"
+    },
+    "summarization": {
+      "status": "conditional",
+      "conditions": [
+        "Bibliographic data only",
+        "Link to original source"
+      ]
+    },
+    "citation_extraction": {
+      "status": "allowed",
+      "conditions": [
+        "Preserve all metadata",
+        "Maintain provenance chain"
+      ]
+    }
+  },
+  "extensions": {
+    "zotero": {
+      "library_type": "personal",
+      "sharing_policy": "selective"
+    }
+  }
+}
+----
+
+== Repository Reconciliation
+
+=== Current State
+
+[cols="1,2,2"]
+|===
+|Aspect |GitLab |GitHub
+
+|URL
+|gitlab.com/extensions-library/zotero/zoterho-template
+|github.com/hyperpolymath/zoterho-template
+
+|License
+|MIT
+|MIT + Palimpsest v0.8
+
+|Config Language
+|CUE
+|CUE (needs Guile migration)
+
+|RSR Compliance
+|Partial
+|Bronze ✅
+|===
+
+=== Reconciliation Plan
+
+. **Migrate GitLab to Guile** - Replace CUE configs
+. **Sync RSR compliance** - Apply Bronze→Silver requirements
+. **Establish canonical repo** - GitLab primary, GitHub mirror
+. **Add CI bidirectional sync** - GitLab CI → GitHub Actions
+
+=== Recommended Canonical Structure
+
+[source]
+----
+zoterho-template/
+├── .well-known/
+│   ├── aibdp.json
+│   ├── security.txt
+│   └── ai.txt
+├── config/
+│   ├── extension.scm      # Main config (Guile)
+│   ├── validation.scm     # Validation rules
+│   └── manifest.scm       # Zotero manifest
+├── src/
+│   ├── Types.res
+│   ├── Validator.res
+│   ├── FogbinderHandoff.res
+│   └── Popup.res
+├── scripts/
+│   ├── build-manifest.scm
+│   └── migrate-cue.scm
+├── STATE.scm
+├── justfile
+├── rescript.json
+├── deno.json
+└── README.adoc
+----
+
+== Integration Checklist
+
+=== For New Zotero Extensions
+
+[source]
+----
+[ ] Clone zoterho-template
+[ ] Update config/extension.scm with project details
+[ ] Create validation rules in config/validation.scm
+[ ] Implement ReScript logic in src/
+[ ] Add .well-known/aibdp.json for citation consent
+[ ] Configure STATE.scm
+[ ] Run: just ci-verify
+----
+
+=== For Existing Projects (zotero-nsai)
+
+[source]
+----
+[ ] Create v2-rescript branch
+[ ] Copy zoterho-template structure
+[ ] Migrate TypeScript types to ReScript
+[ ] Migrate validation logic to ReScript
+[ ] Replace CUE with Guile configs
+[ ] Update Fogbinder handoff to ReScript
+[ ] Run: just test
+[ ] Deprecate TypeScript version
+----
+
+== See Also
+
+* link:MAAF_INTEGRATION.adoc[MAAF Integration Guide]
+* link:VSH_IMPROVEMENTS.adoc[vsh Improvements]
+* https://gitlab.com/extensions-library/zotero/zoterho-template[zoterho-template GitLab]
+* https://github.com/hyperpolymath/zotero-nsai[zotero-nsai Repository]
+* https://github.com/hyperpolymath/fogbinder[Fogbinder Repository]

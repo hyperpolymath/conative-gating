@@ -1,0 +1,285 @@
+= Repository Standardization Plan
+:toc:
+:toc-placement!:
+:sectnums:
+
+This document defines what should be COMMON across all 139+ repositories and what should VARY per project.
+
+toc::[]
+
+== Summary Statistics (Current State)
+
+[cols="2,1,1,1"]
+|===
+|File/Element |Present |Missing |Target
+
+|.gitignore |115 |~24 |100%
+|README.adoc |130 |9 |100%
+|LICENSE/LICENSE.txt |115 |~24 |100%
+|justfile |76 |63 |100%
+|.editorconfig |27 |112 |100%
+|.well-known/ files |0 |139 |100%
+|Containerfile |26 |113 |100%
+|flake.nix |60 |79 |100%
+|STATE.scm |99 |40 |100%
+|RSR_COMPLIANCE.adoc |2 |137 |100%
+|===
+
+== COMMON Elements (Identical Across All Repos)
+
+=== Root Directory Files
+
+.editorconfig:: Standard formatting rules
+* Encoding: UTF-8
+* Indent: 2 spaces (YAML, JSON, Nix), 4 spaces (Rust, Python)
+* Trim trailing whitespace
+* Final newline
+
+.gitignore:: Base template + language-specific additions
+* Common ignores: `.DS_Store`, `*.log`, `*.tmp`, `.env`
+* Language detection adds: `/target/` (Rust), `node_modules/` (JS/TS), etc.
+
+LICENSE.txt:: AGPL-3.0 + Palimpsest v0.4 dual license
+* Standard header referencing both licenses
+
+=== .well-known/ Directory (ALL REPOS)
+
+ai.txt:: AI training policy
+* User-Agent directives
+* Consent requirements
+
+security.txt:: Security disclosure policy
+* Contact info
+* Preferred languages
+* Policy URL
+
+humans.txt:: Credits and acknowledgments
+* Team members
+* Technologies used
+
+consent-required.txt:: Consent-Aware-HTTP compliance
+* Data usage policies
+
+provenance.json:: Artifact provenance
+* Build info
+* Source references
+
+=== .github/ Directory
+
+workflows/ci.yml:: CI pipeline template
+* Language detection triggers correct jobs
+* Standard job names: lint, test, build
+
+ISSUE_TEMPLATE/:: Issue templates
+* bug_report.yml
+* feature_request.yml
+* security_vulnerability.yml
+
+PULL_REQUEST_TEMPLATE.md:: PR checklist
+* Standard checklist items
+
+CODEOWNERS:: Code ownership
+* Default reviewers
+
+FUNDING.yml:: Sponsorship info
+* GitHub sponsors
+* Other platforms
+
+dependabot.yml:: Dependency updates
+* Weekly schedule
+* Group updates
+
+=== Documentation Files (AsciiDoc)
+
+CONTRIBUTING.adoc:: Contribution guidelines
+* RSR Policy reference
+* TPCF agreement
+* Code style requirements
+
+CODE_OF_CONDUCT.adoc:: Community standards
+* Based on Contributor Covenant 2.1
+
+SECURITY.adoc:: Security policy
+* Vulnerability reporting
+* Supported versions
+
+=== Build/Infrastructure
+
+justfile:: Build recipes
+* Common recipes: `build`, `test`, `lint`, `clean`, `dev`
+* `cookbook` recipe for documentation generation
+* Language-specific additions
+
+Containerfile:: Container build
+* Distroless or Wolfi base
+* Multi-stage build pattern
+* nerdctl compatible
+
+flake.nix:: Nix flake
+* Development shell
+* Build outputs
+* Language-specific devShell
+
+guix.scm:: Guix channel
+* Package definitions
+* Development environment
+
+== VARYING Elements (Per Repository)
+
+=== Project Identity
+
+README.adoc:: Project-specific
+* Project name and tagline
+* Description
+* Features list
+* Installation instructions
+* Usage examples
+* License badge
+* Status badges
+
+CHANGELOG.adoc:: Project-specific
+* Version history
+* Release notes
+
+CLAUDE.adoc:: Project-specific instructions
+* Build commands
+* Test commands
+* Architecture notes
+* Common issues
+
+=== GitHub/Git Settings
+
+[cols="2,3"]
+|===
+|Setting |Notes
+
+|Repository Description |Unique per project
+|Topics/Tags |Project-specific, but include standard tags
+|Default Branch |`main` (standard)
+|Branch Protection |Standard rules (require PR, require reviews)
+|Website URL |Project landing page if exists
+|===
+
+==== Standard Topics (include as applicable)
+- `rhodium-standard` (all RSR-compliant repos)
+- Language tags: `rust`, `rescript`, `elixir`, `zig`, `ada`, `haskell`
+- Domain tags: `security`, `automation`, `devtools`, `web`
+
+=== Language/Project Specific
+
+Cargo.toml:: Rust projects
+* Package metadata
+* Dependencies
+* Features
+
+package.json:: Node/ReScript projects
+* Dependencies
+* Scripts
+
+dune-project:: OCaml projects
+mix.exs:: Elixir projects
+*.cabal:: Haskell projects
+Build.zig:: Zig projects
+*.asd:: Ada projects
+
+=== State/Configuration
+
+STATE.scm:: Guile state file
+* Project-specific state
+* Configuration data
+
+.rsr/config.toml:: RSR configuration
+* Tier classification
+* Compliance status
+* Exemptions
+
+== Migration Priority
+
+=== Phase 1: Critical (All Repos)
+1. `.editorconfig` - Add to 112 repos
+2. `.well-known/` - Add to ALL repos
+3. `LICENSE.txt` - Standardize format
+4. Convert `.md` to `.adoc` (CHANGELOG, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY)
+
+=== Phase 2: Build Infrastructure
+1. `justfile` - Add to 63 repos
+2. `Containerfile` - Add to 113 repos
+3. `flake.nix` - Add to 79 repos
+
+=== Phase 3: Documentation
+1. `RSR_COMPLIANCE.adoc` - Add to 137 repos
+2. `TPCF.adoc` - Add/convert in 123 repos
+3. `CLAUDE.adoc` - Standardize across all repos
+
+=== Phase 4: GitHub Settings
+1. Apply standard topics
+2. Configure branch protection
+3. Set up issue/PR templates
+4. Configure dependabot
+
+== Scripts for Bulk Operations
+
+=== Add .editorconfig
+
+[source,bash]
+----
+for repo in */; do
+  if [ ! -f "$repo/.editorconfig" ]; then
+    cp templates/.editorconfig "$repo/"
+  fi
+done
+----
+
+=== Add .well-known/
+
+[source,bash]
+----
+for repo in */; do
+  mkdir -p "$repo/.well-known"
+  cp -n templates/.well-known/* "$repo/.well-known/"
+done
+----
+
+=== Convert MD to AsciiDoc
+
+[source,bash]
+----
+for repo in */; do
+  for md in "$repo"/*.md; do
+    base=$(basename "$md" .md)
+    if [ ! -f "$repo/$base.adoc" ]; then
+      pandoc "$md" -t asciidoc -o "$repo/$base.adoc"
+    fi
+  done
+done
+----
+
+=== GitHub Settings via gh CLI
+
+[source,bash]
+----
+# Set topics
+gh repo edit owner/repo --add-topic rhodium-standard --add-topic rust
+
+# Configure branch protection
+gh api repos/owner/repo/branches/main/protection -X PUT -f ...
+
+# Enable features
+gh repo edit owner/repo --enable-issues --enable-wiki=false
+----
+
+== Repository Type Classification
+
+[cols="1,2,3"]
+|===
+|Type |Count |Characteristics
+
+|Rust Library |~21 |Cargo.toml, src/lib.rs
+|Rust Binary |~15 |Cargo.toml, src/main.rs
+|ReScript |~12 |rescript.json, src/*.res
+|Elixir |~3 |mix.exs, lib/
+|TypeScript (convert) |~19 |package.json, src/*.ts
+|Python (convert) |~5 |pyproject.toml, src/*.py
+|Multi-language |~15 |Multiple build systems
+|Documentation |~10 |Primarily docs
+|===

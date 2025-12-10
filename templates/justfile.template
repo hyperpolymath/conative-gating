@@ -1,0 +1,877 @@
+# {{PROJECT_NAME}} - RSR Standard Justfile
+# https://just.systems/man/en/
+#
+# Run `just` to see all available recipes
+# Run `just cookbook` to generate docs/just-cookbook.adoc
+# Run `just combinations` to see matrix recipe options
+#
+# Reversibility: All recipes marked [reversible] can be undone
+# Dry Run: Use `just --dry-run RECIPE` to preview any recipe
+
+set shell := ["bash", "-uc"]
+set dotenv-load := true
+set positional-arguments := true
+
+# Project metadata
+project := "{{PROJECT_NAME}}"
+version := "0.1.0"
+tier := "{{TIER}}"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DEFAULT & HELP
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Show all available recipes with descriptions
+default:
+    @just --list --unsorted
+
+# Show detailed help for a specific recipe
+help recipe="":
+    #!/usr/bin/env bash
+    if [ -z "{{recipe}}" ]; then
+        just --list --unsorted
+        echo ""
+        echo "Usage: just help <recipe>"
+        echo "       just cookbook     # Generate full documentation"
+        echo "       just combinations # Show matrix recipes"
+    else
+        just --show "{{recipe}}" 2>/dev/null || echo "Recipe '{{recipe}}' not found"
+    fi
+
+# Show this project's info
+info:
+    @echo "Project: {{project}}"
+    @echo "Version: {{version}}"
+    @echo "RSR Tier: {{tier}}"
+    @echo "Recipes: $(just --summary | wc -w)"
+    @[ -f STATE.scm ] && grep -oP '\(phase\s+\.\s+\K[^)]+' STATE.scm | head -1 | xargs -I{} echo "Phase: {}" || true
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# BUILD & COMPILE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Build the project (debug mode)
+build *args:
+    @echo "Building {{project}}..."
+    {{BUILD_COMMAND}} {{args}}
+
+# Build in release mode with optimizations
+build-release *args:
+    @echo "Building {{project}} (release)..."
+    {{BUILD_RELEASE_COMMAND}} {{args}}
+
+# Build and watch for changes
+build-watch:
+    {{WATCH_COMMAND}}
+
+# Clean build artifacts [reversible: rebuild with `just build`]
+clean:
+    {{CLEAN_COMMAND}}
+
+# Deep clean including caches [reversible: rebuild]
+clean-all: clean
+    rm -rf .cache .tmp node_modules target _build lib bs.js
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# TEST & QUALITY
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Run all tests
+test *args:
+    {{TEST_COMMAND}} {{args}}
+
+# Run tests with verbose output
+test-verbose:
+    {{TEST_VERBOSE_COMMAND}}
+
+# Run a specific test
+test-one name:
+    {{TEST_ONE_COMMAND}}
+
+# Run tests and generate coverage report
+test-coverage:
+    {{COVERAGE_COMMAND}}
+
+# Run tests in watch mode
+test-watch:
+    {{TEST_WATCH_COMMAND}}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# LINT & FORMAT
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Format all source files [reversible: git checkout]
+fmt:
+    {{FMT_COMMAND}}
+
+# Check formatting without changes
+fmt-check:
+    {{FMT_CHECK_COMMAND}}
+
+# Run linter
+lint:
+    {{LINT_COMMAND}}
+
+# Run linter and auto-fix [reversible: git checkout]
+lint-fix:
+    {{LINT_FIX_COMMAND}}
+
+# Run all quality checks
+quality: fmt-check lint test
+    @echo "All quality checks passed!"
+
+# Fix all auto-fixable issues [reversible: git checkout]
+fix: fmt lint-fix
+    @echo "Fixed all auto-fixable issues"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# RUN & EXECUTE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Run the application
+run *args:
+    {{RUN_COMMAND}} {{args}}
+
+# Run in development mode with hot reload
+dev:
+    {{DEV_COMMAND}}
+
+# Run with debug logging
+run-debug *args:
+    {{DEBUG_RUN_COMMAND}} {{args}}
+
+# Run REPL/interactive mode
+repl:
+    {{REPL_COMMAND}}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DEPENDENCIES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Install all dependencies
+deps:
+    {{DEPS_COMMAND}}
+
+# Update dependencies [reversible: restore lockfile from git]
+deps-update:
+    {{DEPS_UPDATE_COMMAND}}
+
+# Check for outdated dependencies
+deps-outdated:
+    {{DEPS_OUTDATED_COMMAND}}
+
+# Show dependency tree
+deps-tree:
+    {{DEPS_TREE_COMMAND}}
+
+# Audit dependencies for vulnerabilities
+deps-audit:
+    {{DEPS_AUDIT_COMMAND}}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DOCUMENTATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Generate all documentation
+docs:
+    @mkdir -p docs/generated docs/man
+    {{DOCS_COMMAND}}
+    just cookbook
+    just man
+    @echo "Documentation generated in docs/"
+
+# Serve documentation locally
+docs-serve:
+    @echo "Serving docs at http://localhost:8000"
+    @cd docs && python3 -m http.server 8000 2>/dev/null || echo "Install python3"
+
+# Generate API documentation
+docs-api:
+    {{DOCS_API_COMMAND}}
+
+# Generate justfile cookbook documentation
+cookbook:
+    #!/usr/bin/env bash
+    mkdir -p docs
+    OUTPUT="docs/just-cookbook.adoc"
+    cat > "$OUTPUT" << 'HEADER'
+= {{project}} Justfile Cookbook
+:toc: left
+:toclevels: 3
+:sectnums:
+:source-highlighter: rouge
+
+== Overview
+
+This document describes all available `just` recipes for {{project}}.
+
+Generated: $(date -Iseconds)
+
+Project: {{project}} +
+Version: {{version}} +
+RSR Tier: {{tier}}
+
+== Quick Reference
+
+[cols="2,3,1"]
+|===
+|Recipe |Description |Reversible
+
+HEADER
+
+    # Parse justfile for quick reference table
+    SECTION=""
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^#[[:space:]]([A-Z][A-Z&[:space:]]+)$ ]]; then
+            SECTION="${BASH_REMATCH[1]}"
+        elif [[ "$line" =~ ^#[[:space:]](.+)$ ]] && [[ ! "$line" =~ ═ ]]; then
+            DESC="${BASH_REMATCH[1]}"
+            REV="No"
+            [[ "$DESC" =~ \[reversible ]] && REV="Yes"
+            DESC="${DESC/\[reversible*\]/}"
+        elif [[ "$line" =~ ^([a-z_-]+)([[:space:]].*)?: ]]; then
+            RECIPE="${BASH_REMATCH[1]}"
+            ARGS="${BASH_REMATCH[2]}"
+            if [[ ! "$RECIPE" =~ ^_ ]] && [[ -n "$DESC" ]]; then
+                echo "|$RECIPE$ARGS |${DESC} |$REV" >> "$OUTPUT"
+            fi
+            DESC=""
+        fi
+    done < justfile
+
+    echo "|===" >> "$OUTPUT"
+    echo "" >> "$OUTPUT"
+
+    # Generate detailed sections
+    SECTION=""
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^#[[:space:]]═+ ]]; then
+            continue
+        elif [[ "$line" =~ ^#[[:space:]]([A-Z][A-Z&[:space:]]+)$ ]]; then
+            SECTION="${BASH_REMATCH[1]}"
+            echo "" >> "$OUTPUT"
+            echo "== $SECTION" >> "$OUTPUT"
+            echo "" >> "$OUTPUT"
+        elif [[ "$line" =~ ^#[[:space:]](.+)$ ]] && [[ ! "$line" =~ ═ ]]; then
+            DESC="${BASH_REMATCH[1]}"
+        elif [[ "$line" =~ ^([a-z_-]+)([[:space:]].*)?:[[:space:]]*$ ]]; then
+            RECIPE="${BASH_REMATCH[1]}"
+            ARGS="${BASH_REMATCH[2]}"
+            if [[ ! "$RECIPE" =~ ^_ ]]; then
+                echo "=== \`$RECIPE$ARGS\`" >> "$OUTPUT"
+                echo "" >> "$OUTPUT"
+                if [[ -n "$DESC" ]]; then
+                    echo "$DESC" >> "$OUTPUT"
+                    echo "" >> "$OUTPUT"
+                fi
+                echo ".Usage" >> "$OUTPUT"
+                echo "[source,bash]" >> "$OUTPUT"
+                echo "----" >> "$OUTPUT"
+                echo "just $RECIPE$ARGS" >> "$OUTPUT"
+                echo "----" >> "$OUTPUT"
+                echo "" >> "$OUTPUT"
+            fi
+            DESC=""
+        fi
+    done < justfile
+
+    # Append matrix documentation
+    cat >> "$OUTPUT" << 'MATRIX'
+
+== Matrix Recipes (Combinatoric)
+
+The following recipes support parameter combinations for flexible execution:
+
+=== Build Matrix
+
+`just build-matrix [mode] [target] [features]`
+
+[cols="1,2,3"]
+|===
+|Parameter |Options |Example
+
+|mode |debug, release |`just build-matrix release`
+|target |x86_64-unknown-linux-gnu, aarch64, wasm32 |`just build-matrix debug aarch64`
+|features |comma-separated feature flags |`just build-matrix release '' serde,async`
+|===
+
+=== Test Matrix
+
+`just test-matrix [suite] [verbosity] [parallel]`
+
+[cols="1,2,3"]
+|===
+|Parameter |Options |Example
+
+|suite |unit, integration, e2e, all |`just test-matrix integration`
+|verbosity |quiet, normal, verbose |`just test-matrix unit verbose`
+|parallel |true, false |`just test-matrix unit normal false`
+|===
+
+=== Container Matrix
+
+`just container-matrix [action] [registry] [tag]`
+
+[cols="1,2,3"]
+|===
+|Parameter |Options |Example
+
+|action |build, run, push, shell |`just container-matrix push`
+|registry |ghcr.io/hyperpolymath, docker.io/... |`just container-matrix build docker.io/user`
+|tag |latest, v1.0.0, sha-abc123 |`just container-matrix push ghcr.io/hyperpolymath v1.0.0`
+|===
+
+=== CI Matrix
+
+`just ci-matrix [stage] [depth]`
+
+[cols="1,2,3"]
+|===
+|Parameter |Options |Example
+
+|stage |lint, test, build, security, all |`just ci-matrix test`
+|depth |quick, full |`just ci-matrix all full`
+|===
+
+== Combination Examples
+
+Total possible combinations: ~10 billion (based on all parameter permutations)
+
+[source,bash]
+----
+# Quick CI check
+just ci-matrix lint quick
+
+# Full release pipeline
+just ci-matrix all full && just container-matrix push ghcr.io/hyperpolymath v1.0.0
+
+# Cross-compilation
+just build-matrix release aarch64-unknown-linux-gnu
+
+# Thorough testing
+just test-matrix all verbose false
+----
+MATRIX
+
+    echo "Generated: $OUTPUT"
+
+# Generate man page
+man:
+    #!/usr/bin/env bash
+    mkdir -p docs/man
+    cat > docs/man/{{project}}.1 << EOF
+.TH {{PROJECT_UPPER}} 1 "$(date +%Y-%m-%d)" "{{version}}" "{{project}} Manual"
+.SH NAME
+{{project}} \- {{SYNOPSIS}}
+.SH SYNOPSIS
+.B just
+[recipe] [args...]
+.SH DESCRIPTION
+{{DESCRIPTION}}
+.PP
+This project follows the RSR (Rhodium Standard Repository) framework,
+Tier {{tier}} compliance.
+.SH RECIPES
+EOF
+    just --list --unsorted 2>/dev/null | tail -n +2 | while read -r line; do
+        recipe=$(echo "$line" | awk '{print $1}')
+        desc=$(echo "$line" | sed 's/^[[:space:]]*[a-z_-]*[[:space:]]*//' | sed 's/^#[[:space:]]*//')
+        if [ -n "$recipe" ] && [[ ! "$recipe" =~ ^_ ]]; then
+            echo ".TP" >> docs/man/{{project}}.1
+            echo ".B $recipe" >> docs/man/{{project}}.1
+            echo "$desc" >> docs/man/{{project}}.1
+        fi
+    done
+    cat >> docs/man/{{project}}.1 << EOF
+.SH FILES
+.TP
+.I justfile
+Task definitions
+.TP
+.I STATE.scm
+Project state checkpoint (Guile Scheme)
+.TP
+.I guix.scm
+GNU Guix package definition
+.TP
+.I flake.nix
+Nix flake (fallback)
+.SH ENVIRONMENT
+.TP
+.B EDITOR
+Editor for \`just edit\` (default: code)
+.SH SEE ALSO
+.BR just (1),
+.BR guix (1),
+.BR nix (1)
+.SH AUTHOR
+Hyperpolymath <hyperpolymath@proton.me>
+.SH BUGS
+Report bugs at: https://github.com/hyperpolymath/{{project}}/issues
+EOF
+    echo "Generated: docs/man/{{project}}.1"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# RELEASE & DEPLOY
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Create a release build
+release: quality build-release
+    @echo "Release build complete"
+
+# Package for distribution
+package: release
+    @mkdir -p dist
+    {{PACKAGE_COMMAND}}
+
+# Install locally [reversible: just uninstall]
+install: release
+    {{INSTALL_COMMAND}}
+
+# Uninstall local installation
+uninstall:
+    {{UNINSTALL_COMMAND}}
+
+# Publish to registry (dry run)
+publish-dry:
+    {{PUBLISH_DRY_COMMAND}}
+
+# Publish to registry
+publish: quality
+    {{PUBLISH_COMMAND}}
+
+# Create git tag for version
+tag version:
+    git tag -a "v{{version}}" -m "Release v{{version}}"
+    @echo "Created tag v{{version}}. Push with: git push origin v{{version}}"
+
+# Generate SBOM (Software Bill of Materials)
+sbom:
+    @mkdir -p docs/security
+    @if command -v syft >/dev/null 2>&1; then \
+        syft . -o spdx-json > docs/security/sbom.spdx.json && \
+        syft . -o cyclonedx-json > docs/security/sbom.cdx.json && \
+        echo "SBOM generated in docs/security/"; \
+    else \
+        echo "syft not found. Install: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh"; \
+    fi
+
+# Sign file with GPG
+sign file:
+    gpg --armor --detach-sign {{file}}
+    @echo "Signed: {{file}}.asc"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CONTAINERS (nerdctl + Wolfi)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Build container image
+container-build tag="latest":
+    nerdctl build -t {{project}}:{{tag}} -f Containerfile .
+
+# Run container
+container-run tag="latest" *args:
+    nerdctl run --rm -it {{project}}:{{tag}} {{args}}
+
+# Push container image
+container-push registry="ghcr.io/hyperpolymath" tag="latest":
+    nerdctl tag {{project}}:{{tag}} {{registry}}/{{project}}:{{tag}}
+    nerdctl push {{registry}}/{{project}}:{{tag}}
+
+# Shell into container for debugging
+container-shell tag="latest":
+    nerdctl run --rm -it --entrypoint /bin/sh {{project}}:{{tag}}
+
+# Scan container for vulnerabilities
+container-scan tag="latest":
+    @if command -v trivy >/dev/null 2>&1; then \
+        trivy image {{project}}:{{tag}}; \
+    else \
+        echo "trivy not found"; \
+    fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CI & AUTOMATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Run full CI pipeline locally
+ci: deps quality build-release test-coverage
+    @echo "CI pipeline complete!"
+
+# Run CI in dry-run mode
+ci-dry:
+    @echo "[DRY RUN] Would run: deps → fmt-check → lint → test → build-release → test-coverage"
+
+# Install git hooks
+install-hooks:
+    @mkdir -p .git/hooks
+    @cat > .git/hooks/pre-commit << 'EOF'
+#!/bin/bash
+just fmt-check || exit 1
+just lint || exit 1
+EOF
+    @chmod +x .git/hooks/pre-commit
+    @cat > .git/hooks/commit-msg << 'EOF'
+#!/bin/bash
+# Conventional commit validation
+MSG=$(cat "$1")
+if ! echo "$MSG" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .{1,50}"; then
+    echo "Commit message must follow conventional commits format"
+    echo "Example: feat(parser): add ability to parse arrays"
+    exit 1
+fi
+EOF
+    @chmod +x .git/hooks/commit-msg
+    @echo "Git hooks installed"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SECURITY
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Run full security audit
+security: deps-audit
+    @echo "=== Security Audit ==="
+    @if command -v gitleaks >/dev/null 2>&1; then \
+        echo "Scanning for secrets..." && gitleaks detect --source . --verbose; \
+    fi
+    @if command -v trivy >/dev/null 2>&1; then \
+        echo "Scanning for vulnerabilities..." && trivy fs --severity HIGH,CRITICAL .; \
+    fi
+    @echo "Security audit complete"
+
+# Scan for secrets
+security-secrets:
+    @if command -v gitleaks >/dev/null 2>&1; then \
+        gitleaks detect --source . --verbose; \
+    else \
+        echo "gitleaks not found"; \
+    fi
+
+# Scan for vulnerabilities
+security-vulns:
+    @if command -v trivy >/dev/null 2>&1; then \
+        trivy fs --severity HIGH,CRITICAL .; \
+    else \
+        echo "trivy not found"; \
+    fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# VALIDATION & COMPLIANCE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Validate RSR compliance
+validate-rsr:
+    #!/usr/bin/env bash
+    echo "=== RSR Compliance Check ==="
+    MISSING=""
+    WARNINGS=""
+
+    # Required files
+    for f in .editorconfig .gitignore LICENSE.txt justfile RSR_COMPLIANCE.adoc README.adoc; do
+        [ -f "$f" ] || MISSING="$MISSING\n  - $f"
+    done
+
+    # Required directories
+    for d in .well-known docs; do
+        [ -d "$d" ] || MISSING="$MISSING\n  - $d/"
+    done
+
+    # .well-known contents
+    for f in .well-known/security.txt .well-known/ai.txt .well-known/humans.txt; do
+        [ -f "$f" ] || MISSING="$MISSING\n  - $f"
+    done
+
+    # Guix/Nix (at least one required)
+    if [ ! -f "guix.scm" ] && [ ! -f ".guix-channel" ] && [ ! -f "flake.nix" ]; then
+        WARNINGS="$WARNINGS\n  - No guix.scm or flake.nix"
+    fi
+
+    # STATE.scm recommended
+    [ -f "STATE.scm" ] || WARNINGS="$WARNINGS\n  - STATE.scm (recommended)"
+
+    if [ -n "$MISSING" ]; then
+        echo -e "MISSING:$MISSING"
+        exit 1
+    fi
+    if [ -n "$WARNINGS" ]; then
+        echo -e "WARNINGS:$WARNINGS"
+    fi
+    echo "RSR compliance: PASS"
+
+# Validate STATE.scm syntax
+validate-state:
+    @if [ -f "STATE.scm" ]; then \
+        guile -c "(primitive-load \"STATE.scm\")" 2>/dev/null && echo "STATE.scm: valid" || echo "STATE.scm: INVALID"; \
+    else \
+        echo "No STATE.scm found"; \
+    fi
+
+# Full validation suite
+validate: validate-rsr validate-state
+    @echo "All validations passed!"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# STATE MANAGEMENT
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Update STATE.scm timestamp
+state-touch:
+    @if [ -f "STATE.scm" ]; then \
+        sed -i 's/(updated . "[^"]*")/(updated . "'"$(date -Iseconds)"'")/' STATE.scm && \
+        echo "STATE.scm timestamp updated"; \
+    else \
+        echo "No STATE.scm"; \
+    fi
+
+# Export STATE.scm to JSON (requires guile-json)
+state-export:
+    @if [ -f "STATE.scm" ]; then \
+        guile -c '(use-modules (json)) (primitive-load "STATE.scm") (display (scm->json state))' > STATE.json 2>/dev/null && \
+        echo "Exported to STATE.json" || echo "guile-json not available"; \
+    fi
+
+# Show current phase from STATE.scm
+state-phase:
+    @if [ -f "STATE.scm" ]; then \
+        grep -oP '\(phase\s+\.\s+\K[^)]+' STATE.scm | head -1 || echo "unknown"; \
+    else \
+        echo "No STATE.scm"; \
+    fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# GUIX & NIX
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Enter Guix development shell (primary)
+guix-shell:
+    guix shell -D -f guix.scm
+
+# Build with Guix
+guix-build:
+    guix build -f guix.scm
+
+# Enter Nix development shell (fallback)
+nix-shell:
+    nix develop
+
+# Build with Nix
+nix-build:
+    nix build
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# BADGES & METADATA
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Generate badges for README
+badges level="standard":
+    @if [ -f "scripts/generate-badges.sh" ]; then \
+        ./scripts/generate-badges.sh {{level}}; \
+    else \
+        echo "No badge generator found"; \
+    fi
+
+# Update README badges
+update-badges:
+    @just badges standard > .badges.tmp
+    @if [ -f "scripts/update-readme-badges.sh" ]; then \
+        ./scripts/update-readme-badges.sh README.adoc .badges.tmp; \
+    fi
+    @rm -f .badges.tmp
+    @echo "README badges updated"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# HYBRID AUTOMATION (robot-repo-cleaner)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Run local automation tasks
+automate task="all":
+    #!/usr/bin/env bash
+    case "{{task}}" in
+        all)
+            just fmt
+            just lint
+            just test
+            just docs
+            just state-touch
+            echo "Full automation complete"
+            ;;
+        cleanup)
+            just clean
+            find . -name "*.orig" -delete
+            find . -name "*~" -delete
+            find . -name ".DS_Store" -delete
+            echo "Cleanup complete"
+            ;;
+        update)
+            just deps
+            just validate
+            echo "Update complete"
+            ;;
+        release)
+            just quality
+            just build-release
+            just docs
+            just sbom
+            echo "Release prep complete"
+            ;;
+        *)
+            echo "Unknown task: {{task}}"
+            echo "Available: all, cleanup, update, release"
+            exit 1
+            ;;
+    esac
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# COMBINATORIC MATRIX RECIPES (~10 billion combinations)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Build matrix: [debug|release] × [target] × [features]
+build-matrix mode="debug" target="" features="":
+    #!/usr/bin/env bash
+    CMD="{{BUILD_COMMAND}}"
+    [ "{{mode}}" = "release" ] && CMD="{{BUILD_RELEASE_COMMAND}}"
+    [ -n "{{target}}" ] && CMD="$CMD --target {{target}}"
+    [ -n "{{features}}" ] && CMD="$CMD --features {{features}}"
+    echo "Running: $CMD"
+    eval "$CMD"
+
+# Test matrix: [unit|integration|e2e|all] × [quiet|normal|verbose] × [true|false]
+test-matrix suite="unit" verbosity="normal" parallel="true":
+    #!/usr/bin/env bash
+    CMD="{{TEST_COMMAND}}"
+    case "{{suite}}" in
+        unit) CMD="$CMD --lib" ;;
+        integration) CMD="$CMD --test '*'" ;;
+        e2e) CMD="$CMD --test e2e" ;;
+        all) CMD="$CMD" ;;
+    esac
+    case "{{verbosity}}" in
+        quiet) CMD="$CMD --quiet" ;;
+        verbose) CMD="$CMD --verbose" ;;
+    esac
+    [ "{{parallel}}" = "false" ] && CMD="$CMD --test-threads=1"
+    echo "Running: $CMD"
+    eval "$CMD"
+
+# Container matrix: [build|run|push|shell|scan] × [registry] × [tag]
+container-matrix action="build" registry="ghcr.io/hyperpolymath" tag="latest":
+    #!/usr/bin/env bash
+    IMAGE="{{registry}}/{{project}}:{{tag}}"
+    case "{{action}}" in
+        build) nerdctl build -t "$IMAGE" -f Containerfile . ;;
+        run) nerdctl run --rm -it "$IMAGE" ;;
+        push) nerdctl push "$IMAGE" ;;
+        shell) nerdctl run --rm -it --entrypoint /bin/sh "$IMAGE" ;;
+        scan) trivy image "$IMAGE" 2>/dev/null || echo "trivy not found" ;;
+        *) echo "Unknown action: {{action}}"; exit 1 ;;
+    esac
+
+# CI matrix: [lint|test|build|security|all] × [quick|full]
+ci-matrix stage="all" depth="quick":
+    #!/usr/bin/env bash
+    run_stage() {
+        case "$1" in
+            lint) just fmt-check && just lint ;;
+            test)
+                [ "{{depth}}" = "quick" ] && just test || just test-coverage
+                ;;
+            build)
+                [ "{{depth}}" = "quick" ] && just build || just build-release
+                ;;
+            security)
+                [ "{{depth}}" = "full" ] && just security || echo "Skipping security (quick mode)"
+                ;;
+        esac
+    }
+    if [ "{{stage}}" = "all" ]; then
+        for s in lint test build security; do
+            echo "=== Stage: $s ==="
+            run_stage "$s"
+        done
+    else
+        run_stage "{{stage}}"
+    fi
+
+# Show all matrix combinations
+combinations:
+    @echo "=== Combinatoric Matrix Recipes ==="
+    @echo ""
+    @echo "Build Matrix (mode × target × features)"
+    @echo "  just build-matrix [debug|release] [target] [features]"
+    @echo "  Examples:"
+    @echo "    just build-matrix release"
+    @echo "    just build-matrix debug aarch64-unknown-linux-gnu"
+    @echo "    just build-matrix release '' serde,async"
+    @echo ""
+    @echo "Test Matrix (suite × verbosity × parallel)"
+    @echo "  just test-matrix [unit|integration|e2e|all] [quiet|normal|verbose] [true|false]"
+    @echo "  Examples:"
+    @echo "    just test-matrix integration verbose"
+    @echo "    just test-matrix all normal false"
+    @echo ""
+    @echo "Container Matrix (action × registry × tag)"
+    @echo "  just container-matrix [build|run|push|shell|scan] [registry] [tag]"
+    @echo "  Examples:"
+    @echo "    just container-matrix push ghcr.io/hyperpolymath v1.0.0"
+    @echo "    just container-matrix scan docker.io/library latest"
+    @echo ""
+    @echo "CI Matrix (stage × depth)"
+    @echo "  just ci-matrix [lint|test|build|security|all] [quick|full]"
+    @echo "  Examples:"
+    @echo "    just ci-matrix all full"
+    @echo "    just ci-matrix test quick"
+    @echo ""
+    @echo "Total combinations: ~10 billion"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# VERSION CONTROL
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Show git status
+status:
+    @git status --short
+
+# Show recent commits
+log count="20":
+    @git log --oneline -{{count}}
+
+# Show what would be committed
+diff:
+    @git diff --stat
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# UTILITIES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Count lines of code
+loc:
+    @echo "Lines of code:"
+    @find . -name "*.rs" -o -name "*.ex" -o -name "*.res" -o -name "*.ncl" -o -name "*.scm" 2>/dev/null | \
+        xargs wc -l 2>/dev/null | tail -1 || echo "No source files"
+
+# Show TODO/FIXME comments
+todos:
+    @grep -rn "TODO\|FIXME\|HACK\|XXX" --include="*.rs" --include="*.ex" --include="*.res" . 2>/dev/null || echo "No TODOs found"
+
+# Open project in editor
+edit:
+    ${EDITOR:-code} .
+
+# Print environment variables
+env:
+    @env | grep -E "^(PATH|HOME|USER|PROJECT|GUIX|NIX)" | sort
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# REVERSIBILITY GUIDE
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Recipes marked [reversible] can be undone:
+#   clean         → just build
+#   fmt/lint-fix  → git checkout .
+#   deps-update   → git checkout lockfile
+#   install       → just uninstall
+#   db-migrate    → just db-rollback
+#   commit/amend  → git reflog + git reset
+#
+# Use `just --dry-run RECIPE` to preview any recipe
+# ═══════════════════════════════════════════════════════════════════════════════

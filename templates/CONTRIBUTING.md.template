@@ -1,0 +1,79 @@
+# Contributing to {{PROJECT_NAME}}
+
+Thank you for your interest in contributing! This project follows the **Tri-Perimeter Contribution Framework (TPCF)**.
+
+## Tri-Perimeter Contribution Framework (TPCF)
+
+### Perimeter 3: Community Sandbox
+
+**Access Level**: Open Contribution
+**Trust Level**: Minimal verification required
+
+Anyone can:
+- Fork, clone, and submit pull requests
+- Report issues and request features
+- Join discussions
+
+All contributions are reviewed before merge. Contributors build trust through consistent, quality contributions.
+
+### Perimeter 2: Trusted Collaborators
+
+Proven contributors with:
+- Direct commit access to non-protected branches
+- Ability to review PRs
+- Triage issues
+
+Granted after sustained quality contributions over 3+ months.
+
+### Perimeter 1: Core Maintainers
+
+Long-term maintainers with:
+- Full repository access
+- Merge to main/protected branches
+- Release authority
+- Governance decisions
+
+By invitation after 6+ months as trusted collaborator.
+
+## How to Contribute
+
+### Code Contributions
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feat/your-feature`
+3. Make your changes following RSR guidelines
+4. Run `just check` to ensure quality
+5. Commit with conventional format: `git commit -m "feat: add thing"`
+6. Push and create a pull request
+
+### Commit Message Format
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+
+### Code Standards
+
+- **Tier 1 Languages Only**: Rust, Elixir, Zig, Ada, Haskell, ReScript
+- **Config**: Nickel, Racket (Tier 2)
+- **Format**: Run `just fmt` before committing
+- **Lint**: Run `just lint` with zero warnings
+- **Test**: Add tests for new functionality
+
+### Issue Reporting
+
+When filing issues:
+- Check existing issues first
+- Use issue templates
+- Provide reproduction steps
+- Include system info
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the AGPL-3.0-or-later license.

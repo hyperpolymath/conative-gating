@@ -1,0 +1,13 @@
+{
+  "proposal": {
+    "id": "550e8400-e29b-41d4-a716-446655440002",
+    "action_type": {"CreateFile": {"path": "lib/worker.ex"}},
+    "content": "defmodule MyApp.Worker do\n  use GenServer\n\n  def start_link(opts) do\n    GenServer.start_link(__MODULE__, opts, name: __MODULE__)\n  end\n\n  @impl true\n  def init(opts) do\n    {:ok, %{count: 0, opts: opts}}\n  end\n\n  @impl true\n  def handle_call(:get_count, _from, state) do\n    {:reply, state.count, state}\n  end\n\n  @impl true\n  def handle_cast(:increment, state) do\n    {:noreply, %{state | count: state.count + 1}}\n  end\nend\n",
+    "files_affected": ["lib/worker.ex"],
+    "llm_confidence": 0.92
+  },
+  "expected_verdict": "Compliant",
+  "reasoning": "Standard Elixir GenServer implementation, Tier 1 language",
+  "spirit_violation": false,
+  "category": "language"
+}

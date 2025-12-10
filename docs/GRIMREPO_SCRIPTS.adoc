@@ -1,0 +1,726 @@
+= Grimrepo Scripts Recommendations
+:toc:
+:sectnums:
+// SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+
+== Overview
+
+Recommended scripts for https://gitlab.com/extensions-library/monkey-scripts/grimrepo-scripts[grimrepo-scripts] following RSR principles:
+
+* **ReScript first** - Type-safe, compiles to clean JS
+* **WASM where ideal** - Performance-critical operations
+* **Deno if needed** - Server-side or build tooling
+* **Modular architecture** - Common core with pluggable extensions
+
+== Architecture
+
+=== Core Module (`grim-core.res`)
+
+All scripts share a common core that handles:
+
+[source,rescript]
+----
+// grim-core.res - Shared infrastructure
+
+module Config = {
+  type t = {
+    version: string,
+    debug: bool,
+    storage: option<Storage.t>,
+  }
+
+  let default = {
+    version: "1.0.0",
+    debug: false,
+    storage: None,
+  }
+}
+
+module DOM = {
+  @val external document: Dom.document = "document"
+
+  let query = (selector: string): option<Dom.element> => {
+    Js.Nullable.toOption(document->Webapi.Dom.Document.querySelector(selector))
+  }
+
+  let queryAll = (selector: string): array<Dom.element> => {
+    document
+    ->Webapi.Dom.Document.querySelectorAll(selector)
+    ->Webapi.Dom.NodeList.toArray
+  }
+
+  let create = (tag: string): Dom.element => {
+    document->Webapi.Dom.Document.createElement(tag)
+  }
+}
+
+module Storage = {
+  type t = {
+    get: string => Js.Promise.t<option<string>>,
+    set: (string, string) => Js.Promise.t<unit>,
+    remove: string => Js.Promise.t<unit>,
+  }
+
+  let gmStorage: t = {
+    get: key => GM.getValue(key, ""),
+    set: (key, value) => GM.setValue(key, value),
+    remove: key => GM.deleteValue(key),
+  }
+}
+
+module HTTP = {
+  type response = {
+    status: int,
+    text: string,
+    json: Js.Json.t,
+  }
+
+  let fetch = (url: string): Js.Promise.t<response> => {
+    GM.xmlHttpRequest({
+      method: "GET",
+      url,
+    })
+  }
+}
+
+module UI = {
+  let createPanel = (~title: string, ~content: Dom.element): Dom.element => {
+    let panel = DOM.create("div")
+    panel->Webapi.Dom.Element.setClassName("grim-panel")
+    panel->Webapi.Dom.Element.setInnerHTML(`
+      <div class="grim-panel-header">${title}</div>
+      <div class="grim-panel-body"></div>
+    `)
+    panel
+  }
+
+  let toast = (~message: string, ~duration: int=3000): unit => {
+    let toast = DOM.create("div")
+    toast->Webapi.Dom.Element.setClassName("grim-toast")
+    toast->Webapi.Dom.Element.setTextContent(message)
+    // Auto-remove after duration
+  }
+}
+----
+
+=== Extension Pattern
+
+Each script extends the core:
+
+[source,rescript]
+----
+// Example extension pattern
+module MyScript = {
+  open GrimCore
+
+  type config = {
+    enabled: bool,
+    threshold: int,
+  }
+
+  let defaultConfig = {
+    enabled: true,
+    threshold: 100,
+  }
+
+  let init = (config: config): unit => {
+    if config.enabled {
+      // Script logic
+    }
+  }
+
+  // Register with core
+  let () = GrimCore.register("my-script", init)
+}
+----
+
+== Recommended Scripts
+
+=== Category 1: AIBDP / Privacy
+
+==== 1. `grim-aibdp-checker.res`
+
+**Purpose**: Check and display AIBDP status for visited sites
+
+[cols="1,3"]
+|===
+|Complexity |Low
+|WASM |No
+|Target Sites |*
+|===
+
+[source,rescript]
+----
+// grim-aibdp-checker.res
+module AibdpChecker = {
+  open GrimCore
+
+  type aibdpPolicy = {
+    version: string,
+    training: string,  // "allowed" | "refused" | "conditional"
+    indexing: string,
+    summarization: string,
+  }
+
+  let fetchAibdp = (): Js.Promise.t<option<aibdpPolicy>> => {
+    HTTP.fetch("/.well-known/aibdp.json")
+    ->Js.Promise.then_(response => {
+      if response.status == 200 {
+        Some(Js.Json.decodeObject(response.json)->parsePolicy)
+      } else {
+        None
+      }
+    })
+  }
+
+  let displayBadge = (policy: option<aibdpPolicy>): unit => {
+    let badge = DOM.create("div")
+    badge->setClassName("grim-aibdp-badge")
+
+    switch policy {
+    | Some(p) if p.training == "refused" =>
+        badge->setInnerHTML("🔒 AI Training Refused")
+    | Some(p) if p.training == "conditional" =>
+        badge->setInnerHTML("⚠️ AI Training Conditional")
+    | Some(p) if p.training == "allowed" =>
+        badge->setInnerHTML("✓ AI Training Allowed")
+    | None =>
+        badge->setInnerHTML("❓ No AIBDP")
+    }
+  }
+}
+----
+
+==== 2. `grim-consent-tracker.res`
+
+**Purpose**: Track and remember AIBDP consent decisions
+
+[cols="1,3"]
+|===
+|Complexity |Medium
+|WASM |No
+|Target Sites |*
+|===
+
+Features:
+- Store AIBDP responses in local storage
+- Export consent log
+- Alert on policy changes
+
+==== 3. `grim-ai-blocker.res`
+
+**Purpose**: Detect and block AI scraper patterns
+
+[cols="1,3"]
+|===
+|Complexity |Medium
+|WASM |Yes (pattern matching)
+|Target Sites |*
+|===
+
+=== Category 2: Research / Citation
+
+==== 4. `grim-citation-extractor.res`
+
+**Purpose**: Extract citations from web pages (companion to zotero-nsai)
+
+[cols="1,3"]
+|===
+|Complexity |High
+|WASM |Yes (parsing)
+|Target Sites |Academic sites, blogs
+|===
+
+[source,rescript]
+----
+// grim-citation-extractor.res
+module CitationExtractor = {
+  type citation = {
+    title: string,
+    authors: array<string>,
+    date: option<string>,
+    doi: option<string>,
+    url: string,
+  }
+
+  // Extract from JSON-LD
+  let fromJsonLd = (doc: Dom.document): array<citation> => {
+    doc
+    ->querySelectorAll("script[type='application/ld+json']")
+    ->Array.filterMap(parseSchemaOrg)
+  }
+
+  // Extract from meta tags
+  let fromMeta = (doc: Dom.document): option<citation> => {
+    let og = {
+      title: getMetaContent("og:title"),
+      authors: getMetaContent("article:author")->split(","),
+      date: getMetaContent("article:published_time"),
+      doi: None,
+      url: getMetaContent("og:url"),
+    }
+    if og.title != "" { Some(og) } else { None }
+  }
+
+  // Export to Zotero format
+  let toZotero = (citation: citation): string => {
+    Js.Json.stringify(/* ... */)
+  }
+}
+----
+
+==== 5. `grim-doi-resolver.res`
+
+**Purpose**: Quick DOI resolution and metadata lookup
+
+[cols="1,3"]
+|===
+|Complexity |Low
+|WASM |No
+|Target Sites |*
+|===
+
+==== 6. `grim-arxiv-helper.res`
+
+**Purpose**: Enhanced arXiv browsing with citation export
+
+[cols="1,3"]
+|===
+|Complexity |Medium
+|WASM |No
+|Target Sites |arxiv.org
+|===
+
+=== Category 3: Code Platforms
+
+==== 7. `grim-gitlab-enhanced.res`
+
+**Purpose**: Enhanced GitLab experience (RSR-focused)
+
+[cols="1,3"]
+|===
+|Complexity |High
+|WASM |No
+|Target Sites |gitlab.com, self-hosted GitLab
+|===
+
+Features:
+- RSR tier badge display
+- Language tier highlighting
+- AIBDP indicator for repos
+- Quick STATE.scm viewer
+
+==== 8. `grim-github-rsr.res`
+
+**Purpose**: RSR compliance checking for GitHub repos
+
+[cols="1,3"]
+|===
+|Complexity |Medium
+|WASM |No
+|Target Sites |github.com
+|===
+
+==== 9. `grim-codeberg-helper.res`
+
+**Purpose**: Codeberg enhancements and RSR integration
+
+[cols="1,3"]
+|===
+|Complexity |Low
+|WASM |No
+|Target Sites |codeberg.org
+|===
+
+=== Category 4: Accessibility
+
+==== 10. `grim-a11y-overlay.res`
+
+**Purpose**: Quick accessibility testing overlay
+
+[cols="1,3"]
+|===
+|Complexity |Medium
+|WASM |No
+|Target Sites |*
+|===
+
+[source,rescript]
+----
+// grim-a11y-overlay.res
+module A11yOverlay = {
+  type issue = {
+    element: Dom.element,
+    severity: [#error | #warning | #info],
+    message: string,
+    wcag: string,  // e.g., "2.4.1"
+  }
+
+  let checkContrast = (el: Dom.element): option<issue> => {
+    let fg = getComputedStyle(el, "color")
+    let bg = getComputedStyle(el, "background-color")
+    let ratio = calculateContrastRatio(fg, bg)
+
+    if ratio < 4.5 {
+      Some({
+        element: el,
+        severity: #error,
+        message: `Contrast ratio ${ratio}:1 below 4.5:1`,
+        wcag: "1.4.3",
+      })
+    } else {
+      None
+    }
+  }
+
+  let checkAltText = (img: Dom.element): option<issue> => {
+    let alt = img->getAttribute("alt")
+    switch alt {
+    | None => Some({
+        element: img,
+        severity: #error,
+        message: "Missing alt text",
+        wcag: "1.1.1",
+      })
+    | Some("") => Some({
+        element: img,
+        severity: #warning,
+        message: "Empty alt text",
+        wcag: "1.1.1",
+      })
+    | Some(_) => None
+    }
+  }
+
+  let audit = (): array<issue> => {
+    let issues = []
+    // Check all images
+    DOM.queryAll("img")->Array.forEach(img => {
+      checkAltText(img)->Option.forEach(i => issues->push(i))
+    })
+    // Check text contrast
+    DOM.queryAll("p, span, a, h1, h2, h3")->Array.forEach(el => {
+      checkContrast(el)->Option.forEach(i => issues->push(i))
+    })
+    issues
+  }
+}
+----
+
+==== 11. `grim-focus-helper.res`
+
+**Purpose**: Enhanced focus indicators and keyboard navigation
+
+[cols="1,3"]
+|===
+|Complexity |Low
+|WASM |No
+|Target Sites |*
+|===
+
+=== Category 5: Content Enhancement
+
+==== 12. `grim-readability.res` (WASM)
+
+**Purpose**: Readability mode with RSR theming
+
+[cols="1,3"]
+|===
+|Complexity |High
+|WASM |Yes (text processing)
+|Target Sites |*
+|===
+
+Uses WASM for fast DOM parsing and text extraction.
+
+==== 13. `grim-dark-mode.res`
+
+**Purpose**: Universal dark mode with sinople color schemes
+
+[cols="1,3"]
+|===
+|Complexity |Medium
+|WASM |No
+|Target Sites |*
+|===
+
+[source,rescript]
+----
+// grim-dark-mode.res
+module DarkMode = {
+  type scheme = Rhodium | Conative | Fogbinder | Custom(string, string)
+
+  let applyScheme = (scheme: scheme): unit => {
+    let css = switch scheme {
+    | Fogbinder => `
+      :root {
+        --bg: #0f0f23;
+        --text: #f8f9fa;
+        --primary: #9b59b6;
+        --accent: #e17055;
+      }
+    `
+    | Conative => `
+      :root {
+        --bg: #1a1a2e;
+        --text: #f8f9fa;
+        --primary: #6c5ce7;
+        --accent: #00b894;
+      }
+    `
+    | _ => ""
+    }
+
+    injectCSS(css)
+  }
+}
+----
+
+==== 14. `grim-semantic-enhancer.res`
+
+**Purpose**: Add missing semantic markup (schema.org, microformats)
+
+[cols="1,3"]
+|===
+|Complexity |Medium
+|WASM |No
+|Target Sites |*
+|===
+
+=== Category 6: Productivity
+
+==== 15. `grim-quick-notes.res`
+
+**Purpose**: Quick annotation and note-taking
+
+[cols="1,3"]
+|===
+|Complexity |Medium
+|WASM |No
+|Target Sites |*
+|===
+
+==== 16. `grim-link-validator.res`
+
+**Purpose**: Check for broken links on page
+
+[cols="1,3"]
+|===
+|Complexity |Low
+|WASM |No
+|Target Sites |*
+|===
+
+==== 17. `grim-table-export.res`
+
+**Purpose**: Export HTML tables to various formats
+
+[cols="1,3"]
+|===
+|Complexity |Medium
+|WASM |Yes (CSV/Excel generation)
+|Target Sites |*
+|===
+
+=== Category 7: Developer Tools
+
+==== 18. `grim-nickel-preview.res`
+
+**Purpose**: Preview Nickel configs in browser
+
+[cols="1,3"]
+|===
+|Complexity |High
+|WASM |Yes (Nickel interpreter)
+|Target Sites |GitLab, GitHub
+|===
+
+==== 19. `grim-rescript-highlighter.res`
+
+**Purpose**: Enhanced ReScript syntax highlighting
+
+[cols="1,3"]
+|===
+|Complexity |Low
+|WASM |No
+|Target Sites |GitLab, GitHub
+|===
+
+==== 20. `grim-state-viewer.res`
+
+**Purpose**: Pretty-print STATE.scm files
+
+[cols="1,3"]
+|===
+|Complexity |Medium
+|WASM |No
+|Target Sites |GitLab, GitHub
+|===
+
+== Build System
+
+=== Project Structure
+
+[source]
+----
+grimrepo-scripts/
+├── src/
+│   ├── core/
+│   │   ├── GrimCore.res
+│   │   ├── GrimDOM.res
+│   │   ├── GrimHTTP.res
+│   │   ├── GrimStorage.res
+│   │   └── GrimUI.res
+│   ├── scripts/
+│   │   ├── aibdp/
+│   │   │   ├── AibdpChecker.res
+│   │   │   └── ConsentTracker.res
+│   │   ├── research/
+│   │   │   ├── CitationExtractor.res
+│   │   │   └── DoiResolver.res
+│   │   ├── code/
+│   │   │   ├── GitlabEnhanced.res
+│   │   │   └── GithubRsr.res
+│   │   └── a11y/
+│   │       ├── A11yOverlay.res
+│   │       └── FocusHelper.res
+│   └── wasm/
+│       ├── readability/
+│       │   └── lib.rs
+│       └── pattern-match/
+│           └── lib.rs
+├── dist/
+│   ├── grim-aibdp-checker.user.js
+│   ├── grim-citation-extractor.user.js
+│   └── ...
+├── rescript.json
+├── deno.json
+├── justfile
+└── STATE.scm
+----
+
+=== Justfile
+
+[source,makefile]
+----
+# grimrepo-scripts justfile
+
+default: build
+
+# Build all scripts
+build: build-core build-scripts
+
+# Build core module
+build-core:
+    npx rescript
+    esbuild lib/es6/src/core/*.js --bundle --outfile=dist/grim-core.js
+
+# Build individual scripts
+build-scripts: build-core
+    @for script in src/scripts/**/*.res; do \
+        name=$(basename $script .res | tr '[:upper:]' '[:lower:]'); \
+        just build-script $name; \
+    done
+
+# Build single script
+build-script name:
+    esbuild lib/es6/src/scripts/**/{{name}}.js \
+        --bundle \
+        --external:grim-core \
+        --banner:js="// ==UserScript==\n// @name Grim {{name}}\n// @require grim-core.js\n// ==/UserScript==" \
+        --outfile=dist/grim-{{name}}.user.js
+
+# Build WASM modules
+build-wasm:
+    cd src/wasm/readability && cargo build --target wasm32-unknown-unknown --release
+    wasm-bindgen target/wasm32-unknown-unknown/release/readability.wasm --out-dir dist/wasm
+
+# Development watch
+dev:
+    npx rescript -w &
+    deno task dev
+
+# Validate
+check: check-rescript check-types
+    @echo "✓ All checks passed"
+
+check-rescript:
+    npx rescript format -check src/**/*.res
+
+check-types:
+    npx rescript typecheck
+----
+
+== WASM Integration
+
+For performance-critical operations, compile Rust to WASM:
+
+[source,rust]
+----
+// src/wasm/readability/lib.rs
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn extract_content(html: &str) -> String {
+    // Fast HTML parsing and content extraction
+    let doc = scraper::Html::parse_document(html);
+    // ... extraction logic
+}
+
+#[wasm_bindgen]
+pub fn calculate_contrast(fg: &str, bg: &str) -> f64 {
+    // Color contrast calculation
+    // Returns ratio
+}
+----
+
+Load in ReScript:
+
+[source,rescript]
+----
+// WasmReadability.res
+@module("./wasm/readability.js")
+external extractContent: string => string = "extract_content"
+
+@module("./wasm/readability.js")
+external calculateContrast: (string, string) => float = "calculate_contrast"
+----
+
+== Priority Order
+
+=== Phase 1 (Core + Essential)
+
+1. `grim-core.res` - Core module
+2. `grim-aibdp-checker.res` - AIBDP awareness
+3. `grim-gitlab-enhanced.res` - Primary platform
+4. `grim-citation-extractor.res` - Research workflow
+
+=== Phase 2 (Accessibility)
+
+5. `grim-a11y-overlay.res` - Accessibility testing
+6. `grim-focus-helper.res` - Keyboard nav
+7. `grim-dark-mode.res` - Theme support
+
+=== Phase 3 (Research)
+
+8. `grim-doi-resolver.res`
+9. `grim-arxiv-helper.res`
+10. `grim-semantic-enhancer.res`
+
+=== Phase 4 (Developer)
+
+11. `grim-state-viewer.res`
+12. `grim-nickel-preview.res`
+13. `grim-rescript-highlighter.res`
+
+=== Phase 5 (WASM Enhanced)
+
+14. `grim-readability.res` (WASM)
+15. `grim-ai-blocker.res` (WASM patterns)
+16. `grim-table-export.res` (WASM)
+
+== See Also
+
+* link:MAAF_INTEGRATION.adoc[MAAF Integration]
+* link:ZOTERHO_INTEGRATION.adoc[ZoteRho Template]
+* https://gitlab.com/extensions-library/monkey-scripts/grimrepo-scripts[grimrepo-scripts Repository]

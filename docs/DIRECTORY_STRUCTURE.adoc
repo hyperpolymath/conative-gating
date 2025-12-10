@@ -1,0 +1,388 @@
+= RSR Standard Directory Structure
+:toc:
+:sectnums:
+
+== Overview
+
+This document defines the canonical directory structure for all RSR (Rhodium Standard Repository) projects. The structure prioritizes:
+
+* **Reproducibility**: Consistent layouts enable automation
+* **Minimalist root**: Only essential files at project root
+* **Predictable navigation**: Same patterns across all 139 repos
+* **Language-agnostic**: Core structure works for all Tier 1/2 languages
+
+== Root Directory (Minimalist)
+
+[source]
+----
+project-name/
+├── .editorconfig          # Editor configuration (required)
+├── .gitignore             # Git ignore patterns (required)
+├── .guix-channel          # Guix channel definition (required)
+├── .well-known/           # RFC standards directory (required)
+├── config/                # Configuration files (if needed)
+├── docs/                  # Documentation (required)
+├── guix.scm               # Guix package definition (required)
+├── justfile               # Task runner (required)
+├── LICENSE.txt            # AGPL + Palimpsest dual license (required)
+├── README.adoc            # Project overview (required)
+├── RSR_COMPLIANCE.adoc    # Compliance tracking (required)
+├── src/                   # Source code (required)
+├── STATE.scm              # Project state checkpoint (recommended)
+└── tests/                 # Test files (if applicable)
+----
+
+== Required Files (Root Level)
+
+=== .editorconfig
+[source,ini]
+----
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{rs,ex,zig,ada,hs}]
+indent_size = 4
+
+[justfile]
+indent_style = space
+indent_size = 4
+----
+
+=== .gitignore
+Language-specific patterns plus common exclusions:
+[source]
+----
+# Build outputs
+/target/
+/_build/
+/dist/
+/lib/
+
+# Dependencies
+/node_modules/
+/.cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+*.pem
+----
+
+=== LICENSE.txt
+Dual license header:
+[source]
+----
+SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+
+This software is dual-licensed under:
+1. GNU Affero General Public License v3.0 or later
+2. Palimpsest License v0.5
+
+See LICENSE-AGPL3.txt and LICENSE-PALIMPSEST.txt for full terms.
+----
+
+=== README.adoc
+Minimal template:
+[source,asciidoc]
+----
+= Project Name
+:toc:
+
+// Badges go here (auto-generated)
+
+== Overview
+
+One paragraph description.
+
+== Quick Start
+
+[source,bash]
+----
+guix shell -D -f guix.scm  # Enter dev environment
+just setup                  # Initialize
+just build                  # Build
+just test                   # Test
+----
+
+== Documentation
+
+See link:docs/[docs/] for full documentation.
+
+== License
+
+AGPL-3.0-or-later OR Palimpsest-0.5
+----
+
+== Required Directories
+
+=== .well-known/
+RFC-compliant metadata:
+[source]
+----
+.well-known/
+├── ai.txt                 # AI usage policy
+├── consent-required.txt   # GDPR consent requirements
+├── humans.txt             # Human-readable credits
+├── provenance.json        # Supply chain metadata
+└── security.txt           # RFC 9116 security policy
+----
+
+=== docs/
+Documentation hierarchy:
+[source]
+----
+docs/
+├── generated/             # Auto-generated docs
+├── man/                   # Man pages
+│   └── project-name.1     # Main man page
+├── ARCHITECTURE.adoc      # Technical design (optional)
+├── CONTRIBUTING.adoc      # Contribution guide
+├── GOVERNANCE.adoc        # Decision-making process
+├── just-cookbook.adoc     # Auto-generated justfile docs
+├── BADGE_SCHEMA.adoc      # Badge documentation
+└── security/
+    ├── sbom.spdx.json     # SPDX SBOM
+    └── sbom.cdx.json      # CycloneDX SBOM
+----
+
+=== src/
+Language-specific source layout:
+
+==== Rust
+[source]
+----
+src/
+├── bin/                   # Binary entry points
+│   └── main.rs
+├── lib.rs                 # Library root
+├── config.rs              # Configuration
+├── error.rs               # Error types
+└── modules/               # Feature modules
+----
+
+==== ReScript
+[source]
+----
+src/
+├── Main.res               # Entry point
+├── Types.res              # Type definitions
+├── Utils.res              # Utilities
+└── components/            # UI components (if app)
+----
+
+==== Elixir
+[source]
+----
+lib/
+├── project_name.ex        # Main module
+├── project_name/
+│   ├── application.ex     # OTP application
+│   └── supervisor.ex      # Supervision tree
+└── mix.exs                # Mix project (at root)
+----
+
+==== Guix Channel
+[source]
+----
+# Minimal structure for pure infrastructure repos
+project-name/
+├── channels.scm           # Channel manifest
+├── guix.scm               # Package definitions
+└── modules/               # Scheme modules
+    └── project-name/
+        └── packages.scm
+----
+
+=== config/ (Optional)
+Nickel configuration files:
+[source]
+----
+config/
+├── config.ncl             # Main configuration
+├── policy.ncl             # Policy definitions
+├── schema.ncl             # Type schemas
+├── environments/          # Per-environment configs
+│   ├── development.ncl
+│   ├── staging.ncl
+│   └── production.ncl
+└── validators.ncl         # Validation rules
+----
+
+=== tests/
+Test organization:
+[source]
+----
+tests/
+├── unit/                  # Unit tests
+├── integration/           # Integration tests
+├── e2e/                   # End-to-end tests
+├── fixtures/              # Test data
+└── helpers/               # Test utilities
+----
+
+== Language-Specific Additions
+
+=== Rust Projects
+[source]
+----
++── Cargo.toml             # Manifest
++── Cargo.lock             # Lockfile
++── Containerfile          # Container build
++── benches/               # Benchmarks
+└── examples/              # Usage examples
+----
+
+=== ReScript Projects
+[source]
+----
++── rescript.json          # ReScript config
++── package.json           # npm dependencies
++── bsconfig.json          # Legacy (if needed)
+└── __tests__/             # Jest tests
+----
+
+=== Elixir Projects
+[source]
+----
++── mix.exs                # Mix manifest
++── mix.lock               # Lockfile
++── config/                # Elixir config
+│   ├── config.exs
+│   ├── dev.exs
+│   ├── prod.exs
+│   └── test.exs
+└── priv/                  # Private assets
+----
+
+=== Guix/Nix Infrastructure
+[source]
+----
++── guix.scm               # Guix package
++── .guix-channel          # Channel definition
++── flake.nix              # Nix flake (fallback)
++── flake.lock             # Nix lockfile
+└── modules/               # Scheme modules
+----
+
+== Prohibited at Root
+
+The following should NOT appear at project root:
+
+[cols="1,2"]
+|===
+|Pattern |Reason
+
+|`Dockerfile`
+|Use `Containerfile` instead
+
+|`*.md` (except CHANGELOG.md)
+|Use AsciiDoc (.adoc)
+
+|`.env`
+|Use `.env.example` template only
+
+|`setup.py` / `requirements.txt`
+|Python only in `salt/` subdirectory
+
+|`tsconfig.json`
+|TypeScript deprecated (use ReScript)
+
+|`.cue` files
+|CUE not permitted (use Guile/Nickel)
+
+|Nested `node_modules/`
+|Must be in .gitignore
+|===
+
+== CI/CD Directory
+
+[source]
+----
+.github/
+├── workflows/
+│   ├── ci.yml             # Main CI pipeline
+│   ├── release.yml        # Release automation
+│   └── security.yml       # Security scanning
+├── ISSUE_TEMPLATE/
+│   ├── bug_report.md
+│   └── feature_request.md
+└── PULL_REQUEST_TEMPLATE.md
+
+.gitlab-ci.yml             # GitLab CI (parallel support)
+
+hooks/                     # Git hooks (version controlled)
+├── pre-commit
+├── commit-msg
+├── pre-push
+└── post-merge
+----
+
+== Scripts Directory (Optional)
+
+[source]
+----
+scripts/
+├── generate-badges.sh     # Badge generation
+├── update-readme-badges.sh
+├── install-hooks.sh       # Hook installation
+└── release.sh             # Release automation
+----
+
+== Salt Directory (Python Exception)
+
+Python is ONLY permitted in `salt/` for SaltStack states:
+[source]
+----
+salt/
+├── top.sls                # State top file
+├── states/                # Salt states
+│   └── project.sls
+├── pillar/                # Pillar data
+└── modules/               # Custom modules
+    └── _modules/
+        └── project.py     # Python ONLY here
+----
+
+== Template Application
+
+To apply this structure to a new or existing repo:
+
+[source,bash]
+----
+# From conative-gating/scripts
+./apply-directory-structure.sh /path/to/repo
+
+# Or via justfile
+just setup-structure
+----
+
+== Validation
+
+Use RSR compliance check:
+[source,bash]
+----
+just validate-rsr
+----
+
+This verifies:
+
+* All required files present
+* No prohibited files at root
+* Correct directory structure
+* .well-known contents complete
+* Guix/Nix configuration exists

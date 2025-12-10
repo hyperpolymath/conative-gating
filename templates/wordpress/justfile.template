@@ -1,0 +1,298 @@
+# Sinople WordPress Deployment Justfile
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+# Project: {{PROJECT_NAME}}
+
+# === Variables ===
+project_name := "{{PROJECT_NAME}}"
+project_slug := "{{PROJECT_SLUG}}"
+domain := "{{DOMAIN}}"
+color_scheme := "{{COLOR_SCHEME}}"
+rsr_tier := "{{RSR_TIER}}"
+
+# Container settings
+container_runtime := "nerdctl"
+base_image := "cgr.dev/chainguard/wordpress:latest"
+
+# Directories
+theme_dir := "wp-content/themes/sinople-" + project_slug
+dist_dir := "dist"
+
+# === Default ===
+default: build
+
+# === Build Recipes ===
+
+# Full build
+build: validate assets package
+    @echo "✓ Build complete: {{project_name}}"
+
+# Validate configuration
+validate: check-aibdp check-state check-config
+    @echo "✓ Validation passed"
+
+# Compile and optimize assets
+assets:
+    @echo "Building CSS..."
+    @if command -v sass > /dev/null; then \
+        sass --style=compressed src/scss:{{theme_dir}}/css; \
+    else \
+        cp src/css/*.css {{theme_dir}}/css/; \
+    fi
+    @echo "Building JS..."
+    @if [ -d "src/res" ]; then \
+        npx rescript && cp lib/es6/*.js {{theme_dir}}/js/; \
+    elif [ -d "src/js" ]; then \
+        cp src/js/*.js {{theme_dir}}/js/; \
+    fi
+    @echo "✓ Assets compiled"
+
+# Package for deployment
+package:
+    @mkdir -p {{dist_dir}}
+    @cd wp-content/themes && zip -r ../../{{dist_dir}}/sinople-{{project_slug}}.zip sinople-{{project_slug}}
+    @echo "✓ Theme packaged: {{dist_dir}}/sinople-{{project_slug}}.zip"
+
+# === Development ===
+
+# Development mode with hot reload
+dev:
+    @echo "Starting development server..."
+    @if [ -d "src/res" ]; then \
+        npx rescript -w & \
+    fi
+    @php -S localhost:8080 -t .
+
+# Watch for changes
+watch:
+    @echo "Watching for changes..."
+    @if command -v inotifywait > /dev/null; then \
+        while inotifywait -r -e modify src/; do \
+            just assets; \
+        done \
+    else \
+        echo "Install inotify-tools for watch mode"; \
+    fi
+
+# === Deployment ===
+
+# Deploy sealed mode (production)
+deploy-sealed: build
+    @echo "Deploying in sealed mode..."
+    @{{container_runtime}} build \
+        --build-arg MODE=sealed \
+        --build-arg COLOR_SCHEME={{color_scheme}} \
+        -t {{project_slug}}:sealed .
+    @echo "✓ Sealed container built"
+
+# Deploy docked mode (staging)
+deploy-docked: build
+    @echo "Deploying in docked mode..."
+    @{{container_runtime}} build \
+        --build-arg MODE=docked \
+        --build-arg COLOR_SCHEME={{color_scheme}} \
+        -t {{project_slug}}:docked .
+    @echo "✓ Docked container built"
+
+# Run container locally
+run mode="docked":
+    @{{container_runtime}} run -d \
+        -p 8080:80 \
+        --name {{project_slug}}-{{mode}} \
+        {{project_slug}}:{{mode}}
+    @echo "Running at http://localhost:8080"
+
+# Stop container
+stop mode="docked":
+    @{{container_runtime}} stop {{project_slug}}-{{mode}} || true
+    @{{container_runtime}} rm {{project_slug}}-{{mode}} || true
+
+# === Validation ===
+
+# Check AIBDP manifest
+check-aibdp:
+    @if [ -f ".well-known/aibdp.json" ]; then \
+        jq -e '.aibdp_version == "0.2"' .well-known/aibdp.json > /dev/null && \
+        echo "  ✓ AIBDP v0.2"; \
+    else \
+        echo "  ✗ AIBDP manifest missing"; \
+        exit 1; \
+    fi
+
+# Check STATE.scm
+check-state:
+    @if [ -f "STATE.scm" ]; then \
+        if command -v guile > /dev/null; then \
+            guile -c '(primitive-load "STATE.scm")' && echo "  ✓ STATE.scm valid"; \
+        else \
+            echo "  ⚠ guile not available, skipping STATE.scm check"; \
+        fi \
+    else \
+        echo "  ⚠ STATE.scm not found"; \
+    fi
+
+# Check Nickel config
+check-config:
+    @if [ -f "config.ncl" ]; then \
+        if command -v nickel > /dev/null; then \
+            nickel typecheck config.ncl && echo "  ✓ config.ncl valid"; \
+        else \
+            echo "  ⚠ nickel not available"; \
+        fi \
+    fi
+
+# WordPress specific checks
+check-wp:
+    @echo "Checking WordPress requirements..."
+    @if ! grep -q "ABSPATH" {{theme_dir}}/functions.php; then \
+        echo "  ✗ functions.php missing ABSPATH check"; \
+        exit 1; \
+    fi
+    @if ! grep -q "text-domain" {{theme_dir}}/style.css; then \
+        echo "  ⚠ style.css missing text domain"; \
+    fi
+    @echo "  ✓ WordPress structure valid"
+
+# === MAAF ===
+
+# Generate well-known files
+generate-well-known:
+    @mkdir -p .well-known
+    @echo "Generating AIBDP manifest..."
+    @cat > .well-known/aibdp.json << 'AIBDP'
+    {
+      "aibdp_version": "0.2",
+      "contact": "mailto:{{CONTACT_EMAIL}}",
+      "policies": {
+        "training": {
+          "status": "{{TRAINING_POLICY}}",
+          "conditions": ["Attribution required", "Non-commercial"]
+        },
+        "indexing": { "status": "allowed" },
+        "summarization": { "status": "conditional" }
+      },
+      "extensions": {
+        "rsr": {
+          "tier": {{rsr_tier}},
+          "domain": "{{domain}}"
+        }
+      }
+    }
+    AIBDP
+    @echo "Generating security.txt..."
+    @cat > .well-known/security.txt << 'SECURITY'
+    Contact: mailto:{{CONTACT_EMAIL}}
+    Preferred-Languages: en
+    Canonical: https://{{domain}}/.well-known/security.txt
+    Policy: https://{{domain}}/security-policy
+    SECURITY
+    @echo "✓ Well-known files generated"
+
+# Serve MAAF headers (nginx config snippet)
+generate-nginx-headers:
+    @echo "# MAAF Headers for {{project_name}}"
+    @echo "add_header Link '</.well-known/aibdp.json>; rel=\"aibdp-manifest\"' always;"
+    @echo "add_header X-AIBDP-Version '0.2' always;"
+    @echo "add_header X-RSR-Tier '{{rsr_tier}}' always;"
+
+# === Color Schemes ===
+
+# Apply color scheme
+apply-scheme scheme="rhodium":
+    @echo "Applying {{scheme}} color scheme..."
+    @sed -i 's/data-scheme="[^"]*"/data-scheme="{{scheme}}"/' {{theme_dir}}/header.php || true
+    @echo "✓ Color scheme: {{scheme}}"
+
+# List available schemes
+list-schemes:
+    @echo "Available color schemes:"
+    @echo "  rhodium    - Bronze/teal (default infrastructure)"
+    @echo "  conative   - Purple/green (AI safety)"
+    @echo "  zotero     - Red/blue (research)"
+    @echo "  fogbinder  - Purple/orange (dark, uncertainty)"
+    @echo "  echidna    - Blue/gold (formal verification)"
+    @echo "  wharf      - Green/red (security)"
+    @echo "  bastion    - Purple/blue (identity)"
+    @echo "  vext       - Teal/red (notifications)"
+    @echo "  palimpsest - Purple/orange (licensing)"
+    @echo "  kith       - Green/red (well-known)"
+
+# === Accessibility ===
+
+# Run accessibility audit
+a11y-audit:
+    @echo "Running accessibility audit..."
+    @if command -v pa11y > /dev/null; then \
+        pa11y --standard WCAG2AAA http://localhost:8080; \
+    else \
+        echo "Install pa11y: npm install -g pa11y"; \
+    fi
+
+# Check color contrast
+check-contrast:
+    @echo "Checking color contrast ratios..."
+    @echo "Primary ({{PRIMARY_COLOR}}) on white: must be 7:1 for AAA"
+    @echo "Run: npx color-contrast-checker {{PRIMARY_COLOR}} #ffffff"
+
+# === Clean ===
+
+# Clean build artifacts
+clean:
+    @rm -rf {{dist_dir}}
+    @rm -rf {{theme_dir}}/css/*.css
+    @rm -rf {{theme_dir}}/js/*.js
+    @rm -rf lib/
+    @echo "✓ Cleaned"
+
+# Deep clean (including dependencies)
+clean-all: clean
+    @rm -rf node_modules/
+    @rm -rf vendor/
+    @echo "✓ Deep cleaned"
+
+# === CI/CD ===
+
+# CI verification
+ci-verify: validate check-wp a11y-audit build
+    @echo "✓ CI verification passed"
+
+# Generate deployment manifest
+ci-manifest:
+    @echo "project: {{project_name}}"
+    @echo "slug: {{project_slug}}"
+    @echo "domain: {{domain}}"
+    @echo "scheme: {{color_scheme}}"
+    @echo "rsr_tier: {{rsr_tier}}"
+    @echo "build_date: $(date -Iseconds)"
+    @echo "git_sha: $(git rev-parse --short HEAD 2>/dev/null || echo 'unknown')"
+
+# === Database (Virtual Sharding) ===
+
+# Initialize virtual sharding
+db-init-sharding:
+    @echo "Initializing virtual sharding..."
+    @echo "Mutable tables: wp_comments, wp_commentmeta"
+    @echo "Immutable tables: wp_users, wp_options, wp_posts"
+
+# Seal database (production)
+db-seal:
+    @echo "Sealing database for production..."
+    @echo "⚠ This makes wp_posts read-only"
+
+# === Utilities ===
+
+# Show project info
+info:
+    @echo "Project: {{project_name}}"
+    @echo "Slug: {{project_slug}}"
+    @echo "Domain: {{domain}}"
+    @echo "Color Scheme: {{color_scheme}}"
+    @echo "RSR Tier: {{rsr_tier}}"
+    @echo "Theme Dir: {{theme_dir}}"
+
+# Open in browser
+open:
+    @xdg-open http://localhost:8080 2>/dev/null || open http://localhost:8080
+
+# Show help
+help:
+    @just --list

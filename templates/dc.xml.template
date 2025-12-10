@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Dublin Core Metadata for {{PROJECT_NAME}}
+  https://www.dublincore.org/specifications/dublin-core/dcmi-terms/
+  SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+
+  Place in: .well-known/dc.xml
+-->
+<metadata
+  xmlns="http://purl.org/dc/elements/1.1/"
+  xmlns:dcterms="http://purl.org/dc/terms/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://purl.org/dc/elements/1.1/ http://dublincore.org/schemas/xmls/qdc/2008/02/11/dc.xsd">
+
+  <!-- Core Elements -->
+  <title>{{PROJECT_NAME}}</title>
+  <creator>Jonathan D.A. Jewell</creator>
+  <subject>{{DOMAIN}}</subject>
+  <subject>RSR</subject>
+  <subject>Rhodium Standard</subject>
+  <description>{{DESCRIPTION}}</description>
+  <publisher>Rhodium Standard</publisher>
+  <contributor>Jonathan D.A. Jewell</contributor>
+  <date>{{YEAR}}</date>
+  <type>Software</type>
+  <format>application/octet-stream</format>
+  <identifier>https://github.com/hyperpolymath/{{PROJECT_NAME}}</identifier>
+  <source>https://github.com/hyperpolymath/{{PROJECT_NAME}}</source>
+  <language>en</language>
+  <relation>https://rhodium.sh</relation>
+  <coverage>Global</coverage>
+  <rights>AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5</rights>
+
+  <!-- Dublin Core Terms (Extended) -->
+  <dcterms:abstract>{{DESCRIPTION}}</dcterms:abstract>
+  <dcterms:accessRights>Open Source</dcterms:accessRights>
+  <dcterms:alternative>{{PROJECT_NAME}}</dcterms:alternative>
+  <dcterms:audience>Developers</dcterms:audience>
+  <dcterms:available>{{RELEASE_DATE}}</dcterms:available>
+  <dcterms:bibliographicCitation>
+    Jewell, J.D.A. ({{YEAR}}). {{PROJECT_NAME}} (Version {{VERSION}}) [Computer software]. https://github.com/hyperpolymath/{{PROJECT_NAME}}
+  </dcterms:bibliographicCitation>
+  <dcterms:created>{{CREATED_DATE}}</dcterms:created>
+  <dcterms:dateAccepted>{{RELEASE_DATE}}</dcterms:dateAccepted>
+  <dcterms:dateSubmitted>{{CREATED_DATE}}</dcterms:dateSubmitted>
+  <dcterms:educationLevel>Advanced</dcterms:educationLevel>
+  <dcterms:extent>{{LOC}} lines of code</dcterms:extent>
+  <dcterms:hasFormat>GitHub Repository</dcterms:hasFormat>
+  <dcterms:hasPart>{{COMPONENTS}}</dcterms:hasPart>
+  <dcterms:hasVersion>{{VERSION}}</dcterms:hasVersion>
+  <dcterms:isPartOf>RSR Framework</dcterms:isPartOf>
+  <dcterms:issued>{{RELEASE_DATE}}</dcterms:issued>
+  <dcterms:license>https://spdx.org/licenses/AGPL-3.0-or-later.html</dcterms:license>
+  <dcterms:mediator>GitHub</dcterms:mediator>
+  <dcterms:medium>Digital</dcterms:medium>
+  <dcterms:modified>{{MODIFIED_DATE}}</dcterms:modified>
+  <dcterms:provenance>Created by Jonathan D.A. Jewell as part of Rhodium Standard ecosystem</dcterms:provenance>
+  <dcterms:references>See CITATION.cff</dcterms:references>
+  <dcterms:rightsHolder>Jonathan D.A. Jewell</dcterms:rightsHolder>
+
+</metadata>

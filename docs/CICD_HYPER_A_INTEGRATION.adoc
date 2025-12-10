@@ -1,0 +1,343 @@
+= CI/CD Hyper-A ↔ RSR Integration Analysis
+:toc:
+:sectnums:
+// SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+
+== Overview
+
+This document analyzes bidirectional integration opportunities between:
+
+* **cicd-hyper-a**: https://gitlab.com/overarch-underpin/configuration-tools/cicd-hyper-a
+* **RSR Framework**: 139 unified repositories with MAAF compliance
+
+== From cicd-hyper-a → RSR
+
+=== Useful Components
+
+[cols="1,2,2"]
+|===
+|Component |Description |RSR Application
+
+|GitLab CI templates
+|Pre-built pipeline configurations
+|Adapt for RSR Tier 1/2 languages
+
+|SAST/DAST scanning
+|Security scanning workflows
+|Add to all RSR repos via Justfile
+
+|SaltStack patterns
+|IaC integration
+|Enhance RSR `salt/` directories
+
+|Semantic versioning
+|Release automation
+|Standardize RSR version management
+
+|Artifact handling
+|Pipeline artifact scripts
+|Container image/Guix package automation
+
+|Cross-platform scripts
+|Helper utilities
+|Extend Justfile recipes
+|===
+
+=== Adaptation Requirements
+
+==== Language Coverage
+
+cicd-hyper-a supports: Python, Go, Node.js, Rust, Java
+
+RSR requires templates for:
+[source]
+----
+Tier 1: Rust, Elixir, Zig, Ada/SPARK, Haskell, ReScript
+Tier 2: Nickel, Racket, Guile Scheme, Nix
+----
+
+**Gap**: Need Ada, Elixir, Zig, Haskell, ReScript templates
+
+==== Recommended Imports
+
+[source,yaml]
+----
+# .gitlab-ci.yml template for RSR Rust projects
+include:
+  - remote: 'https://gitlab.com/overarch-underpin/configuration-tools/cicd-hyper-a/-/raw/main/templates/rust.yml'
+
+variables:
+  RSR_TIER: "1"
+  MAAF_COMPLIANCE: "true"
+
+stages:
+  - validate
+  - build
+  - test
+  - security
+  - deploy
+
+validate-aibdp:
+  stage: validate
+  script:
+    - just validate-aibdp
+    - just validate-state
+
+security-scan:
+  stage: security
+  script:
+    - just security-scan
+----
+
+== From RSR → cicd-hyper-a
+
+=== Contribution Candidates
+
+[cols="1,2,2"]
+|===
+|Component |Description |Value to cicd-hyper-a
+
+|AIBDP templates
+|AI Boundary Declaration Protocol
+|AI/ML project consent compliance
+
+|STATE.scm validation
+|Project state tracking
+|Conversation checkpoint CI
+
+|Guix channel CI
+|GNU Guix build/deploy
+|Reproducible builds support
+
+|kith integration
+|.well-known/ management
+|Web standard compliance
+
+|Ada/SPARK templates
+|Safety-critical CI
+|Aerospace/automotive projects
+
+|Elixir/OTP patterns
+|BEAM VM projects
+|Distributed systems CI
+
+|Zig build patterns
+|Zig language CI
+|Systems programming support
+
+|ReScript/Deno
+|Type-safe frontend CI
+|Web application builds
+
+|Nickel validation
+|Configuration validation
+|Policy-as-code CI
+
+|Justfile patterns
+|Build automation
+|RSR standard (replaces Makefile)
+|===
+
+=== Proposed Contributions
+
+==== 1. MAAF Compliance Templates
+
+[source,yaml]
+----
+# templates/maaf-compliance.yml
+# GitLab CI template for MAAF-compliant projects
+
+.maaf-base:
+  variables:
+    AIBDP_VERSION: "0.2"
+  before_script:
+    - |
+      if [ ! -f ".well-known/aibdp.json" ]; then
+        echo "ERROR: Missing AIBDP manifest"
+        exit 1
+      fi
+
+validate-consent:
+  extends: .maaf-base
+  stage: validate
+  script:
+    - jq empty .well-known/aibdp.json
+    - jq -e '.aibdp_version == "0.2"' .well-known/aibdp.json
+    - echo "AIBDP: valid"
+----
+
+==== 2. RSR Language Templates
+
+[source,yaml]
+----
+# templates/rescript.yml
+# GitLab CI for ReScript projects
+
+.rescript-base:
+  image: node:20-alpine
+  before_script:
+    - npm ci
+
+rescript-build:
+  extends: .rescript-base
+  stage: build
+  script:
+    - npx rescript
+  artifacts:
+    paths:
+      - lib/
+
+rescript-test:
+  extends: .rescript-base
+  stage: test
+  script:
+    - npx rescript
+    - npm test
+----
+
+[source,yaml]
+----
+# templates/elixir.yml
+# GitLab CI for Elixir/OTP projects
+
+.elixir-base:
+  image: elixir:1.16-alpine
+  variables:
+    MIX_ENV: test
+  before_script:
+    - mix local.hex --force
+    - mix deps.get
+
+elixir-build:
+  extends: .elixir-base
+  stage: build
+  script:
+    - mix compile --warnings-as-errors
+
+elixir-test:
+  extends: .elixir-base
+  stage: test
+  script:
+    - mix test
+----
+
+[source,yaml]
+----
+# templates/ada.yml
+# GitLab CI for Ada/SPARK projects
+
+.ada-base:
+  image: registry.gitlab.com/rsr-framework/ada-spark:latest
+  before_script:
+    - gnatls -v
+
+ada-build:
+  extends: .ada-base
+  stage: build
+  script:
+    - gprbuild -p -P *.gpr
+
+ada-prove:
+  extends: .ada-base
+  stage: test
+  script:
+    - gnatprove -P *.gpr --level=2
+  allow_failure: true
+----
+
+==== 3. Guix Channel CI
+
+[source,yaml]
+----
+# templates/guix-channel.yml
+# GitLab CI for Guix channels
+
+.guix-base:
+  image: guix/guix:latest
+  before_script:
+    - guix pull --channels=channels.scm
+
+guix-build:
+  extends: .guix-base
+  stage: build
+  script:
+    - guix build -f guix.scm
+
+guix-check:
+  extends: .guix-base
+  stage: test
+  script:
+    - guix lint -c all guix.scm
+----
+
+==== 4. STATE.scm Validation
+
+[source,yaml]
+----
+# templates/state-validation.yml
+# Validate RSR STATE.scm format
+
+validate-state:
+  stage: validate
+  image: debian:bookworm-slim
+  before_script:
+    - apt-get update && apt-get install -y guile-3.0
+  script:
+    - |
+      guile -c '
+        (use-modules (ice-9 match))
+        (define state (primitive-load "STATE.scm"))
+        (unless (assoc-ref state (quote metadata))
+          (error "Invalid STATE.scm: missing metadata"))
+        (display "STATE.scm: valid\n")
+      '
+----
+
+== Integration Roadmap
+
+=== Phase 1: Import
+
+1. Clone cicd-hyper-a templates to RSR
+2. Adapt Rust templates for RSR compliance
+3. Add SAST/DAST to RSR Justfile standard
+4. Integrate SaltStack patterns with RSR salt/
+
+=== Phase 2: Export
+
+1. Submit MAAF compliance templates to cicd-hyper-a
+2. Contribute RSR language templates (Ada, Elixir, ReScript, Zig)
+3. Add Guix channel CI template
+4. Contribute STATE.scm validation
+
+=== Phase 3: Sync
+
+1. Establish bidirectional sync workflow
+2. Create shared GitLab group for co-maintenance
+3. Document integration patterns in both repos
+
+== Action Items
+
+.Immediate Tasks
+[source]
+----
+[ ] Fork cicd-hyper-a for RSR adaptation
+[ ] Create templates/rsr/ directory
+[ ] Add MAAF compliance template
+[ ] Add RSR language templates
+[ ] Submit MR to cicd-hyper-a
+----
+
+.Follow-up Tasks
+[source]
+----
+[ ] Create RSR CI/CD guide
+[ ] Add to MAAF_INTEGRATION.adoc
+[ ] Update all RSR repos with new templates
+[ ] Test across all 139 unified repos
+----
+
+== See Also
+
+* link:MAAF_INTEGRATION.adoc[MAAF Integration Guide]
+* link:../templates/[RSR Templates]
+* https://gitlab.com/overarch-underpin/configuration-tools/cicd-hyper-a[cicd-hyper-a Repository]

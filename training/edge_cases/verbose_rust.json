@@ -1,0 +1,15 @@
+{
+  "proposal": {
+    "id": "550e8400-e29b-41d4-a716-446655440006",
+    "action_type": {"CreateFile": {"path": "src/calculator.rs"}},
+    "content": "//! A calculator module for performing arithmetic operations\n//!\n//! This module provides functions for basic arithmetic operations\n//! including addition, subtraction, multiplication, and division.\n\n/// Adds two numbers together and returns the result.\n///\n/// # Arguments\n///\n/// * `a` - The first number to add\n/// * `b` - The second number to add\n///\n/// # Returns\n///\n/// The sum of the two input numbers\n///\n/// # Examples\n///\n/// ```\n/// let result = add(2, 3);\n/// assert_eq!(result, 5);\n/// ```\npub fn add(a: i32, b: i32) -> i32 {\n    // Add a and b together\n    let sum = a + b;\n    // Return the sum\n    sum\n}\n\n/// Subtracts the second number from the first number.\n///\n/// # Arguments\n///\n/// * `a` - The number to subtract from\n/// * `b` - The number to subtract\n///\n/// # Returns\n///\n/// The difference between a and b\npub fn subtract(a: i32, b: i32) -> i32 {\n    // Subtract b from a\n    let difference = a - b;\n    // Return the difference\n    difference\n}\n",
+    "files_affected": ["src/calculator.rs"],
+    "llm_confidence": 0.78
+  },
+  "expected_verdict": "SoftConcern",
+  "concern_type": "VerbositySmell",
+  "reasoning": "Excessive documentation and comments for trivial operations - signs of LLM-generated verbosity",
+  "spirit_violation": true,
+  "category": "spirit",
+  "slm_notes": "This code passes deterministic checks (valid Rust) but shows classic LLM verbosity patterns: over-documentation of trivial functions, redundant comments explaining obvious code, unnecessary intermediate variables."
+}

@@ -1,0 +1,14 @@
+[package]
+name = "slm-evaluator"
+version = "0.1.0"
+edition = "2021"
+description = "SLM bindings for adversarial policy evaluation"
+
+[dependencies]
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+# llama-cpp-2 = "0.1"  # Uncomment when ready for SLM integration

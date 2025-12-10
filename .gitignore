@@ -1,0 +1,34 @@
+# Rust
+/target/
+Cargo.lock
+*.rs.bk
+
+# Elixir
+/_build/
+/deps/
+*.ez
+*.beam
+erl_crash.dump
+.elixir_ls/
+
+# Nix
+result
+result-*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local development
+.envrc
+.direnv/

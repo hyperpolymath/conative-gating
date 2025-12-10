@@ -1,0 +1,14 @@
+{
+  "proposal": {
+    "id": "550e8400-e29b-41d4-a716-446655440005",
+    "action_type": {"CreateFile": {"path": "package.json"}},
+    "content": "{\n  \"name\": \"my-project\",\n  \"version\": \"1.0.0\",\n  \"scripts\": {\n    \"start\": \"node index.js\",\n    \"test\": \"jest\"\n  },\n  \"dependencies\": {\n    \"express\": \"^4.18.0\"\n  }\n}\n",
+    "files_affected": ["package.json"],
+    "llm_confidence": 0.85
+  },
+  "expected_verdict": "HardViolation",
+  "violation_type": "ForbiddenToolchain",
+  "reasoning": "npm usage without deno.json companion file",
+  "spirit_violation": false,
+  "category": "toolchain"
+}

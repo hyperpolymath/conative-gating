@@ -1,0 +1,13 @@
+{
+  "proposal": {
+    "id": "550e8400-e29b-41d4-a716-446655440007",
+    "action_type": {"CreateFile": {"path": "training/prepare_data.py"}},
+    "content": "#!/usr/bin/env python3\n\"\"\"Prepare training data for SLM evaluation.\"\"\"\n\nimport json\nfrom pathlib import Path\n\ndef load_examples(directory: Path):\n    \"\"\"Load all JSON examples from a directory.\"\"\"\n    examples = []\n    for f in directory.glob('*.json'):\n        with open(f) as fp:\n            examples.append(json.load(fp))\n    return examples\n\nif __name__ == '__main__':\n    data = load_examples(Path('training/compliant'))\n    print(f'Loaded {len(data)} examples')\n",
+    "files_affected": ["training/prepare_data.py"],
+    "llm_confidence": 0.90
+  },
+  "expected_verdict": "Compliant",
+  "reasoning": "Python is allowed in training/ directory per exception rule",
+  "spirit_violation": false,
+  "category": "language"
+}

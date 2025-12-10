@@ -1,0 +1,22 @@
+# {{PROJECT_NAME}} - Distroless Container
+# Build: nerdctl build -t {{PROJECT_NAME}}:latest .
+# Run: nerdctl run --rm {{PROJECT_NAME}}:latest
+
+# Build stage
+FROM cgr.dev/chainguard/wolfi-base:latest AS builder
+
+RUN apk add --no-cache {{BUILD_DEPS}}
+
+WORKDIR /build
+COPY . .
+RUN {{BUILD_COMMAND}}
+
+# Runtime stage - Distroless
+FROM gcr.io/distroless/static-debian12:nonroot
+
+COPY --from=builder /build/{{BINARY_PATH}} /app/{{BINARY_NAME}}
+
+WORKDIR /app
+USER nonroot:nonroot
+
+ENTRYPOINT ["/app/{{BINARY_NAME}}"]

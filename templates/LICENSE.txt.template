@@ -1,0 +1,67 @@
+SPDX-License-Identifier: AGPL-3.0-or-later AND Palimpsest-0.4
+SPDX-FileCopyrightText: 2024-2025 Jonathan D.A. Jewell
+
+================================================================================
+DUAL LICENSE: AGPL-3.0-or-later AND PALIMPSEST LICENSE v0.4
+================================================================================
+
+This project is dual-licensed. You may choose to use, copy, modify, and
+distribute this work under the terms of either license.
+
+--------------------------------------------------------------------------------
+GNU AFFERO GENERAL PUBLIC LICENSE v3.0 (or later)
+--------------------------------------------------------------------------------
+
+Copyright (C) 2024-2025 Jonathan D.A. Jewell
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+Full text: https://www.gnu.org/licenses/agpl-3.0.txt
+
+--------------------------------------------------------------------------------
+PALIMPSEST LICENSE v0.4
+--------------------------------------------------------------------------------
+
+The Palimpsest License v0.4 is a future-proof, layered licensing framework
+designed for creative work in the age of AI. It protects creators while
+addressing modern challenges like AI training, emotional lineage, and
+quantum-proof traceability.
+
+Governing Law: Netherlands (Book 6, Dutch Civil Code)
+Enforcement Venue: Scotland (via Hague Convention, 2005)
+Binding Languages: Dutch (primary legal), English (informative)
+
+Key Protection Mechanisms:
+  - Clause 1.2: Non-Interpretive (NI) systems require explicit consent
+  - Clause 2.3: Metadata preservation is mandatory
+  - Emotional Lineage: Protects narrative intent and cultural context
+  - Quantum-Proof Traceability: Future-proofs attribution mechanisms
+
+Full text: https://github.com/palimpsest-license/palimpsest-license
+
+--------------------------------------------------------------------------------
+CHOOSING YOUR LICENSE
+--------------------------------------------------------------------------------
+
+You may choose to use this work under:
+  1. AGPL-3.0-or-later only (copyleft, network use triggers sharing)
+  2. Palimpsest License v0.4 only (enhanced protections for creative work)
+  3. Both licenses simultaneously (maximum compatibility and protection)
+
+For derivative works:
+  - Network services: AGPL-3.0-or-later applies
+  - Creative/narrative content: Palimpsest License recommended
+  - Mixed projects: Dual licensing provides flexibility
+
+================================================================================

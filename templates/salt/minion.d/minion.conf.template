@@ -1,0 +1,35 @@
+# {{PROJECT_NAME}} - Salt Minion Configuration
+# For offline development with robot-vacuum-cleaner
+
+master: localhost
+master_type: disable
+
+file_client: local
+file_roots:
+  base:
+    - /srv/{{PROJECT_NAME}}/salt/states
+    - /srv/robot-vacuum-cleaner/salt/states
+
+pillar_roots:
+  base:
+    - /srv/{{PROJECT_NAME}}/salt/pillar
+
+# Project-specific grain
+grains:
+  project: {{PROJECT_NAME}}
+  language: {{LANGUAGE}}
+  tier: {{TIER}}
+
+# State output
+state_output: changes
+state_verbose: False
+
+# Logging
+log_level: warning
+log_file: /var/log/salt/minion
+
+# Auto-accept
+auto_accept: True
+
+# Timeout settings
+timeout: 300

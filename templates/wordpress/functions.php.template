@@ -1,0 +1,291 @@
+<?php
+/**
+ * Sinople Child Theme Functions - {{PROJECT_NAME}}
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * RSR-compliant WordPress theme functions with MAAF integration.
+ *
+ * @package Sinople_{{PROJECT_SLUG}}
+ * @since 1.0.0
+ */
+
+// Prevent direct access
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/**
+ * Theme Setup
+ */
+function {{PROJECT_SLUG}}_setup() {
+    // Accessibility: Add support for title tag
+    add_theme_support('title-tag');
+
+    // Accessibility: HTML5 markup
+    add_theme_support('html5', array(
+        'search-form',
+        'comment-form',
+        'comment-list',
+        'gallery',
+        'caption',
+        'style',
+        'script',
+        'navigation-widgets',
+    ));
+
+    // Responsive embeds
+    add_theme_support('responsive-embeds');
+
+    // Custom logo with accessibility
+    add_theme_support('custom-logo', array(
+        'height'      => 100,
+        'width'       => 400,
+        'flex-height' => true,
+        'flex-width'  => true,
+    ));
+
+    // Editor color palette (RSR scheme: {{COLOR_SCHEME}})
+    add_theme_support('editor-color-palette', array(
+        array(
+            'name'  => __('Primary', '{{PROJECT_SLUG}}'),
+            'slug'  => 'primary',
+            'color' => '{{PRIMARY_COLOR}}',
+        ),
+        array(
+            'name'  => __('Secondary', '{{PROJECT_SLUG}}'),
+            'slug'  => 'secondary',
+            'color' => '{{SECONDARY_COLOR}}',
+        ),
+        array(
+            'name'  => __('Accent', '{{PROJECT_SLUG}}'),
+            'slug'  => 'accent',
+            'color' => '{{ACCENT_COLOR}}',
+        ),
+    ));
+
+    // Register navigation menus
+    register_nav_menus(array(
+        'primary'   => __('Primary Menu', '{{PROJECT_SLUG}}'),
+        'footer'    => __('Footer Menu', '{{PROJECT_SLUG}}'),
+        'social'    => __('Social Links', '{{PROJECT_SLUG}}'),
+    ));
+}
+add_action('after_setup_theme', '{{PROJECT_SLUG}}_setup');
+
+/**
+ * Enqueue Styles and Scripts
+ */
+function {{PROJECT_SLUG}}_scripts() {
+    // Parent theme styles
+    wp_enqueue_style(
+        'sinople-parent',
+        get_template_directory_uri() . '/style.css',
+        array(),
+        '1.0.0'
+    );
+
+    // Child theme styles
+    wp_enqueue_style(
+        '{{PROJECT_SLUG}}-style',
+        get_stylesheet_uri(),
+        array('sinople-parent'),
+        '1.0.0'
+    );
+
+    // Accessibility enhancements
+    wp_enqueue_script(
+        '{{PROJECT_SLUG}}-a11y',
+        get_stylesheet_directory_uri() . '/js/accessibility.js',
+        array(),
+        '1.0.0',
+        true
+    );
+
+    // Skip link focus fix
+    wp_enqueue_script(
+        '{{PROJECT_SLUG}}-skip-link',
+        get_stylesheet_directory_uri() . '/js/skip-link-focus-fix.js',
+        array(),
+        '1.0.0',
+        true
+    );
+}
+add_action('wp_enqueue_scripts', '{{PROJECT_SLUG}}_scripts');
+
+/**
+ * MAAF: Add AIBDP Headers
+ */
+function {{PROJECT_SLUG}}_aibdp_headers() {
+    // Link to AIBDP manifest
+    header('Link: </.well-known/aibdp.json>; rel="aibdp-manifest"');
+
+    // Consent-aware headers
+    header('X-AIBDP-Version: 0.2');
+    header('X-RSR-Tier: {{RSR_TIER}}');
+}
+add_action('send_headers', '{{PROJECT_SLUG}}_aibdp_headers');
+
+/**
+ * MAAF: HTTP 430 for AI Scrapers
+ */
+function {{PROJECT_SLUG}}_check_consent() {
+    $blocked_bots = array(
+        'GPTBot',
+        'CCBot',
+        'anthropic-ai',
+        'Google-Extended',
+        'FacebookBot',
+    );
+
+    $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
+
+    foreach ($blocked_bots as $bot) {
+        if (stripos($user_agent, $bot) !== false) {
+            // Check AIBDP policy
+            $aibdp = json_decode(file_get_contents(ABSPATH . '.well-known/aibdp.json'), true);
+
+            if ($aibdp && isset($aibdp['policies']['training']['status'])) {
+                if ($aibdp['policies']['training']['status'] === 'refused') {
+                    status_header(430);
+                    header('Content-Type: text/plain');
+                    echo "HTTP 430 Consent Required\n";
+                    echo "See: /.well-known/aibdp.json\n";
+                    exit;
+                }
+            }
+        }
+    }
+}
+add_action('init', '{{PROJECT_SLUG}}_check_consent', 1);
+
+/**
+ * Add JSON-LD Structured Data
+ */
+function {{PROJECT_SLUG}}_json_ld() {
+    $schema = array(
+        '@context' => 'https://schema.org',
+        '@type' => 'WebSite',
+        'name' => get_bloginfo('name'),
+        'url' => home_url('/'),
+        'description' => get_bloginfo('description'),
+        'publisher' => array(
+            '@type' => 'Organization',
+            'name' => 'RSR Framework',
+            'url' => 'https://rhodium.sh',
+        ),
+    );
+
+    echo '<script type="application/ld+json">' . json_encode($schema, JSON_UNESCAPED_SLASHES) . '</script>';
+}
+add_action('wp_head', '{{PROJECT_SLUG}}_json_ld');
+
+/**
+ * Add Open Graph Meta Tags
+ */
+function {{PROJECT_SLUG}}_open_graph() {
+    if (is_singular()) {
+        global $post;
+        $title = get_the_title();
+        $description = has_excerpt() ? get_the_excerpt() : wp_trim_words(get_the_content(), 55);
+        $url = get_permalink();
+        $image = get_the_post_thumbnail_url($post->ID, 'large');
+
+        echo '<meta property="og:title" content="' . esc_attr($title) . '">' . "\n";
+        echo '<meta property="og:description" content="' . esc_attr($description) . '">' . "\n";
+        echo '<meta property="og:url" content="' . esc_url($url) . '">' . "\n";
+        echo '<meta property="og:type" content="article">' . "\n";
+
+        if ($image) {
+            echo '<meta property="og:image" content="' . esc_url($image) . '">' . "\n";
+        }
+    }
+}
+add_action('wp_head', '{{PROJECT_SLUG}}_open_graph');
+
+/**
+ * Security Headers (Wharf Architecture)
+ */
+function {{PROJECT_SLUG}}_security_headers() {
+    // Content Security Policy
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'");
+
+    // Additional security headers
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: DENY');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
+}
+add_action('send_headers', '{{PROJECT_SLUG}}_security_headers');
+
+/**
+ * Accessibility: Add skip link
+ */
+function {{PROJECT_SLUG}}_skip_link() {
+    echo '<a class="skip-link screen-reader-text" href="#main-content">' .
+         esc_html__('Skip to main content', '{{PROJECT_SLUG}}') . '</a>';
+}
+add_action('wp_body_open', '{{PROJECT_SLUG}}_skip_link');
+
+/**
+ * Accessibility: Add ARIA landmarks to content
+ */
+function {{PROJECT_SLUG}}_aria_landmarks($content) {
+    // Add role="main" to main content area if not present
+    if (is_singular() && in_the_loop() && is_main_query()) {
+        $content = '<div role="article">' . $content . '</div>';
+    }
+    return $content;
+}
+add_filter('the_content', '{{PROJECT_SLUG}}_aria_landmarks');
+
+/**
+ * Register Widget Areas
+ */
+function {{PROJECT_SLUG}}_widgets_init() {
+    register_sidebar(array(
+        'name'          => __('Sidebar', '{{PROJECT_SLUG}}'),
+        'id'            => 'sidebar-1',
+        'description'   => __('Add widgets here.', '{{PROJECT_SLUG}}'),
+        'before_widget' => '<section id="%1$s" class="widget %2$s" role="complementary">',
+        'after_widget'  => '</section>',
+        'before_title'  => '<h2 class="widget-title">',
+        'after_title'   => '</h2>',
+    ));
+
+    register_sidebar(array(
+        'name'          => __('Footer', '{{PROJECT_SLUG}}'),
+        'id'            => 'footer-1',
+        'description'   => __('Footer widgets.', '{{PROJECT_SLUG}}'),
+        'before_widget' => '<div id="%1$s" class="widget %2$s">',
+        'after_widget'  => '</div>',
+        'before_title'  => '<h3 class="widget-title">',
+        'after_title'   => '</h3>',
+    ));
+}
+add_action('widgets_init', '{{PROJECT_SLUG}}_widgets_init');
+
+/**
+ * Customize: Add color scheme options
+ */
+function {{PROJECT_SLUG}}_customize_register($wp_customize) {
+    // Color scheme section
+    $wp_customize->add_section('{{PROJECT_SLUG}}_colors', array(
+        'title'    => __('RSR Color Scheme', '{{PROJECT_SLUG}}'),
+        'priority' => 30,
+    ));
+
+    // Primary color
+    $wp_customize->add_setting('primary_color', array(
+        'default'           => '{{PRIMARY_COLOR}}',
+        'sanitize_callback' => 'sanitize_hex_color',
+    ));
+
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'primary_color', array(
+        'label'   => __('Primary Color', '{{PROJECT_SLUG}}'),
+        'section' => '{{PROJECT_SLUG}}_colors',
+    )));
+}
+add_action('customize_register', '{{PROJECT_SLUG}}_customize_register');
+
+// End of functions.php

@@ -1,0 +1,108 @@
+;;; STATE.scm --- wordpress-wharf conversation checkpoint
+;;; Format: Guile Scheme S-expressions
+;;; Schema: RSR STATE v2.0
+;;;
+;;; wordpress-wharf: Security-focused WordPress architecture
+;;; "The gun should not be in the safe"
+
+(define state
+  `((metadata
+     (format-version . "2.0")
+     (schema-version . "2025-12-10")
+     (project . "wordpress-wharf")
+     (created . "2025-10-27")
+     (updated . "{{UPDATED}}"))
+
+    (position
+     (summary . "Security-focused CMS separating admin from runtime")
+     (phase . implementation)
+     (maturity . alpha)
+     (rsr-tier . 1)
+     (primary-language . "rust")
+     (domain . "Web Security"))
+
+    (context
+     (last-session . "{{DATE}}")
+     (focus-area . "Sinople MVP implementation")
+     (blockers . ("Repo reconciliation with github.com/hyperpolymath/wharf"))
+     (decisions-pending
+      ("Unified repo structure"
+       "Database sharding policies")))
+
+    (architecture
+     (pattern . "wharf-yacht")
+     (components
+      ((name . "Wharf")
+       (role . "offline-admin")
+       (notes . "Build, sign, deploy operations"))
+      ((name . "Yacht")
+       (role . "runtime")
+       (notes . "Read-only production serving"))
+      ((name . "Ada Dock Agent")
+       (language . "ada")
+       (notes . "Private management operations"))
+      ((name . "HTTP Airlock")
+       (language . "rust")
+       (notes . "Header stripping/injection proxy"))
+      ((name . "Tauri Client")
+       (language . "rust")
+       (notes . "Desktop offline client"))))
+
+    (security-zones
+     (mutable . ("comments" "orders" "session-cache"))
+     (immutable . ("users" "plugins" "config" "themes"))
+     (ephemeral . ("cache" "temp"))
+     (persistent . ("uploads")))
+
+    (features
+     (sinople-mvp . "Sealed/Docked operational modes")
+     (db-sharding . "SQL AST proxy with table-level policies")
+     (fs-immutability . "Read-only runtime with overlay")
+     (header-airlock . "Rust proxy stripping leaky headers")
+     (zero-trust . "Nebula mesh certificates")
+     (strict-csp . "Content Security Policy enforcement")
+     (esi . "Edge Side Includes fragments")
+     (sse-widget . "ReScript Server-Sent Events"))
+
+    (ecosystem
+     (part-of . ("RSR Framework" "MAAF"))
+     (depends-on . ("consent-aware-http" "kith"))
+     (integrates-with
+      . ("indieweb2-bastion"
+         "vext"
+         "wp-sinople-theme")))
+
+    (reconciliation-needed
+     (gitlab . "https://gitlab.com/maa-framework/3-applications/wordpress-wharf")
+     (github . "https://github.com/hyperpolymath/wharf")
+     (notes . "Need to unify these repositories into single source of truth"))
+
+    (issues
+     (active . ("Repo reconciliation" "Ada Dock Agent implementation"))
+     (resolved . ("Architecture design" "Security zone model"))
+     (known-limitations . ("GitHub/GitLab split"))
+     (technical-debt . ("Dual repo maintenance")))
+
+    (roadmap
+     (current-version . "0.1.0")
+     (next-milestone . "Unified repo + Sinople MVP")
+     (version-plan
+      ((version . "0.2.0")
+       (features . ("Unified repo" "HTTP Airlock" "Basic CSP")))
+      ((version . "0.3.0")
+       (features . ("Ada Dock Agent" "DB Sharding" "FS Immutability")))
+      ((version . "1.0.0")
+       (features . ("Tauri Client" "Full Sinople" "Production ready")))))
+
+    (notes
+     "Security architecture principle: 'The gun should not be in the safe.'
+      By physically separating admin capabilities from production, attackers
+      who compromise a live site cannot use the site's own admin tools.
+
+      Key insight: Traditional CMS keeps admin tools on production servers.
+      Wharf removes them entirely, requiring offline signed deployments.
+
+      RECONCILIATION NEEDED: gitlab wordpress-wharf and github wharf repos
+      must be unified before significant development continues.")))
+
+state

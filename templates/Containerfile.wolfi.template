@@ -1,0 +1,15 @@
+# {{PROJECT_NAME}} - Wolfi Container
+# Build: nerdctl build -t {{PROJECT_NAME}}:latest .
+# Run: nerdctl run --rm {{PROJECT_NAME}}:latest
+
+FROM cgr.dev/chainguard/wolfi-base:latest
+
+RUN apk add --no-cache {{RUNTIME_DEPS}}
+
+WORKDIR /app
+COPY --chown=nonroot:nonroot . .
+
+USER nonroot:nonroot
+
+ENTRYPOINT ["{{ENTRYPOINT}}"]
+CMD ["{{DEFAULT_CMD}}"]

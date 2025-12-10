@@ -1,0 +1,42 @@
+# {{PROJECT_NAME}} - Serum Site Configuration
+# https://dalgona.github.io/Serum/
+
+%{
+  site_name: "{{PROJECT_NAME}}",
+  site_description: "{{DESCRIPTION}}",
+  author: "Jonathan D.A. Jewell",
+  author_email: "jonathan@hyperpolymath.org",
+  server_root: "https://hyperpolymath.org/{{PROJECT_NAME}}",
+  base_url: "/{{PROJECT_NAME}}/",
+
+  # Build settings
+  date_format: "{WDfull}, {D} {Mfull} {YYYY}",
+  list_title_all: "All Posts",
+  list_title_tag: "Posts tagged ~s",
+  pagination: true,
+  posts_per_page: 10,
+
+  # Theme
+  theme: Serum.Themes.Essence,
+
+  # Plugins
+  plugins: [
+    {Serum.Plugins.LiveReloader, only: :dev},
+    {Serum.Plugins.SitemapGenerator,
+      only: :prod,
+      args: [
+        for: [:pages, :posts]
+      ]
+    }
+  ],
+
+  # Security headers (served via .well-known or server config)
+  headers: %{
+    "Content-Security-Policy" => "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'",
+    "X-Content-Type-Options" => "nosniff",
+    "X-Frame-Options" => "DENY",
+    "X-XSS-Protection" => "1; mode=block",
+    "Referrer-Policy" => "strict-origin-when-cross-origin",
+    "Permissions-Policy" => "geolocation=(), microphone=(), camera=()"
+  }
+}

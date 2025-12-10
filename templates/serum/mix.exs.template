@@ -1,0 +1,31 @@
+# {{PROJECT_NAME}} - Serum Static Site Generator Config
+# https://dalgona.github.io/Serum/
+
+defmodule {{PROJECT_NAME_PASCAL}}.MixProject do
+  use Mix.Project
+
+  def project do
+    [
+      app: :{{PROJECT_NAME_SNAKE}}_site,
+      version: "0.1.0",
+      elixir: "~> 1.15",
+      start_permanent: Mix.env() == :prod,
+      deps: deps()
+    ]
+  end
+
+  def application do
+    [
+      extra_applications: [:logger]
+    ]
+  end
+
+  defp deps do
+    [
+      {:serum, "~> 1.5"},
+      {:serum_theme_essence, "~> 1.0"},
+      {:floki, "~> 0.35"},
+      {:earmark, "~> 1.4"}
+    ]
+  end
+end

@@ -1,0 +1,43 @@
+= Training Data for Conative Gating
+:toc:
+
+This directory contains training examples for the SLM evaluator.
+
+== Structure
+
+* `compliant/` - Examples that should pass
+* `violations/` - Examples that should be blocked
+* `edge_cases/` - Spirit violations that require SLM evaluation
+
+== Format
+
+Each example is a JSON file with:
+
+[source,json]
+----
+{
+  "proposal": { /* proposal object */ },
+  "expected_verdict": "Compliant|HardViolation|SoftConcern",
+  "reasoning": "Human explanation of why",
+  "spirit_violation": false,
+  "category": "language|toolchain|pattern|spirit"
+}
+----
+
+== Categories
+
+=== Compliant
+Clear passes - Tier 1 languages, proper toolchain, no secrets
+
+=== Hard Violations
+Obvious failures caught by deterministic oracle:
+* Forbidden language files
+* Toolchain violations
+* Security patterns (hardcoded secrets)
+
+=== Edge Cases / Spirit Violations
+Require SLM evaluation:
+* Code that technically passes but violates intent
+* Suspicious refactoring patterns
+* Verbosity smells
+* Off-by-one obfuscation

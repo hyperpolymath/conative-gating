@@ -1,0 +1,110 @@
+;;; STATE.scm --- bunsenite conversation checkpoint
+;;; Format: Guile Scheme S-expressions
+;;; Schema: RSR STATE v2.0
+;;;
+;;; bunsenite: Cross-language Nickel configuration loader with FFI bindings.
+;;; Named after the nickel ore mineral.
+
+(define state
+  `((metadata
+     (format-version . "2.0")
+     (schema-version . "2025-12-10")
+     (project . "bunsenite")
+     (created . "2025-10-27")
+     (updated . "{{UPDATED}}"))
+
+    (position
+     (summary . "Cross-language Nickel configuration loader with FFI bindings")
+     (phase . implementation)
+     (maturity . alpha)
+     (rsr-tier . 1)
+     (primary-language . "rust")
+     (domain . "Configuration Management"))
+
+    (context
+     (last-session . "{{DATE}}")
+     (focus-area . "FFI layer stability")
+     (blockers . ())
+     (decisions-pending . ()))
+
+    (architecture
+     (pattern . "layered-ffi")
+     (components
+      ((name . "Rust Core")
+       (language . "rust")
+       (status . complete)
+       (notes . "nickel-lang-core integration, parsing logic"))
+      ((name . "Zig FFI Layer")
+       (language . "zig")
+       (status . complete)
+       (notes . "Stable C ABI, isolates consumers from Rust ABI"))
+      ((name . "Deno Bindings")
+       (language . "typescript")
+       (status . complete)
+       (notes . "Deno FFI bindings"))
+      ((name . "ReScript Bindings")
+       (language . "rescript")
+       (status . complete)
+       (notes . "Type-safe functional wrappers"))
+      ((name . "C/C++ Headers")
+       (language . "c")
+       (status . complete)
+       (notes . "Direct C ABI access"))))
+
+    (features
+     (nickel-parsing . "Robust parsing via nickel-lang-core")
+     (zero-copy . "Where applicable for performance")
+     (multi-format . "Export to JSON, TOML")
+     (memory-safe . "Rust guarantees")
+     (type-safe . "ReScript type safety"))
+
+    (ecosystem
+     (part-of . ("RSR Framework" "MAAF"))
+     (depends-on . ("nickel-lang-core"))
+     (integrates-with
+      . ("conative-gating"
+         "consent-aware-http"
+         "indieweb2-bastion"
+         "cadre-router")))
+
+    (rsr-integration-points
+     (conative-gating . "Load CURPS policies from Rust arbiter")
+     (consent-aware-http . "Parse AIBDP policy schemas")
+     (indieweb2-bastion . "Load Nickel configuration")
+     (cadre-router . "Parse routing policies"))
+
+    (build-requirements
+     (rust . "1.75+")
+     (zig . "0.11+")
+     (deno . "1.40+")
+     (build-tool . "just"))
+
+    (issues
+     (active . ())
+     (resolved . ("FFI layer design" "Multi-language bindings"))
+     (known-limitations . ("Alpha stability"))
+     (technical-debt . ()))
+
+    (roadmap
+     (current-version . "0.1.0")
+     (next-milestone . "Stable 1.0 release")
+     (version-plan
+      ((version . "0.2.0")
+       (features . ("Improved error messages" "More export formats")))
+      ((version . "1.0.0")
+       (features . ("Stable API" "Full documentation" "Production ready")))))
+
+    (licensing
+     (spdx . "MIT OR LicenseRef-Palimpsest-0.6")
+     (rsr-compatible . #t))
+
+    (notes
+     "Critical infrastructure for RSR Nickel configuration loading.
+      All projects using Nickel (Tier 2 language) should use bunsenite
+      for cross-language configuration access.
+
+      The Zig FFI layer is key - it provides a stable C ABI that
+      isolates consumers from Rust's unstable ABI, allowing language
+      bindings to be updated independently.")))
+
+state

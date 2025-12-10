@@ -1,0 +1,89 @@
+;;; STATE.scm --- kith conversation checkpoint
+;;; Format: Guile Scheme S-expressions
+;;; Schema: RSR STATE v2.0
+;;;
+;;; CLI tool for managing .well-known/ directories with ethical governance.
+
+(define state
+  `((metadata
+     (format-version . "2.0")
+     (schema-version . "2025-12-10")
+     (project . "kith")
+     (created . "2025-11-14")
+     (updated . "{{UPDATED}}"))
+
+    (position
+     (summary . "CLI tool for managing .well-known/ directories with ethical governance")
+     (phase . implementation)
+     (maturity . alpha)
+     (rsr-tier . 1)
+     (primary-language . "ada")
+     (domain . "Web Infrastructure"))
+
+    (context
+     (last-session . "{{DATE}}")
+     (focus-area . "AIBDP manifest management")
+     (blockers . ())
+     (decisions-pending . ()))
+
+    (implementations
+     ((name . "Core CLI")
+      (status . complete)
+      (files . ("src/ada/"))
+      (notes . "Ada/SPARK interactive interface and validation"))
+     ((name . "Automation Scripts")
+      (status . complete)
+      (files . ("scripts/"))
+      (notes . "Nushell automation for batch operations"))
+     ((name . "Infrastructure")
+      (status . complete)
+      (files . ("salt/"))
+      (notes . "SaltStack deployment states"))
+     ((name . "JSON Schemas")
+      (status . complete)
+      (files . ("schemas/"))
+      (notes . "Validation schemas for all .well-known/ formats")))
+
+    (ecosystem
+     (part-of . ("RSR Framework" "MAAF"))
+     (depends-on . ("consent-aware-http"))
+     (integrates-with
+      . ("indieweb2-bastion"
+         "cadre-router"
+         "wordpress-wharf"
+         "conative-gating")))
+
+    (supported-standards
+     (aibdp . "AI Boundary Declaration Protocol")
+     (security-txt . "RFC 9116 Security Contact")
+     (acme . "ACME Certificate Automation")
+     (webfinger . "User Discovery Protocol")
+     (did . "Decentralized Identifiers")
+     (ai-txt . "AI Training Preferences")
+     (dc-xml . "Dublin Core Metadata"))
+
+    (issues
+     (active . ())
+     (resolved . ("Initial implementation" "Schema validation"))
+     (known-limitations . ())
+     (technical-debt . ()))
+
+    (roadmap
+     (current-version . "0.1.0")
+     (next-milestone . "Full MAAF compliance")
+     (version-plan
+      ((version . "0.2.0")
+       (features . ("indieweb2-bastion sync" "Batch validation" "CI/CD integration")))))
+
+    (notes
+     "Core infrastructure tool for RSR .well-known/ management.
+      All RSR repos should use kith for generating and validating
+      their .well-known/ directories.
+
+      Commands:
+      - kith init: Initialize .well-known/ structure
+      - kith validate: Validate all manifests
+      - kith generate aibdp: Generate AIBDP from template
+      - kith sync: Sync with indieweb2-bastion")))
+
+state

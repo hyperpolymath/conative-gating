@@ -1,0 +1,72 @@
+;;; STATE.scm --- {{PROJECT_NAME}} conversation checkpoint
+;;; Format: Guile Scheme S-expressions
+;;; Schema: RSR STATE v2.0
+;;;
+;;; This file captures the current state of AI-assisted development.
+;;; It serves as a checkpoint for conversation continuity and
+;;; project status tracking.
+;;;
+;;; Usage:
+;;;   guile -c '(primitive-load "STATE.scm") (display state)'
+;;;   just validate-state
+;;;   just state-touch  ; Update timestamp
+
+(define state
+  `((metadata
+     (format-version . "2.0")
+     (schema-version . "2025-12-10")
+     (project . "{{PROJECT_NAME}}")
+     (created . "{{CREATED_DATE}}")
+     (updated . "{{UPDATED_DATE}}"))
+
+    (position
+     (summary . "{{SUMMARY}}")
+     (phase . {{PHASE}})  ; design | implementation | testing | maintenance | archived
+     (maturity . {{MATURITY}})  ; experimental | alpha | beta | production | lts
+     (rsr-tier . {{TIER}})  ; 1 | 2 | infrastructure
+     (primary-language . "{{LANGUAGE}}")
+     (domain . "{{DOMAIN}}"))
+
+    (context
+     (last-session . "{{SESSION_DATE}}")
+     (focus-area . "{{FOCUS}}")
+     (blockers . ())
+     (decisions-pending . ()))
+
+    (implementations
+     ;; Completed implementations
+     ((name . "{{IMPL_1}}")
+      (status . {{IMPL_1_STATUS}})  ; complete | in-progress | planned
+      (files . ({{IMPL_1_FILES}}))
+      (notes . "{{IMPL_1_NOTES}}")))
+
+    (issues
+     (active . ())
+     (resolved . ())
+     (known-limitations . ())
+     (technical-debt . ()))
+
+    (roadmap
+     (current-version . "{{VERSION}}")
+     (next-milestone . "{{NEXT_MILESTONE}}")
+     (version-plan
+      ((version . "{{NEXT_VERSION}}")
+       (features . ({{NEXT_FEATURES}}))
+       (target . "{{TARGET_DATE}}"))))
+
+    (ecosystem
+     (part-of . ({{PART_OF}}))
+     (depends-on . ({{DEPENDS_ON}}))
+     (integrates-with . ({{INTEGRATES_WITH}}))
+     (supersedes . ({{SUPERSEDES}})))
+
+    (session-files
+     ;; Files modified in last session
+     ())
+
+    (notes
+     ;; Free-form notes for context
+     "{{NOTES}}")))
+
+;;; Export state for external tools
+state

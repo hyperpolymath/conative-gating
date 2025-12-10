@@ -1,0 +1,110 @@
+# RSR Git Hooks Management
+# Add these recipes to your justfile for hook management
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+
+# === Git Hooks ===
+
+# Install all RSR git hooks
+hooks-install:
+    @echo "Installing RSR git hooks..."
+    @if [ -f "scripts/install-hooks.sh" ]; then \
+        ./scripts/install-hooks.sh --all; \
+    else \
+        echo "Downloading hook templates..."; \
+        mkdir -p .git/hooks; \
+        curl -sL https://gitlab.com/rsr-framework/conative-gating/-/raw/main/templates/hooks/pre-commit.template > .git/hooks/pre-commit; \
+        curl -sL https://gitlab.com/rsr-framework/conative-gating/-/raw/main/templates/hooks/pre-push.template > .git/hooks/pre-push; \
+        curl -sL https://gitlab.com/rsr-framework/conative-gating/-/raw/main/templates/hooks/post-receive.template > .git/hooks/post-receive; \
+        chmod +x .git/hooks/pre-commit .git/hooks/pre-push .git/hooks/post-receive; \
+        echo "✓ Hooks installed"; \
+    fi
+
+# Run pre-commit checks manually
+hooks-check:
+    @if [ -f ".git/hooks/pre-commit" ]; then \
+        .git/hooks/pre-commit; \
+    else \
+        echo "Pre-commit hook not installed. Run: just hooks-install"; \
+    fi
+
+# List installed hooks
+hooks-list:
+    @echo "Installed git hooks:"
+    @for hook in pre-commit pre-push post-receive commit-msg; do \
+        if [ -x ".git/hooks/$$hook" ]; then \
+            echo "  ✓ $$hook"; \
+        else \
+            echo "  ✗ $$hook (not installed)"; \
+        fi \
+    done
+
+# Remove all hooks
+hooks-remove:
+    @echo "Removing git hooks..."
+    @rm -f .git/hooks/pre-commit .git/hooks/pre-push .git/hooks/post-receive
+    @echo "✓ Hooks removed"
+
+# === IRC Notifications ===
+
+# Send IRC notification manually
+irc-notify message:
+    @echo '{"to": ["irc://irc.libera.chat/#rsr-commits"], "privmsg": "{{message}}"}' | \
+    nc -q0 localhost 6659 2>/dev/null || echo "Warning: irker not running"
+
+# Test IRC connection
+irc-test:
+    @echo "Testing irker connection..."
+    @echo '{"to": ["irc://irc.libera.chat/#rsr-commits"], "privmsg": "Test from {{`basename $(pwd)`}}"}' | \
+    nc -q0 localhost 6659 2>/dev/null && echo "✓ Message sent" || echo "✗ irker not available"
+
+# === RSR Compliance ===
+
+# Full compliance check (pre-commit + pre-push)
+check-full: hooks-check
+    @if [ -f ".git/hooks/pre-push" ]; then \
+        .git/hooks/pre-push origin ""; \
+    fi
+
+# Validate STATE.scm
+check-state:
+    @if [ -f "STATE.scm" ]; then \
+        if command -v guile > /dev/null; then \
+            guile -c '(primitive-load "STATE.scm")' && echo "✓ STATE.scm valid"; \
+        else \
+            echo "⚠ guile not available"; \
+        fi \
+    else \
+        echo "⚠ STATE.scm not found"; \
+    fi
+
+# Validate AIBDP manifest
+check-aibdp:
+    @if [ -f ".well-known/aibdp.json" ]; then \
+        jq -e '.aibdp_version == "0.2"' .well-known/aibdp.json > /dev/null && \
+        echo "✓ AIBDP valid (v0.2)" || echo "✗ AIBDP invalid"; \
+    else \
+        echo "⚠ AIBDP manifest not found"; \
+    fi
+
+# Check for prohibited languages
+check-languages:
+    @echo "Checking for prohibited languages..."
+    @FOUND=0; \
+    if find . -name "*.ts" -not -path "./node_modules/*" | head -1 | grep -q .; then \
+        echo "✗ TypeScript files found (use ReScript)"; FOUND=1; \
+    fi; \
+    if find . -name "*.go" | head -1 | grep -q .; then \
+        echo "✗ Go files found (use Rust/Elixir/Zig)"; FOUND=1; \
+    fi; \
+    if find . -name "*.py" -not -path "./salt/*" -not -path "./saltstack/*" | head -1 | grep -q .; then \
+        echo "✗ Python files found outside salt/ (prohibited)"; FOUND=1; \
+    fi; \
+    if find . -name "*.cue" | head -1 | grep -q .; then \
+        echo "✗ CUE files found (use Nickel)"; FOUND=1; \
+    fi; \
+    if [ $$FOUND -eq 0 ]; then echo "✓ No prohibited languages found"; fi
+
+# Run all checks
+check-all: check-state check-aibdp check-languages hooks-check
+    @echo ""
+    @echo "All checks complete"
