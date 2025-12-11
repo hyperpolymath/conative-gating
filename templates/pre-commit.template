@@ -1,0 +1,91 @@
+#!/bin/bash
+# RSR Anti-Pattern Pre-Commit Hook
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Enforces: No TypeScript, No Go, No Python (except SaltStack), No npm
+# Allows: ReScript, Deno, WASM, Rust, OCaml, Haskell, Guile/Scheme
+
+set -e
+
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+ERRORS=0
+
+echo "🔍 RSR Anti-Pattern Check..."
+
+# Get staged files
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+
+# Check for TypeScript files
+TS_FILES=$(echo "$STAGED" | grep -E '\.(ts|tsx)$' || true)
+if [ -n "$TS_FILES" ]; then
+    echo -e "${RED}❌ TypeScript files detected (use ReScript instead):${NC}"
+    echo "$TS_FILES" | sed 's/^/   /'
+    ERRORS=$((ERRORS + 1))
+fi
+
+# Check for Go files
+GO_FILES=$(echo "$STAGED" | grep -E '\.go$' || true)
+if [ -n "$GO_FILES" ]; then
+    echo -e "${RED}❌ Go files detected (use Rust/WASM instead):${NC}"
+    echo "$GO_FILES" | sed 's/^/   /'
+    ERRORS=$((ERRORS + 1))
+fi
+
+# Check for Python files (except SaltStack)
+PY_FILES=$(echo "$STAGED" | grep -E '\.py$' | grep -v '/salt/' | grep -v '_states/' | grep -v '_modules/' | grep -v 'pillar/' || true)
+if [ -n "$PY_FILES" ]; then
+    echo -e "${RED}❌ Python files detected (only allowed for SaltStack):${NC}"
+    echo "$PY_FILES" | sed 's/^/   /'
+    ERRORS=$((ERRORS + 1))
+fi
+
+# Check for npm artifacts
+NPM_FILES=$(echo "$STAGED" | grep -E '(package-lock\.json|yarn\.lock|node_modules/)' || true)
+if [ -n "$NPM_FILES" ]; then
+    echo -e "${RED}❌ npm artifacts detected (use Deno instead):${NC}"
+    echo "$NPM_FILES" | sed 's/^/   /'
+    ERRORS=$((ERRORS + 1))
+fi
+
+# Check for package.json without deno.json
+if echo "$STAGED" | grep -q 'package\.json$'; then
+    REPO_ROOT=$(git rev-parse --show-toplevel)
+    if [ ! -f "$REPO_ROOT/deno.json" ] && [ ! -f "$REPO_ROOT/deno.jsonc" ]; then
+        echo -e "${YELLOW}⚠️  package.json without deno.json - consider migrating to Deno${NC}"
+    fi
+fi
+
+# Check for tsconfig.json
+if echo "$STAGED" | grep -q 'tsconfig\.json$'; then
+    echo -e "${RED}❌ tsconfig.json detected (use ReScript bsconfig.json/rescript.json instead):${NC}"
+    ERRORS=$((ERRORS + 1))
+fi
+
+# Warn about .js files (might be fine if generated from ReScript)
+JS_FILES=$(echo "$STAGED" | grep -E '\.jsx?$' || true)
+if [ -n "$JS_FILES" ]; then
+    # Check if there's a corresponding .res file or if it's in lib/
+    for jsfile in $JS_FILES; do
+        RESFILE="${jsfile%.js}.res"
+        RESFILE2="${jsfile%.mjs}.res"
+        if [ ! -f "$RESFILE" ] && [ ! -f "$RESFILE2" ] && [[ "$jsfile" != lib/* ]] && [[ "$jsfile" != *".mjs.js" ]]; then
+            # Allow Deno entry points
+            if ! head -1 "$jsfile" 2>/dev/null | grep -q 'deno'; then
+                echo -e "${YELLOW}⚠️  JS file without ReScript source: $jsfile${NC}"
+            fi
+        fi
+    done
+fi
+
+if [ $ERRORS -gt 0 ]; then
+    echo ""
+    echo -e "${RED}Commit blocked: $ERRORS anti-pattern violation(s) found${NC}"
+    echo "RSR Stack: ReScript + Deno + WASM + Rust + OCaml + Haskell + Guile"
+    exit 1
+fi
+
+echo "✅ No anti-patterns detected"
+exit 0

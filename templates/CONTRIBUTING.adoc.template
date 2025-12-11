@@ -1,0 +1,85 @@
+= Contributing to {{PROJECT_NAME}}
+:toc: macro
+:icons: font
+:experimental:
+
+Thank you for considering contributing to {{PROJECT_NAME}}!
+
+toc::[]
+
+== RSR Stack Policy
+
+This project follows the **Rhodium Standard Repository** (RSR) conventions.
+
+=== Allowed Technologies
+
+[cols="1,2,1"]
+|===
+| Technology | Purpose | Status
+
+| ReScript | Frontend/Logic | ✅ Preferred
+| Deno | JS Runtime | ✅ Preferred
+| WASM | Performance-critical | ✅ Allowed
+| Rust | Systems/WASM source | ✅ Allowed
+| OCaml | Proofs/Formal methods | ✅ Allowed
+| Haskell | Proofs/Formal methods | ✅ Allowed
+| Guile/Scheme | Configuration/State | ✅ Allowed
+| SaltStack | Infrastructure (Python) | ✅ Allowed
+|===
+
+=== Blocked Technologies
+
+[cols="1,2,1"]
+|===
+| Technology | Reason | Status
+
+| TypeScript | Use ReScript instead | ❌ Blocked
+| Go | Use Rust/WASM instead | ❌ Blocked
+| Python | Use Guile/Deno (except SaltStack) | ❌ Blocked
+| npm/yarn | Use Deno instead | ❌ Blocked
+|===
+
+== Pre-Commit Hooks
+
+This repository has pre-commit hooks that enforce the RSR stack policy.
+The hooks will block commits containing:
+
+* `.ts` or `.tsx` files
+* `.go` files
+* `.py` files (outside `/salt/`, `/_states/`, `/_modules/`, `/pillar/`)
+* `package-lock.json` or `yarn.lock`
+* `tsconfig.json`
+
+== Documentation Format
+
+All documentation should be in **AsciiDoc** (`.adoc`) format, not Markdown.
+
+Reasons:
+
+* Better semantic markup
+* Native support for includes
+* Table of contents generation
+* Consistent with RSR ecosystem
+
+== Mirrors
+
+This repository is mirrored to multiple platforms:
+
+* link:https://github.com/hyperpolymath/{{PROJECT_NAME}}[GitHub] (primary)
+* link:https://gitlab.com/hyperpolymath/{{PROJECT_NAME}}[GitLab]
+* link:https://bitbucket.org/hyperpolymath/{{PROJECT_NAME}}[Bitbucket]
+* link:https://codeberg.org/hyperpolymath/{{PROJECT_NAME}}[Codeberg]
+
+Please submit issues and pull requests to **GitHub**.
+
+== Code of Conduct
+
+Be respectful, inclusive, and constructive.
+
+== License
+
+By contributing, you agree that your contributions will be licensed under:
+
+----
+{{LICENSE}}
+----
