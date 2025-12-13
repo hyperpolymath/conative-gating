@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Language Guard - Fire extinguisher when SLM unavailable
 # ~20 lines of grep. Zero cost. Catches obvious violations.
 name: Language Guard
@@ -12,11 +13,15 @@ on:
       - '**.java'
       - 'package.json'
 
+permissions: read-all
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Check for forbidden languages
         run: |
