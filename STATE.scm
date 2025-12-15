@@ -152,6 +152,14 @@
 (define session-history
   '((snapshots
      ((date . "2025-12-15")
+      (session . "security-fixes")
+      (accomplishments
+       ("SHA-pinned dtolnay/rust-toolchain@stable in rust-ci.yml"
+        "SHA-pinned Swatinem/rust-cache@v2 in rust-ci.yml"
+        "SHA-pinned codecov/codecov-action@v5 in rust-ci.yml"
+        "OpenSSF Scorecard Pinned-Dependencies compliance"))
+      (notes . "Fixed unpinned GitHub Actions for OpenSSF Scorecard compliance"))
+     ((date . "2025-12-15")
       (session . "initial-state-creation")
       (accomplishments
        ("Added META.scm, ECOSYSTEM.scm, STATE.scm"
