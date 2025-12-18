@@ -15,7 +15,7 @@
   '((version . "0.1.0")
     (schema-version . "1.0")
     (created . "2025-12-15")
-    (updated . "2025-12-15")
+    (updated . "2025-12-17")
     (project . "conative-gating")
     (repo . "github.com/hyperpolymath/conative-gating")))
 
@@ -151,6 +151,15 @@
 
 (define session-history
   '((snapshots
+     ((date . "2025-12-17")
+      (session . "scm-security-review")
+      (accomplishments
+       ("SHA-pinned all actions in ci.yml (dtolnay/rust-toolchain, Swatinem/rust-cache, actions/upload-artifact)"
+        "Updated SECURITY.md with project-specific policy (was boilerplate)"
+        "Verified all SCM files (ECOSYSTEM.scm, META.scm, STATE.scm)"
+        "Verified Nix flake configuration"
+        "Full OpenSSF Scorecard Pinned-Dependencies compliance"))
+      (notes . "Security audit and SCM review session"))
      ((date . "2025-12-15")
       (session . "security-fixes")
       (accomplishments
@@ -197,6 +206,6 @@
     (next-milestone . "v0.2 - Core Functionality")
     (critical-blockers . 0)
     (high-priority-issues . 0)
-    (updated . "2025-12-15")))
+    (updated . "2025-12-17")))
 
 ;;; End of STATE.scm
