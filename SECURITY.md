@@ -2,20 +2,45 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
-
 | Version | Supported          |
 | ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| 0.1.x   | :white_check_mark: |
+
+## Security Measures
+
+This project follows RSR (Rhodium Standard Repository) security practices:
+
+- **SHA-pinned GitHub Actions**: All workflow actions use commit SHA pins for supply chain security
+- **SPDX License Headers**: All source files contain SPDX license identifiers
+- **OpenSSF Scorecard Compliance**: Continuous security monitoring via OSSF Scorecard
+- **CodeQL Analysis**: Automated static analysis for security vulnerabilities
+- **Dependency Scanning**: Automated alerts via Dependabot and cargo-audit
+- **No Weak Cryptography**: SHA256+ required for security purposes (no MD5/SHA1)
+- **HTTPS Only**: All external URLs must use HTTPS
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+If you discover a security vulnerability, please report it responsibly:
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+1. **Do NOT** create a public GitHub issue for security vulnerabilities
+2. Email the maintainer at: jonathan.jewell@gmail.com
+3. Include:
+   - Description of the vulnerability
+   - Steps to reproduce
+   - Potential impact assessment
+   - Suggested fix (if any)
+
+### Response Timeline
+
+- **Initial Response**: Within 48 hours
+- **Triage**: Within 7 days
+- **Resolution**: Depending on severity
+  - Critical: Within 7 days
+  - High: Within 30 days
+  - Medium/Low: Within 90 days
+
+### Disclosure Policy
+
+- We follow coordinated disclosure practices
+- Credit will be given to reporters in the security advisory (unless anonymity is requested)
+- Public disclosure after patch is released and users have reasonable time to update
