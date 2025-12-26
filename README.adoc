@@ -1,1 +1,311 @@
+= Conative Gating
+Jonathan D.A. Jewell <jonathan@hyperpolymath.org>
+:toc: macro
+:toc-title: Contents
+:toclevels: 3
+:sectnums:
+:icons: font
+:source-highlighter: rouge
+:experimental:
+:repo: https://github.com/hyperpolymath/conative-gating
 
+SLM-as-Cerebellum for LLM Policy Enforcement
+
+[.lead]
+A biologically-inspired system where a Small Language Model acts as an *inhibitory antagonist* to Large Language Models, preventing policy violations through mechanisms analogous to the basal ganglia's GO/NO-GO decision system.
+
+toc::[]
+
+== The Problem
+
+LLMs are trained to be helpful, which makes them systematically violate explicit project constraints. When given rules like "NEVER use TypeScript, use ReScript", LLMs:
+
+1. Read and acknowledge the constraint
+2. Generate compliant-sounding justification
+3. Violate the constraint anyway
+
+This happens because:
+
+* Common languages (TypeScript, Python) dominate training data
+* The "helpfulness drive" overrides explicit instructions
+* LLMs lack true "loss aversion" for policy violations
+
+Documentation-based enforcement fails because LLMs "engage with" documentation rather than *obey* it.
+
+== The Solution
+
+Conative Gating introduces a second model trained with *inverted incentives*:
+
+[cols="1,1,1"]
+|===
+| Component | Role | Analogy
+
+| *LLM*
+| Task execution (helpful, creative)
+| Frontal cortex / Direct pathway ("GO")
+
+| *SLM*
+| Policy enforcement (adversarial, suspicious)
+| Cerebellum / Indirect pathway ("NO-GO")
+
+| *Policy Oracle*
+| Deterministic rule checking
+| Reflex arc (fast, no ML)
+
+| *Consensus Arbiter*
+| Weighted decision making
+| Thalamus (integration)
+|===
+
+=== Key Innovation
+
+Using *consensus protocols with asymmetric weighting* - the SLM's votes count 1.5x the LLM's, creating a natural bias toward inhibition that counters the LLM's tendency toward helpfulness.
+
+== Architecture
+
+----
+                     USER REQUEST
+                          |
+                          v
+             +------------------------+
+             |   CONTEXT ASSEMBLY     |
+             +------------------------+
+                          |
+           +--------------+--------------+
+           |                             |
+           v                             v
+    +-------------+              +---------------+
+    |     LLM     |              |      SLM      |
+    | (Proposer)  |              | (Adversarial) |
+    +------+------+              +-------+-------+
+           |                             |
+           +-------------+---------------+
+                         |
+                         v
+             +------------------------+
+             |   CONSENSUS ARBITER    |
+             | (Modified PBFT)        |
+             | SLM weight: 1.5x       |
+             +------------------------+
+                         |
+           +-------------+-------------+
+           |             |             |
+           v             v             v
+       +-------+    +--------+    +-------+
+       | ALLOW |    |ESCALATE|    | BLOCK |
+       +-------+    +--------+    +-------+
+----
+
+=== Three-Tier Evaluation
+
+[horizontal]
+Policy Oracle (Rust):: Deterministic rule checking - forbidden languages, toolchain rules, security patterns. Fast, no ML needed.
+
+SLM Evaluator (Rust + llama.cpp):: Detects "spirit violations" - technically compliant but violates intent. Catches verbosity, meta-commentary bloat.
+
+Consensus Arbiter (Elixir/OTP):: Modified PBFT with asymmetric weighting. Three outcomes: ALLOW, ESCALATE, BLOCK.
+
+== Installation
+
+=== From Source
+
+[source,bash]
+----
+git clone https://github.com/hyperpolymath/conative-gating
+cd conative-gating
+cargo build --release
+----
+
+=== Usage
+
+[source,bash]
+----
+# Scan a directory for policy violations
+conative scan ./my-project
+
+# Check a single file
+conative check --file src/main.ts
+
+# Check inline content
+conative check --content "const x: string = 'hello'"
+
+# Show current policy
+conative policy
+
+# Initialize local configuration
+conative init
+
+# JSON output for automation
+conative scan . --format json
+----
+
+=== Exit Codes
+
+[cols="1,3"]
+|===
+| Code | Meaning
+
+| 0 | Compliant - all checks passed
+| 1 | Hard violation detected (blocked)
+| 2 | Soft concern detected (warning)
+| 3 | Error during execution
+|===
+
+== Default Policy (RSR)
+
+The default policy implements the Rhodium Standard Repository (RSR) language hierarchy:
+
+=== Tier 1 - Preferred
+
+* Rust, Elixir, Zig, Ada, Haskell, ReScript
+
+=== Tier 2 - Acceptable (generates warnings)
+
+* Nickel, Racket
+
+=== Forbidden
+
+* TypeScript, Python*, Go, Java
+
+[NOTE]
+====
+*Python exception: Allowed in `salt/` directories for SaltStack and `training/` for ML training scripts.
+====
+
+=== Toolchain Rules
+
+* `npm` requires `deno.json` (no npm without Deno)
+
+=== Security Patterns
+
+* Detects hardcoded secrets (passwords, API keys)
+
+== Configuration
+
+Initialize local configuration:
+
+[source,bash]
+----
+conative init
+----
+
+This creates `.conative/policy.ncl` using Nickel for type-safe configuration:
+
+[source,nickel]
+----
+{
+  name = "My Project Policy",
+  languages = {
+    tier1 = [...],
+    forbidden = [...],
+    exceptions = [
+      { language = "python", allowed_paths = ["scripts/"], reason = "Build scripts" }
+    ]
+  },
+  enforcement = {
+    slm_weight = 1.5,
+    escalate_threshold = 0.4,
+    block_threshold = 0.7,
+  }
+}
+----
+
+== Decision Matrix
+
+[cols="1,1,1"]
+|===
+| LLM Confidence | SLM Violation Score | Result
+
+| High (>0.8) | Low (<0.3) | *ALLOW*
+| High (>0.8) | Med (0.3-0.6) | ESCALATE
+| High (>0.8) | High (>0.6) | *BLOCK*
+| Med (0.5-0.8) | Any >0.4 | ESCALATE
+| Low (<0.5) | Any | ESCALATE
+|===
+
+== Project Structure
+
+----
+conative-gating/
+  src/
+    main.rs           # CLI application
+    oracle/           # Policy Oracle crate (Rust)
+    slm/              # SLM Evaluator crate (Rust)
+  config/
+    policy.ncl        # Default policy (Nickel)
+    schema.ncl        # Policy schema
+  training/
+    compliant/        # Examples that should pass
+    violations/       # Examples that should fail
+    edge_cases/       # Spirit violations for SLM
+  docs/
+    ARCHITECTURE.md   # Full design specification
+    *.adoc            # Integration documentation
+----
+
+== Integration
+
+=== Claude Code Hook
+
+[source,json]
+----
+{
+  "hooks": {
+    "pre-commit": "conative scan --strict"
+  }
+}
+----
+
+=== Pre-commit Hook
+
+[source,yaml]
+----
+repos:
+  - repo: local
+    hooks:
+      - id: conative-gating
+        name: Conative Policy Check
+        entry: conative scan
+        language: system
+        pass_filenames: false
+----
+
+=== Programmatic Validation
+
+[source,bash]
+----
+# Validate structured proposals
+conative validate proposal.json --strict
+----
+
+Proposal format:
+
+[source,json]
+----
+{
+  "id": "uuid",
+  "action_type": {"CreateFile": {"path": "src/util.rs"}},
+  "content": "file contents here",
+  "files_affected": ["src/util.rs"],
+  "llm_confidence": 0.95
+}
+----
+
+== Related Projects
+
+* *NeuroPhone* - Neurosymbolic phone AI (integrates Conative Gating)
+* *ECHIDNA* - Multi-prover orchestration (SLM as another "prover")
+* *RSR Framework* - Rhodium Standard Repository specifications
+* *Axiom.jl* - Provable Julia ML (future formal verification)
+
+== License
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+Copyright (C) 2025 Jonathan D.A. Jewell
+
+== References
+
+* link:docs/ARCHITECTURE.md[Full Architecture Specification]
+* link:docs/MAAF_INTEGRATION.adoc[MAAF Integration]
+* link:docs/STATE_ECOSYSTEM_SCHEMA.adoc[STATE/ECOSYSTEM Schema]
