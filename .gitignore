@@ -77,3 +77,6 @@ htmlcov/
 /tmp/
 *.tmp
 *.bak
+
+# Generated test baselines
+.conative/

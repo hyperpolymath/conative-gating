@@ -1050,6 +1050,460 @@ impl TestSummary {
 }
 
 // ============================================================================
+// REGRESSION HARNESS
+// ============================================================================
+
+/// Baseline result for regression testing
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BaselineResult {
+    /// Test case name
+    pub name: String,
+
+    /// Expected verdict from baseline
+    pub verdict: Verdict,
+
+    /// Expected category from baseline
+    pub category: Option<RefusalCategory>,
+
+    /// Expected refusal code from baseline
+    pub code: Option<u16>,
+
+    /// Timestamp when baseline was recorded
+    pub recorded_at: DateTime<Utc>,
+
+    /// Contract version when recorded
+    pub contract_version: String,
+}
+
+/// Complete regression baseline
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegressionBaseline {
+    /// Baseline schema version
+    pub schema: String,
+
+    /// When the baseline was created
+    pub created_at: DateTime<Utc>,
+
+    /// Contract version used
+    pub contract_version: String,
+
+    /// Git commit hash (if available)
+    pub git_commit: Option<String>,
+
+    /// Individual test baselines
+    pub results: Vec<BaselineResult>,
+
+    /// Metadata
+    pub metadata: HashMap<String, String>,
+}
+
+impl RegressionBaseline {
+    /// Create a new baseline from test results
+    pub fn from_summary(summary: &TestSummary, git_commit: Option<String>) -> Self {
+        let results = summary
+            .results
+            .iter()
+            .map(|r| BaselineResult {
+                name: r.name.clone(),
+                verdict: r.actual_verdict,
+                category: r.actual_category,
+                code: None,
+                recorded_at: Utc::now(),
+                contract_version: CONTRACT_VERSION.to_string(),
+            })
+            .collect();
+
+        Self {
+            schema: "regression-baseline-v1".to_string(),
+            created_at: Utc::now(),
+            contract_version: CONTRACT_VERSION.to_string(),
+            git_commit,
+            results,
+            metadata: HashMap::new(),
+        }
+    }
+
+    /// Serialize to JSON
+    pub fn to_json(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string_pretty(self)
+    }
+
+    /// Deserialize from JSON
+    pub fn from_json(json: &str) -> Result<Self, serde_json::Error> {
+        serde_json::from_str(json)
+    }
+}
+
+/// Regression detection result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegressionReport {
+    /// When the comparison was run
+    pub timestamp: DateTime<Utc>,
+
+    /// Baseline used for comparison
+    pub baseline_commit: Option<String>,
+
+    /// Current contract version
+    pub current_version: String,
+
+    /// Total tests compared
+    pub total_compared: usize,
+
+    /// Tests that regressed (were passing, now failing)
+    pub regressions: Vec<Regression>,
+
+    /// Tests that improved (were failing, now passing)
+    pub improvements: Vec<Improvement>,
+
+    /// Tests that changed behavior (different verdict)
+    pub behavior_changes: Vec<BehaviorChange>,
+
+    /// Tests with stable behavior
+    pub stable_count: usize,
+
+    /// New tests not in baseline
+    pub new_tests: Vec<String>,
+
+    /// Tests in baseline but not in current run
+    pub removed_tests: Vec<String>,
+}
+
+impl RegressionReport {
+    /// Check if there are any regressions
+    pub fn has_regressions(&self) -> bool {
+        !self.regressions.is_empty()
+    }
+
+    /// Check if there are any behavior changes
+    pub fn has_changes(&self) -> bool {
+        !self.regressions.is_empty() || !self.behavior_changes.is_empty()
+    }
+
+    /// Get summary text
+    pub fn summary_text(&self) -> String {
+        format!(
+            "Compared {} tests: {} stable, {} regressions, {} improvements, {} behavior changes, {} new, {} removed",
+            self.total_compared,
+            self.stable_count,
+            self.regressions.len(),
+            self.improvements.len(),
+            self.behavior_changes.len(),
+            self.new_tests.len(),
+            self.removed_tests.len()
+        )
+    }
+}
+
+/// A test that regressed (was passing, now failing)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Regression {
+    pub test_name: String,
+    pub baseline_verdict: Verdict,
+    pub current_verdict: Verdict,
+    pub baseline_passed: bool,
+    pub current_passed: bool,
+    pub error_message: Option<String>,
+}
+
+/// A test that improved (was failing, now passing)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Improvement {
+    pub test_name: String,
+    pub baseline_verdict: Verdict,
+    pub current_verdict: Verdict,
+}
+
+/// A test with changed behavior (different verdict, may or may not be regression)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BehaviorChange {
+    pub test_name: String,
+    pub baseline_verdict: Verdict,
+    pub current_verdict: Verdict,
+    pub baseline_category: Option<RefusalCategory>,
+    pub current_category: Option<RefusalCategory>,
+}
+
+/// Regression test harness
+pub struct RegressionHarness {
+    baseline: Option<RegressionBaseline>,
+    current_results: Vec<TestResult>,
+}
+
+impl RegressionHarness {
+    /// Create a new regression harness
+    pub fn new() -> Self {
+        Self {
+            baseline: None,
+            current_results: Vec::new(),
+        }
+    }
+
+    /// Load baseline from JSON
+    pub fn with_baseline(mut self, baseline: RegressionBaseline) -> Self {
+        self.baseline = Some(baseline);
+        self
+    }
+
+    /// Load baseline from file
+    pub fn load_baseline(&mut self, path: &std::path::Path) -> Result<(), std::io::Error> {
+        let content = std::fs::read_to_string(path)?;
+        let baseline = RegressionBaseline::from_json(&content)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+        self.baseline = Some(baseline);
+        Ok(())
+    }
+
+    /// Save current results as baseline
+    pub fn save_baseline(
+        &self,
+        path: &std::path::Path,
+        git_commit: Option<String>,
+    ) -> Result<(), std::io::Error> {
+        let summary = TestSummary {
+            total: self.current_results.len(),
+            passed: self.current_results.iter().filter(|r| r.passed).count(),
+            failed: self.current_results.iter().filter(|r| !r.passed).count(),
+            total_duration_us: self.current_results.iter().map(|r| r.duration_us).sum(),
+            results: self.current_results.clone(),
+        };
+        let baseline = RegressionBaseline::from_summary(&summary, git_commit);
+        let json = baseline.to_json()
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+        std::fs::write(path, json)
+    }
+
+    /// Add test results for comparison
+    pub fn add_results(&mut self, results: Vec<TestResult>) {
+        self.current_results.extend(results);
+    }
+
+    /// Compare current results against baseline and generate report
+    pub fn compare(&self) -> RegressionReport {
+        let baseline = match &self.baseline {
+            Some(b) => b,
+            None => {
+                return RegressionReport {
+                    timestamp: Utc::now(),
+                    baseline_commit: None,
+                    current_version: CONTRACT_VERSION.to_string(),
+                    total_compared: 0,
+                    regressions: Vec::new(),
+                    improvements: Vec::new(),
+                    behavior_changes: Vec::new(),
+                    stable_count: 0,
+                    new_tests: self.current_results.iter().map(|r| r.name.clone()).collect(),
+                    removed_tests: Vec::new(),
+                };
+            }
+        };
+
+        let baseline_map: HashMap<&str, &BaselineResult> = baseline
+            .results
+            .iter()
+            .map(|r| (r.name.as_str(), r))
+            .collect();
+
+        let current_map: HashMap<&str, &TestResult> = self
+            .current_results
+            .iter()
+            .map(|r| (r.name.as_str(), r))
+            .collect();
+
+        let mut regressions = Vec::new();
+        let mut improvements = Vec::new();
+        let mut behavior_changes = Vec::new();
+        let mut stable_count = 0;
+        let mut new_tests = Vec::new();
+        let mut removed_tests = Vec::new();
+
+        // Check current results against baseline
+        for current in &self.current_results {
+            if let Some(baseline_result) = baseline_map.get(current.name.as_str()) {
+                let baseline_passed = baseline_result.verdict == current.expected_verdict;
+                let current_passed = current.passed;
+
+                if baseline_passed && !current_passed {
+                    // Regression: was passing, now failing
+                    regressions.push(Regression {
+                        test_name: current.name.clone(),
+                        baseline_verdict: baseline_result.verdict,
+                        current_verdict: current.actual_verdict,
+                        baseline_passed,
+                        current_passed,
+                        error_message: current.error.clone(),
+                    });
+                } else if !baseline_passed && current_passed {
+                    // Improvement: was failing, now passing
+                    improvements.push(Improvement {
+                        test_name: current.name.clone(),
+                        baseline_verdict: baseline_result.verdict,
+                        current_verdict: current.actual_verdict,
+                    });
+                } else if baseline_result.verdict != current.actual_verdict {
+                    // Behavior change: different verdict
+                    behavior_changes.push(BehaviorChange {
+                        test_name: current.name.clone(),
+                        baseline_verdict: baseline_result.verdict,
+                        current_verdict: current.actual_verdict,
+                        baseline_category: baseline_result.category,
+                        current_category: current.actual_category,
+                    });
+                } else {
+                    stable_count += 1;
+                }
+            } else {
+                new_tests.push(current.name.clone());
+            }
+        }
+
+        // Check for removed tests
+        for baseline_result in &baseline.results {
+            if !current_map.contains_key(baseline_result.name.as_str()) {
+                removed_tests.push(baseline_result.name.clone());
+            }
+        }
+
+        RegressionReport {
+            timestamp: Utc::now(),
+            baseline_commit: baseline.git_commit.clone(),
+            current_version: CONTRACT_VERSION.to_string(),
+            total_compared: self.current_results.len(),
+            regressions,
+            improvements,
+            behavior_changes,
+            stable_count,
+            new_tests,
+            removed_tests,
+        }
+    }
+}
+
+impl Default for RegressionHarness {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// ============================================================================
+// RED-TEAM TEST METADATA
+// ============================================================================
+
+/// Red-team test category
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub enum RedTeamCategory {
+    /// Attempts to bypass detection via documentation/comments
+    DocumentationBypass,
+    /// Attempts to split or obfuscate markers
+    MarkerObfuscation,
+    /// Attempts to use encoding to hide content
+    EncodedContent,
+    /// Boundary condition tests (empty, whitespace, unicode)
+    BoundaryCondition,
+    /// Polyglot or injection attacks
+    ContentInjection,
+    /// Secret hiding techniques
+    SecretEvasion,
+    /// False positive tests (should NOT trigger)
+    FalsePositiveCheck,
+    /// Custom/other category
+    Custom(String),
+}
+
+impl RedTeamCategory {
+    pub fn from_str(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "documentation_bypass" | "doc_bypass" | "comment_bypass" => {
+                RedTeamCategory::DocumentationBypass
+            }
+            "marker_split" | "marker_obfuscation" | "case_evasion" | "extension_masking" => {
+                RedTeamCategory::MarkerObfuscation
+            }
+            "encoded_secrets" | "encoding" => RedTeamCategory::EncodedContent,
+            "edge_case" | "boundary" | "unicode_evasion" => RedTeamCategory::BoundaryCondition,
+            "polyglot" | "injection" => RedTeamCategory::ContentInjection,
+            "secret_hiding" | "secret_splitting" => RedTeamCategory::SecretEvasion,
+            "false_positive_avoidance" | "false_positive" => RedTeamCategory::FalsePositiveCheck,
+            other => RedTeamCategory::Custom(other.to_string()),
+        }
+    }
+}
+
+/// Extended test case with red-team metadata
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RedTeamTestCase {
+    /// Base test case
+    #[serde(flatten)]
+    pub base: TestCase,
+
+    /// Red-team category
+    pub redteam_category: RedTeamCategory,
+
+    /// Attack vector description
+    pub attack_vector: String,
+
+    /// Severity if this bypass works
+    pub bypass_severity: Severity,
+
+    /// Whether this is an expected bypass (known limitation)
+    pub known_limitation: bool,
+}
+
+/// Red-team test summary
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RedTeamSummary {
+    /// Total red-team tests
+    pub total: usize,
+
+    /// Tests where oracle correctly blocked attack
+    pub blocked: usize,
+
+    /// Tests where attack bypassed oracle
+    pub bypassed: usize,
+
+    /// Tests where oracle had false positive
+    pub false_positives: usize,
+
+    /// Known limitations (expected bypasses)
+    pub known_limitations: usize,
+
+    /// Breakdown by category
+    pub by_category: HashMap<String, CategoryStats>,
+
+    /// Bypass rate (bypassed / total)
+    pub bypass_rate: f64,
+
+    /// False positive rate
+    pub false_positive_rate: f64,
+}
+
+/// Statistics for a red-team category
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CategoryStats {
+    pub total: usize,
+    pub blocked: usize,
+    pub bypassed: usize,
+    pub false_positives: usize,
+}
+
+impl RedTeamSummary {
+    /// Check if any bypasses occurred (excluding known limitations)
+    pub fn has_unexpected_bypasses(&self) -> bool {
+        self.bypassed > self.known_limitations
+    }
+
+    /// Get overall security score (0-100)
+    pub fn security_score(&self) -> u8 {
+        if self.total == 0 {
+            return 100;
+        }
+        let blocked_rate = self.blocked as f64 / self.total as f64;
+        let fp_penalty = self.false_positive_rate * 0.5;
+        let score = (blocked_rate - fp_penalty) * 100.0;
+        score.clamp(0.0, 100.0) as u8
+    }
+}
+
+// ============================================================================
 // UNIT TESTS
 // ============================================================================
 

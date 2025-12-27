@@ -20,7 +20,8 @@
 
 use clap::{Parser, Subcommand, ValueEnum};
 use gating_contract::{
-    AuditEntry, ContractRunner, GatingRequest, TestCase, TestHarness, Verdict,
+    AuditEntry, CategoryStats, ContractRunner, GatingRequest, RedTeamCategory, RedTeamSummary,
+    RegressionBaseline, RegressionHarness, TestCase, TestHarness, Verdict,
 };
 use policy_oracle::{ActionType, DirectoryScanResult, Oracle, Policy, Proposal};
 use std::path::{Path, PathBuf};
@@ -346,6 +347,64 @@ enum ContractAction {
         #[arg(short, long)]
         section: Option<String>,
     },
+
+    /// Run red-team adversarial tests
+    ///
+    /// Executes adversarial test cases designed to bypass the gating system.
+    /// Reports on bypass rates, false positives, and security score.
+    ///
+    /// CATEGORIES
+    ///   bypass:      Attempts to bypass via docs/comments
+    ///   obfuscation: Marker splitting, case variation
+    ///   encoding:    Base64/hex encoded secrets
+    ///   boundary:    Empty files, unicode, edge cases
+    ///   injection:   Polyglot files, hidden secrets
+    #[command(visible_alias = "rt")]
+    Redteam {
+        /// Directory containing red-team test cases
+        #[arg(default_value = "training/redteam")]
+        path: PathBuf,
+
+        /// Output format
+        #[arg(short, long, value_enum, default_value = "text")]
+        format: OutputFormat,
+
+        /// Show details of bypasses
+        #[arg(long)]
+        verbose: bool,
+    },
+
+    /// Regression testing against baseline
+    ///
+    /// Compare current test results against a saved baseline to detect
+    /// regressions (tests that used to pass but now fail) and improvements.
+    ///
+    /// WORKFLOW
+    ///   1. Run tests and save baseline: conative contract regression --save
+    ///   2. Make changes to codebase
+    ///   3. Compare against baseline: conative contract regression
+    #[command(visible_alias = "reg")]
+    Regression {
+        /// Directory containing test cases
+        #[arg(default_value = "training")]
+        path: PathBuf,
+
+        /// Baseline file path
+        #[arg(short, long, default_value = ".conative/baseline.json")]
+        baseline: PathBuf,
+
+        /// Save current results as new baseline
+        #[arg(long)]
+        save: bool,
+
+        /// Output format
+        #[arg(short, long, value_enum, default_value = "text")]
+        format: OutputFormat,
+
+        /// Fail on any regression
+        #[arg(long)]
+        strict: bool,
+    },
 }
 
 fn main() {
@@ -445,6 +504,33 @@ fn main() {
             ContractAction::Schema { format, section } => {
                 show_contract_schema(&format, section.as_deref());
                 0
+            }
+            ContractAction::Redteam {
+                path,
+                format,
+                verbose,
+            } => {
+                if cli.dry_run {
+                    println!("[dry-run] Would run red-team tests from: {}", path.display());
+                    0
+                } else {
+                    run_redteam_tests(&path, &format, verbose, &cli.verbosity)
+                }
+            }
+            ContractAction::Regression {
+                path,
+                baseline,
+                save,
+                format,
+                strict,
+            } => {
+                if cli.dry_run {
+                    println!("[dry-run] Would run regression tests");
+                    println!("[dry-run] Tests: {}, Baseline: {}", path.display(), baseline.display());
+                    0
+                } else {
+                    run_regression_tests(&path, &baseline, save, &format, strict, &cli.verbosity)
+                }
             }
         },
     };
@@ -1246,5 +1332,393 @@ fn show_contract_schema(format: &OutputFormat, section: Option<&str>) {
                 println!("  content_hash:     String (SHA for verification)");
             }
         }
+    }
+}
+
+// ============ Red-Team Test Functions ============
+
+fn run_redteam_tests(path: &Path, format: &OutputFormat, verbose: bool, verbosity: &Verbosity) -> i32 {
+    use std::collections::HashMap;
+
+    let mut harness = TestHarness::new();
+    let test_cases = match load_redteam_cases(path, verbosity) {
+        Ok(cases) => cases,
+        Err(e) => {
+            eprintln!("Error loading red-team tests: {}", e);
+            return 3;
+        }
+    };
+
+    if test_cases.is_empty() {
+        eprintln!("No red-team test cases found in: {}", path.display());
+        return 3;
+    }
+
+    if matches!(verbosity, Verbosity::Verbose | Verbosity::Debug) {
+        eprintln!("Running {} red-team tests...", test_cases.len());
+    }
+
+    // Run all tests and collect results with category info
+    let mut category_results: HashMap<String, (Vec<bool>, Vec<bool>, Vec<bool>)> = HashMap::new();
+    let mut bypasses = Vec::new();
+    let mut false_positives = Vec::new();
+
+    for (test, redteam_category, attack_vector, is_fp_check) in &test_cases {
+        let result = harness.run_test(test);
+
+        let cat_key = format!("{:?}", redteam_category);
+        let entry = category_results.entry(cat_key.clone()).or_insert((Vec::new(), Vec::new(), Vec::new()));
+
+        if *is_fp_check {
+            // False positive check: should pass (Allow)
+            let is_fp = !result.passed && result.actual_verdict == Verdict::Block;
+            entry.2.push(is_fp);
+            if is_fp {
+                false_positives.push((test.name.clone(), attack_vector.clone()));
+            }
+        } else {
+            // Attack test: should block
+            let was_blocked = result.actual_verdict == Verdict::Block;
+            entry.0.push(was_blocked);
+            if !was_blocked {
+                bypasses.push((test.name.clone(), attack_vector.clone(), result.actual_verdict));
+                entry.1.push(true);
+            }
+        }
+
+        if verbose && matches!(verbosity, Verbosity::Verbose | Verbosity::Debug) {
+            let status = if result.passed { "BLOCKED" } else { "BYPASS" };
+            eprintln!("  {} [{}] {}", status, cat_key, test.name);
+        }
+    }
+
+    // Build summary
+    let mut by_category: HashMap<String, CategoryStats> = HashMap::new();
+    let mut total_blocked = 0;
+    let mut total_bypassed = 0;
+    let mut total_fp = 0;
+
+    for (cat, (blocked, bypassed, fps)) in &category_results {
+        let blocked_count = blocked.iter().filter(|&&b| b).count();
+        let bypassed_count = bypassed.len();
+        let fp_count = fps.iter().filter(|&&f| f).count();
+
+        total_blocked += blocked_count;
+        total_bypassed += bypassed_count;
+        total_fp += fp_count;
+
+        by_category.insert(cat.clone(), CategoryStats {
+            total: blocked.len() + bypassed.len() + fps.len(),
+            blocked: blocked_count,
+            bypassed: bypassed_count,
+            false_positives: fp_count,
+        });
+    }
+
+    let total = test_cases.len();
+    let summary = RedTeamSummary {
+        total,
+        blocked: total_blocked,
+        bypassed: total_bypassed,
+        false_positives: total_fp,
+        known_limitations: 0, // Could be parsed from test metadata
+        by_category,
+        bypass_rate: if total > 0 { total_bypassed as f64 / total as f64 } else { 0.0 },
+        false_positive_rate: if total > 0 { total_fp as f64 / total as f64 } else { 0.0 },
+    };
+
+    match format {
+        OutputFormat::Json => {
+            println!("{}", serde_json::to_string_pretty(&summary).unwrap());
+        }
+        OutputFormat::Compact => {
+            println!(
+                "redteam total={} blocked={} bypassed={} fps={} score={}",
+                summary.total, summary.blocked, summary.bypassed, summary.false_positives, summary.security_score()
+            );
+        }
+        OutputFormat::Text => {
+            println!("=== Red-Team Test Results ===\n");
+            println!("Total Tests:     {}", summary.total);
+            println!("Blocked:         {} ({:.1}%)", summary.blocked, (summary.blocked as f64 / summary.total as f64) * 100.0);
+            println!("Bypassed:        {} ({:.1}%)", summary.bypassed, summary.bypass_rate * 100.0);
+            println!("False Positives: {} ({:.1}%)", summary.false_positives, summary.false_positive_rate * 100.0);
+            println!("\nSecurity Score:  {}/100", summary.security_score());
+
+            if !bypasses.is_empty() {
+                println!("\n--- Bypasses ---");
+                for (name, attack, verdict) in &bypasses {
+                    println!("  {} [{:?}]", name, verdict);
+                    if verbose {
+                        println!("    Attack: {}", attack);
+                    }
+                }
+            }
+
+            if !false_positives.is_empty() {
+                println!("\n--- False Positives ---");
+                for (name, attack) in &false_positives {
+                    println!("  {}", name);
+                    if verbose {
+                        println!("    Attack: {}", attack);
+                    }
+                }
+            }
+
+            println!("\n--- By Category ---");
+            for (cat, stats) in &summary.by_category {
+                println!("  {}: {} total, {} blocked, {} bypassed, {} fps",
+                    cat, stats.total, stats.blocked, stats.bypassed, stats.false_positives);
+            }
+        }
+    }
+
+    if summary.has_unexpected_bypasses() {
+        1
+    } else {
+        0
+    }
+}
+
+/// Load red-team test cases with metadata
+fn load_redteam_cases(path: &Path, verbosity: &Verbosity) -> Result<Vec<(TestCase, RedTeamCategory, String, bool)>, String> {
+    let mut cases = Vec::new();
+
+    if path.is_file() {
+        if let Some(case) = load_redteam_file(path)? {
+            cases.push(case);
+        }
+    } else if path.is_dir() {
+        for entry in std::fs::read_dir(path).map_err(|e| e.to_string())? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let entry_path = entry.path();
+
+            if entry_path.is_dir() {
+                cases.extend(load_redteam_cases(&entry_path, verbosity)?);
+            } else if entry_path.extension().map(|s| s == "json").unwrap_or(false) {
+                match load_redteam_file(&entry_path) {
+                    Ok(Some(case)) => cases.push(case),
+                    Ok(None) => {},
+                    Err(e) => {
+                        if matches!(verbosity, Verbosity::Debug) {
+                            eprintln!("Skipping {}: {}", entry_path.display(), e);
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        return Err(format!("Path does not exist: {}", path.display()));
+    }
+
+    Ok(cases)
+}
+
+/// Load a single red-team test case
+fn load_redteam_file(path: &Path) -> Result<Option<(TestCase, RedTeamCategory, String, bool)>, String> {
+    let content = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+
+    #[derive(serde::Deserialize)]
+    struct RedTeamData {
+        proposal: Proposal,
+        expected_verdict: String,
+        #[serde(default)]
+        reasoning: String,
+        #[serde(default)]
+        redteam_category: Option<String>,
+        #[serde(default)]
+        attack_vector: Option<String>,
+    }
+
+    let data: RedTeamData = serde_json::from_str(&content).map_err(|e| e.to_string())?;
+
+    // Skip non-redteam tests
+    let redteam_cat = match &data.redteam_category {
+        Some(c) => RedTeamCategory::from_str(c),
+        None => return Ok(None),
+    };
+
+    let expected_verdict = match data.expected_verdict.as_str() {
+        "Compliant" => Verdict::Allow,
+        "HardViolation" => Verdict::Block,
+        "SoftConcern" => Verdict::Warn,
+        other => return Err(format!("Unknown verdict: {}", other)),
+    };
+
+    let is_fp_check = matches!(redteam_cat, RedTeamCategory::FalsePositiveCheck);
+
+    let test_case = TestCase {
+        name: path.file_stem().unwrap_or_default().to_string_lossy().to_string(),
+        description: data.reasoning,
+        request: GatingRequest::new(data.proposal),
+        expected_verdict,
+        expected_category: None,
+        expected_code: None,
+    };
+
+    Ok(Some((test_case, redteam_cat, data.attack_vector.unwrap_or_default(), is_fp_check)))
+}
+
+// ============ Regression Test Functions ============
+
+fn run_regression_tests(
+    path: &Path,
+    baseline_path: &Path,
+    save_baseline: bool,
+    format: &OutputFormat,
+    strict: bool,
+    verbosity: &Verbosity,
+) -> i32 {
+    // Run tests first
+    let mut harness = TestHarness::new();
+    let test_cases = match load_test_cases(path, verbosity) {
+        Ok(cases) => cases,
+        Err(e) => {
+            eprintln!("Error loading test cases: {}", e);
+            return 3;
+        }
+    };
+
+    if test_cases.is_empty() {
+        eprintln!("No test cases found in: {}", path.display());
+        return 3;
+    }
+
+    for test in &test_cases {
+        harness.run_test(test);
+    }
+
+    let summary = harness.summary();
+
+    if save_baseline {
+        // Create directory if needed
+        if let Some(parent) = baseline_path.parent() {
+            if !parent.exists() {
+                if let Err(e) = std::fs::create_dir_all(parent) {
+                    eprintln!("Failed to create baseline directory: {}", e);
+                    return 3;
+                }
+            }
+        }
+
+        // Get git commit if available
+        let git_commit = std::process::Command::new("git")
+            .args(["rev-parse", "HEAD"])
+            .output()
+            .ok()
+            .and_then(|o| String::from_utf8(o.stdout).ok())
+            .map(|s| s.trim().to_string());
+
+        let baseline = RegressionBaseline::from_summary(&summary, git_commit);
+        match baseline.to_json() {
+            Ok(json) => {
+                if let Err(e) = std::fs::write(baseline_path, &json) {
+                    eprintln!("Failed to write baseline: {}", e);
+                    return 3;
+                }
+                println!("Baseline saved to: {}", baseline_path.display());
+                println!("Tests: {} total, {} passed, {} failed", summary.total, summary.passed, summary.failed);
+                return 0;
+            }
+            Err(e) => {
+                eprintln!("Failed to serialize baseline: {}", e);
+                return 3;
+            }
+        }
+    }
+
+    // Compare against baseline
+    let mut reg_harness = RegressionHarness::new();
+    if baseline_path.exists() {
+        if let Err(e) = reg_harness.load_baseline(baseline_path) {
+            eprintln!("Failed to load baseline: {}", e);
+            eprintln!("Run with --save to create a new baseline");
+            return 3;
+        }
+    } else {
+        eprintln!("No baseline found at: {}", baseline_path.display());
+        eprintln!("Run with --save to create a new baseline");
+        return 3;
+    }
+
+    reg_harness.add_results(summary.results.clone());
+    let report = reg_harness.compare();
+
+    match format {
+        OutputFormat::Json => {
+            println!("{}", serde_json::to_string_pretty(&report).unwrap());
+        }
+        OutputFormat::Compact => {
+            println!(
+                "regression compared={} stable={} regressed={} improved={} changed={} new={} removed={}",
+                report.total_compared,
+                report.stable_count,
+                report.regressions.len(),
+                report.improvements.len(),
+                report.behavior_changes.len(),
+                report.new_tests.len(),
+                report.removed_tests.len()
+            );
+        }
+        OutputFormat::Text => {
+            println!("=== Regression Report ===\n");
+            println!("{}", report.summary_text());
+
+            if let Some(ref commit) = report.baseline_commit {
+                println!("\nBaseline commit: {}", commit);
+            }
+
+            if !report.regressions.is_empty() {
+                println!("\n--- REGRESSIONS ({}) ---", report.regressions.len());
+                for reg in &report.regressions {
+                    println!("  {} [{:?} -> {:?}]", reg.test_name, reg.baseline_verdict, reg.current_verdict);
+                    if let Some(ref err) = reg.error_message {
+                        println!("    Error: {}", err);
+                    }
+                }
+            }
+
+            if !report.improvements.is_empty() {
+                println!("\n--- IMPROVEMENTS ({}) ---", report.improvements.len());
+                for imp in &report.improvements {
+                    println!("  {} [{:?} -> {:?}]", imp.test_name, imp.baseline_verdict, imp.current_verdict);
+                }
+            }
+
+            if !report.behavior_changes.is_empty() {
+                println!("\n--- BEHAVIOR CHANGES ({}) ---", report.behavior_changes.len());
+                for change in &report.behavior_changes {
+                    println!("  {} [{:?} -> {:?}]", change.test_name, change.baseline_verdict, change.current_verdict);
+                }
+            }
+
+            if !report.new_tests.is_empty() {
+                println!("\n--- NEW TESTS ({}) ---", report.new_tests.len());
+                for name in &report.new_tests {
+                    println!("  {}", name);
+                }
+            }
+
+            if !report.removed_tests.is_empty() {
+                println!("\n--- REMOVED TESTS ({}) ---", report.removed_tests.len());
+                for name in &report.removed_tests {
+                    println!("  {}", name);
+                }
+            }
+
+            if report.has_regressions() {
+                println!("\nWARNING: {} regression(s) detected!", report.regressions.len());
+            } else if report.stable_count == report.total_compared {
+                println!("\nAll tests stable.");
+            }
+        }
+    }
+
+    if strict && report.has_regressions() {
+        1
+    } else if report.has_regressions() {
+        2 // Warning exit code
+    } else {
+        0
     }
 }
