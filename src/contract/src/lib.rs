@@ -686,8 +686,8 @@ impl ContractRunner {
             refusal,
             evaluations: EvaluationChain {
                 oracle: Some(oracle_eval.clone()),
-                slm: None,     // Not yet implemented
-                arbiter: None, // Not yet implemented
+                slm: None,     // Phase 2: Requires llama.cpp integration
+                arbiter: None, // Phase 4: Elixir GenServer via Rustler NIF
             },
             processing: ProcessingMetadata {
                 duration_us: duration.as_micros() as u64,
