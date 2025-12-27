@@ -11,6 +11,7 @@ repository = "https://github.com/hyperpolymath/conative-gating"
 members = [
     "src/oracle",
     "src/slm",
+    "src/contract",
 ]
 
 [workspace.dependencies]
@@ -30,7 +31,9 @@ clap_mangen = "0.2"
 
 [dependencies]
 policy-oracle = { path = "src/oracle" }
+gating-contract = { path = "src/contract" }
 clap.workspace = true
+chrono.workspace = true
 clap_complete.workspace = true
 clap_mangen.workspace = true
 serde.workspace = true
