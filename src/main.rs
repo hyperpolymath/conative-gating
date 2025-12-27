@@ -19,6 +19,9 @@
 //! All operations are safe to run repeatedly.
 
 use clap::{Parser, Subcommand, ValueEnum};
+use gating_contract::{
+    AuditEntry, ContractRunner, GatingRequest, TestCase, TestHarness, Verdict,
+};
 use policy_oracle::{ActionType, DirectoryScanResult, Oracle, Policy, Proposal};
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
@@ -165,7 +168,7 @@ enum Commands {
     #[command(visible_alias = "c")]
     Check {
         /// File path to check
-        #[arg(short, long, group = "input")]
+        #[arg(short = 'F', long, group = "input")]
         file: Option<PathBuf>,
 
         /// Content string to check (use '-' for stdin)
@@ -272,6 +275,77 @@ enum Commands {
     /// EXAMPLE
     ///   conative man > /usr/local/share/man/man1/conative.1
     Man,
+
+    /// Run the gating contract test runner
+    ///
+    /// Executes contract tests from JSON files or evaluates requests
+    /// using the formal gating contract specification.
+    ///
+    /// The contract defines:
+    /// - Inputs (GatingRequest): What the gating system receives
+    /// - Outputs (GatingDecision): What it returns
+    /// - Refusal Taxonomy: Categorization of all refusals
+    /// - Audit Log Format: Structured logging for compliance
+    ///
+    /// EXAMPLES
+    ///   conative contract test training/           # Run all tests in directory
+    ///   conative contract eval request.json        # Evaluate single request
+    ///   conative contract eval request.json --audit  # With audit log output
+    #[command(visible_alias = "ct")]
+    Contract {
+        #[command(subcommand)]
+        action: ContractAction,
+    },
+}
+
+#[derive(Subcommand)]
+enum ContractAction {
+    /// Run contract tests from test case files
+    ///
+    /// Reads JSON test case files and validates contract behavior.
+    /// Returns non-zero exit code if any tests fail.
+    Test {
+        /// Directory or file containing test cases
+        #[arg(default_value = "training")]
+        path: PathBuf,
+
+        /// Output format
+        #[arg(short, long, value_enum, default_value = "text")]
+        format: OutputFormat,
+
+        /// Stop on first failure
+        #[arg(long)]
+        fail_fast: bool,
+    },
+
+    /// Evaluate a gating request through the contract
+    ///
+    /// Processes a GatingRequest JSON and returns a GatingDecision.
+    Eval {
+        /// Request JSON file (use '-' for stdin)
+        request: PathBuf,
+
+        /// Output format
+        #[arg(short, long, value_enum, default_value = "json")]
+        format: OutputFormat,
+
+        /// Include audit log entry in output
+        #[arg(long)]
+        audit: bool,
+    },
+
+    /// Display contract schema information
+    ///
+    /// Shows the contract version, input/output schemas, and refusal codes.
+    Schema {
+        /// Output format
+        #[arg(short, long, value_enum, default_value = "text")]
+        format: OutputFormat,
+
+        /// Show only specific section (inputs, outputs, refusals, audit)
+        #[arg(short, long)]
+        section: Option<String>,
+    },
 }
 
 fn main() {
@@ -343,6 +417,36 @@ fn main() {
             generate_man_page();
             0
         }
+        Commands::Contract { action } => match action {
+            ContractAction::Test {
+                path,
+                format,
+                fail_fast,
+            } => {
+                if cli.dry_run {
+                    println!("[dry-run] Would run contract tests from: {}", path.display());
+                    0
+                } else {
+                    run_contract_tests(&path, &format, fail_fast, &cli.verbosity)
+                }
+            }
+            ContractAction::Eval {
+                request,
+                format,
+                audit,
+            } => {
+                if cli.dry_run {
+                    println!("[dry-run] Would evaluate request: {}", request.display());
+                    0
+                } else {
+                    eval_contract_request(&request, &format, audit)
+                }
+            }
+            ContractAction::Schema { format, section } => {
+                show_contract_schema(&format, section.as_deref());
+                0
+            }
+        },
     };
 
     std::process::exit(exit_code);
@@ -725,6 +829,421 @@ impl IntoString for policy_oracle::ConcernType {
             policy_oracle::ConcernType::UnusualStructure => "Unusual structure".to_string(),
             policy_oracle::ConcernType::Tier2Language { language } => {
                 format!("Tier 2 language: {}", language)
+            }
+        }
+    }
+}
+
+// ============ Contract Runner Functions ============
+
+fn run_contract_tests(path: &Path, format: &OutputFormat, fail_fast: bool, verbosity: &Verbosity) -> i32 {
+    let mut harness = TestHarness::new();
+    let test_cases = match load_test_cases(path, verbosity) {
+        Ok(cases) => cases,
+        Err(e) => {
+            eprintln!("Error loading test cases: {}", e);
+            return 3;
+        }
+    };
+
+    if test_cases.is_empty() {
+        eprintln!("No test cases found in: {}", path.display());
+        return 3;
+    }
+
+    if matches!(verbosity, Verbosity::Verbose | Verbosity::Debug) {
+        eprintln!("Running {} test cases...", test_cases.len());
+    }
+
+    for test in &test_cases {
+        let result = harness.run_test(test);
+
+        if matches!(verbosity, Verbosity::Verbose | Verbosity::Debug) {
+            let status = if result.passed { "PASS" } else { "FAIL" };
+            eprintln!("  {} {} ({}μs)", status, test.name, result.duration_us);
+        }
+
+        if fail_fast && !result.passed {
+            break;
+        }
+    }
+
+    let summary = harness.summary();
+
+    match format {
+        OutputFormat::Json => {
+            println!("{}", serde_json::to_string_pretty(&summary).unwrap());
+        }
+        OutputFormat::Compact => {
+            println!(
+                "tests={} passed={} failed={} duration={}μs",
+                summary.total, summary.passed, summary.failed, summary.total_duration_us
+            );
+        }
+        OutputFormat::Text => {
+            println!("=== Contract Test Results ===\n");
+            println!("Total:   {}", summary.total);
+            println!("Passed:  {}", summary.passed);
+            println!("Failed:  {}", summary.failed);
+            println!("Duration: {}μs\n", summary.total_duration_us);
+
+            if !summary.all_passed() {
+                println!("Failed tests:");
+                for name in summary.failed_tests() {
+                    println!("  - {}", name);
+                }
+
+                // Show details of failures
+                for result in &summary.results {
+                    if !result.passed {
+                        println!("\n  {} ERROR:", result.name);
+                        if let Some(err) = &result.error {
+                            println!("    {}", err);
+                        }
+                    }
+                }
+            } else {
+                println!("All tests passed!");
+            }
+        }
+    }
+
+    if summary.all_passed() {
+        0
+    } else {
+        1
+    }
+}
+
+/// Load test cases from a file or directory
+fn load_test_cases(path: &Path, verbosity: &Verbosity) -> Result<Vec<TestCase>, String> {
+    let mut cases = Vec::new();
+
+    if path.is_file() {
+        cases.push(load_test_case_file(path)?);
+    } else if path.is_dir() {
+        for entry in std::fs::read_dir(path).map_err(|e| e.to_string())? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let entry_path = entry.path();
+
+            if entry_path.is_dir() {
+                // Recurse into subdirectories
+                cases.extend(load_test_cases(&entry_path, verbosity)?);
+            } else if entry_path.extension().map(|s| s == "json").unwrap_or(false) {
+                match load_test_case_file(&entry_path) {
+                    Ok(case) => cases.push(case),
+                    Err(e) => {
+                        if matches!(verbosity, Verbosity::Debug) {
+                            eprintln!("Skipping {}: {}", entry_path.display(), e);
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        return Err(format!("Path does not exist: {}", path.display()));
+    }
+
+    Ok(cases)
+}
+
+/// Load a single test case from a training data JSON file
+fn load_test_case_file(path: &Path) -> Result<TestCase, String> {
+    let content = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+
+    // Parse the training data format
+    #[derive(serde::Deserialize)]
+    #[allow(dead_code)]
+    struct TrainingData {
+        proposal: Proposal,
+        expected_verdict: String,
+        #[serde(default)]
+        reasoning: String,
+        #[serde(default)]
+        category: String,
+        #[serde(default)]
+        violation_type: Option<String>,
+        #[serde(default)]
+        concern_type: Option<String>,
+        #[serde(default)]
+        spirit_violation: bool,
+    }
+
+    let data: TrainingData = serde_json::from_str(&content).map_err(|e| e.to_string())?;
+
+    let expected_verdict = match data.expected_verdict.as_str() {
+        "Compliant" => Verdict::Allow,
+        "HardViolation" => Verdict::Block,
+        "SoftConcern" => Verdict::Warn,
+        other => return Err(format!("Unknown verdict: {}", other)),
+    };
+
+    // Map the expected category based on violation_type, concern_type, or category
+    let expected_category = if data.spirit_violation {
+        // Spirit violations require SLM - these will fail until SLM is implemented
+        Some(gating_contract::RefusalCategory::VerbositySmell)
+    } else if let Some(ref vtype) = data.violation_type {
+        match vtype.as_str() {
+            "ForbiddenLanguage" => Some(gating_contract::RefusalCategory::ForbiddenLanguage),
+            "ForbiddenToolchain" => Some(gating_contract::RefusalCategory::ForbiddenToolchain),
+            "SecurityViolation" => Some(gating_contract::RefusalCategory::SecurityViolation),
+            "ForbiddenPattern" => Some(gating_contract::RefusalCategory::ForbiddenPattern),
+            _ => None,
+        }
+    } else if let Some(ref ctype) = data.concern_type {
+        match ctype.as_str() {
+            "VerbositySmell" => Some(gating_contract::RefusalCategory::VerbositySmell),
+            "PatternDeviation" | "UnusualStructure" => {
+                Some(gating_contract::RefusalCategory::StructuralAnomaly)
+            }
+            _ => None,
+        }
+    } else {
+        match data.category.as_str() {
+            "language" => {
+                if data.expected_verdict == "HardViolation" {
+                    Some(gating_contract::RefusalCategory::ForbiddenLanguage)
+                } else {
+                    None
+                }
+            }
+            "toolchain" => Some(gating_contract::RefusalCategory::ForbiddenToolchain),
+            "pattern" | "security" => Some(gating_contract::RefusalCategory::ForbiddenPattern),
+            "spirit" => Some(gating_contract::RefusalCategory::VerbositySmell),
+            _ => None,
+        }
+    };
+
+    Ok(TestCase {
+        name: path.file_stem().unwrap_or_default().to_string_lossy().to_string(),
+        description: data.reasoning,
+        request: GatingRequest::new(data.proposal),
+        expected_verdict,
+        expected_category,
+        expected_code: None,
+    })
+}
+
+fn eval_contract_request(request_path: &Path, format: &OutputFormat, include_audit: bool) -> i32 {
+    let content = match std::fs::read_to_string(request_path) {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("Failed to read request file: {}", e);
+            return 3;
+        }
+    };
+
+    let request: GatingRequest = match serde_json::from_str(&content) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Failed to parse request JSON: {}", e);
+            return 3;
+        }
+    };
+
+    let runner = ContractRunner::new();
+    let decision = match runner.evaluate(&request) {
+        Ok(d) => d,
+        Err(e) => {
+            eprintln!("Error evaluating request: {}", e);
+            return 3;
+        }
+    };
+
+    match format {
+        OutputFormat::Json => {
+            if include_audit {
+                let audit = runner.audit(&request, &decision);
+                #[derive(serde::Serialize)]
+                struct Output {
+                    decision: gating_contract::GatingDecision,
+                    audit: AuditEntry,
+                }
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&Output {
+                        decision: decision.clone(),
+                        audit
+                    })
+                    .unwrap()
+                );
+            } else {
+                println!("{}", serde_json::to_string_pretty(&decision).unwrap());
+            }
+        }
+        OutputFormat::Compact => {
+            let refusal_code = decision
+                .refusal
+                .as_ref()
+                .map(|r| r.code.numeric())
+                .unwrap_or(0);
+            println!(
+                "verdict={:?} code={} duration={}μs",
+                decision.verdict, refusal_code, decision.processing.duration_us
+            );
+        }
+        OutputFormat::Text => {
+            println!("=== Gating Decision ===\n");
+            println!("Request ID:  {}", decision.request_id);
+            println!("Decision ID: {}", decision.decision_id);
+            println!("Verdict:     {:?}", decision.verdict);
+            println!("Duration:    {}μs", decision.processing.duration_us);
+
+            if let Some(ref refusal) = decision.refusal {
+                println!("\nRefusal Details:");
+                println!("  Category: {}", refusal.category.display_name());
+                println!("  Code:     {}", refusal.code.numeric());
+                println!("  Message:  {}", refusal.message);
+                if let Some(ref remediation) = refusal.remediation {
+                    println!("  Fix:      {}", remediation);
+                }
+            }
+
+            if include_audit {
+                let audit = runner.audit(&request, &decision);
+                println!("\nAudit Log Entry:");
+                println!("{}", serde_json::to_string_pretty(&audit).unwrap());
+            }
+        }
+    }
+
+    decision.verdict.exit_code()
+}
+
+fn show_contract_schema(format: &OutputFormat, section: Option<&str>) {
+    match format {
+        OutputFormat::Json => {
+            #[derive(serde::Serialize)]
+            struct Schema {
+                version: &'static str,
+                schema: &'static str,
+                inputs: InputSchema,
+                outputs: OutputSchema,
+                refusal_codes: Vec<RefusalCodeInfo>,
+            }
+
+            #[derive(serde::Serialize)]
+            struct InputSchema {
+                gating_request: Vec<&'static str>,
+            }
+
+            #[derive(serde::Serialize)]
+            struct OutputSchema {
+                gating_decision: Vec<&'static str>,
+                verdicts: Vec<&'static str>,
+            }
+
+            #[derive(serde::Serialize)]
+            struct RefusalCodeInfo {
+                code: u16,
+                name: &'static str,
+                category: &'static str,
+            }
+
+            let schema = Schema {
+                version: gating_contract::CONTRACT_VERSION,
+                schema: gating_contract::CONTRACT_SCHEMA,
+                inputs: InputSchema {
+                    gating_request: vec![
+                        "request_id: UUID",
+                        "timestamp: DateTime<Utc>",
+                        "proposal: Proposal",
+                        "context: RequestContext",
+                        "policy_override: Option<Policy>",
+                    ],
+                },
+                outputs: OutputSchema {
+                    gating_decision: vec![
+                        "request_id: UUID",
+                        "decision_id: UUID",
+                        "timestamp: DateTime<Utc>",
+                        "verdict: Verdict",
+                        "refusal: Option<Refusal>",
+                        "evaluations: EvaluationChain",
+                        "processing: ProcessingMetadata",
+                    ],
+                    verdicts: vec!["Allow", "Warn", "Escalate", "Block"],
+                },
+                refusal_codes: vec![
+                    RefusalCodeInfo { code: 100, name: "Lang100TypeScript", category: "ForbiddenLanguage" },
+                    RefusalCodeInfo { code: 101, name: "Lang101Python", category: "ForbiddenLanguage" },
+                    RefusalCodeInfo { code: 102, name: "Lang102Go", category: "ForbiddenLanguage" },
+                    RefusalCodeInfo { code: 103, name: "Lang103Java", category: "ForbiddenLanguage" },
+                    RefusalCodeInfo { code: 200, name: "Tool200NpmWithoutDeno", category: "ForbiddenToolchain" },
+                    RefusalCodeInfo { code: 300, name: "Sec300HardcodedSecret", category: "SecurityViolation" },
+                    RefusalCodeInfo { code: 500, name: "Spirit500Verbosity", category: "VerbositySmell" },
+                ],
+            };
+
+            println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+        }
+        OutputFormat::Compact | OutputFormat::Text => {
+            let show_all = section.is_none();
+            let section = section.unwrap_or("");
+
+            println!("=== Gating Contract Schema ===\n");
+            println!("Version: {}", gating_contract::CONTRACT_VERSION);
+            println!("Schema:  {}", gating_contract::CONTRACT_SCHEMA);
+
+            if show_all || section == "inputs" {
+                println!("\n--- INPUTS ---\n");
+                println!("GatingRequest:");
+                println!("  request_id:      UUID (unique request identifier)");
+                println!("  timestamp:       DateTime<Utc> (when request was created)");
+                println!("  proposal:        Proposal (action_type, content, files_affected)");
+                println!("  context:         RequestContext (source, session, repository)");
+                println!("  policy_override: Option<Policy> (custom policy if needed)");
+            }
+
+            if show_all || section == "outputs" {
+                println!("\n--- OUTPUTS ---\n");
+                println!("GatingDecision:");
+                println!("  request_id:  UUID (correlation with request)");
+                println!("  decision_id: UUID (unique decision identifier)");
+                println!("  timestamp:   DateTime<Utc> (when decision was made)");
+                println!("  verdict:     Verdict (Allow | Warn | Escalate | Block)");
+                println!("  refusal:     Option<Refusal> (details if not allowed)");
+                println!("  evaluations: EvaluationChain (oracle, slm, arbiter results)");
+                println!("  processing:  ProcessingMetadata (duration, rules checked)");
+                println!("\nVerdicts:");
+                println!("  Allow    (0) - Proposal proceeds");
+                println!("  Warn     (2) - Proceed with warning");
+                println!("  Escalate (3) - Requires human review");
+                println!("  Block    (1) - Proposal rejected");
+            }
+
+            if show_all || section == "refusals" {
+                println!("\n--- REFUSAL TAXONOMY ---\n");
+                println!("Hard Policy Violations (Oracle):");
+                println!("  100-199  ForbiddenLanguage   (TypeScript, Python, Go, Java...)");
+                println!("  200-299  ForbiddenToolchain  (npm without deno, yarn...)");
+                println!("  300-399  SecurityViolation   (hardcoded secrets, insecure hash...)");
+                println!("  400-499  ForbiddenPattern    (forbidden imports, unsafe blocks...)");
+                println!("\nSpirit Violations (SLM):");
+                println!("  500-599  SpiritViolation     (verbosity, over-documentation...)");
+                println!("\nSystem Codes:");
+                println!("  900-999  SystemError         (invalid request, rate limited...)");
+            }
+
+            if show_all || section == "audit" {
+                println!("\n--- AUDIT LOG FORMAT ---\n");
+                println!("AuditEntry:");
+                println!("  schema:           String (contract schema identifier)");
+                println!("  audit_id:         UUID");
+                println!("  request_id:       UUID");
+                println!("  decision_id:      UUID");
+                println!("  timestamp:        DateTime<Utc>");
+                println!("  verdict:          Verdict");
+                println!("  refusal_code:     Option<u16>");
+                println!("  refusal_category: Option<RefusalCategory>");
+                println!("  source:           String");
+                println!("  repository:       Option<String>");
+                println!("  session_id:       Option<String>");
+                println!("  rules_checked:    Vec<String>");
+                println!("  rules_triggered:  Vec<String>");
+                println!("  duration_us:      u64");
+                println!("  contract_version: String");
+                println!("  content_hash:     String (SHA for verification)");
             }
         }
     }
