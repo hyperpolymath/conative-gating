@@ -36,8 +36,8 @@ Development roadmap for the SLM-as-Cerebellum policy enforcement system.
 | Interface defined, needs llama.cpp
 
 | Consensus Arbiter
-| [red]#*NOT STARTED*#
-| Elixir/OTP implementation pending
+| [yellow]#*STARTED*#
+| GenServer skeleton, Application module, decide/3 logic
 
 | LLM Integration
 | [red]#*NOT STARTED*#
@@ -157,13 +157,13 @@ Implement modified PBFT consensus with asymmetric weighting in Elixir/OTP.
 === Tasks
 
 [%interactive]
-* [ ] Set up Elixir/OTP project structure
-* [ ] Implement GenServer for arbiter
-* [ ] Define consensus protocol messages
-* [ ] Implement asymmetric weighting (SLM = 1.5x)
-* [ ] Add escalation logic
+* [x] Set up Elixir/OTP project structure
+* [x] Implement GenServer for arbiter
+* [x] Define consensus protocol messages
+* [x] Implement asymmetric weighting (SLM = 1.5x)
+* [x] Add escalation logic
 * [ ] Implement audit logging
-* [ ] Create supervision tree
+* [x] Create supervision tree
 * [ ] Add Rustler NIFs for Oracle/SLM calls
 * [ ] Write property-based tests
 

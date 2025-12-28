@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Jonathan D.A. Jewell <jonathan@hyperpolymath.org>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 defmodule ConativeGating.ConsensusArbiter do
   @moduledoc """
   Consensus Arbiter for Conative Gating.
