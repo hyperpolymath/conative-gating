@@ -305,7 +305,7 @@ Proposal format:
 
 == License
 
-SPDX-License-Identifier: AGPL-3.0-or-later
+SPDX-License-Identifier: PMPL-1.0
 
 Copyright (C) 2025 Jonathan D.A. Jewell
 
