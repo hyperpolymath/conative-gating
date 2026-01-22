@@ -1,6 +1,6 @@
 #!/bin/bash
 # Mass Apply RSR Templates to All Repositories
-# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+# SPDX-License-Identifier: PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5
 #
 # Usage:
 #   ./mass-apply-templates.sh [--dry-run] [--repos-dir /path/to/repos]
@@ -245,7 +245,7 @@ apply_state_scm() {
     if ! $DRY_RUN; then
         cat > "$repo_dir/STATE.scm" << EOF
 ;;; STATE.scm - Project State Checkpoint for $project_name
-;;; SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+;;; SPDX-License-Identifier: PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5
 ;;; Generated: $(date -Iseconds)
 
 (define-module ($project_slug state)
@@ -370,7 +370,7 @@ apply_justfile_hooks() {
         if ! $DRY_RUN && [[ -f "$TEMPLATE_DIR/justfile-hooks.template" ]]; then
             cat > "$repo_dir/justfile" << 'EOF'
 # RSR Project Justfile
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-License-Identifier: PMPL-1.0-or-later
 
 default: check
 
