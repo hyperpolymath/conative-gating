@@ -21,7 +21,7 @@ Based on primary build system detection:
 |Elixir |~3 |bofig, tma-mark2, hybrid-automation-router
 |JavaScript/TS |~5 |7-tentacles, sinople-wharf, accessibility-everywhere
 |Python (to convert) |~2 |vext, jtv-playground (experiments)
-|Nix-only |~35 |STATE.scm, gitvisor, wp-praxis
+|Nix-only |~35 |STATE.scm, git-hud, wp-praxis
 |===
 
 == Per-Repository Variations

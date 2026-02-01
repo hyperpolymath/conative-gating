@@ -49,7 +49,7 @@ fogbinder,rescript,app,yes,yes,yes,no,yes,yes,yes,none
 github-slideshow,guix,channel,yes,yes,yes,no,yes,no,yes,none
 gitloom,guix,channel,yes,yes,yes,no,yes,no,yes,none
 git-rsr-certified,rust,library,yes,yes,yes,no,yes,yes,yes,none
-gitvisor,guix,channel,yes,yes,yes,yes,yes,yes,yes,none
+git-hud,guix,channel,yes,yes,yes,yes,yes,yes,yes,none
 grim-repo,rescript,app,yes,yes,yes,no,yes,yes,yes,none
 gsbot,guix,channel,yes,yes,yes,no,yes,no,yes,none
 heterogenous-mobile-computing,rust,binary,yes,yes,yes,no,yes,yes,yes,none

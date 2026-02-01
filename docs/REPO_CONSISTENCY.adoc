@@ -1,7 +1,7 @@
 = GitHub/GitLab Repository Consistency Guide
 :toc:
 :sectnums:
-// SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+// SPDX-License-Identifier: PMPL-1.0-or-later
 
 == Overview
 
