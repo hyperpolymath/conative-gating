@@ -87,7 +87,11 @@ Thumbs.db
 Dual license header:
 [source]
 ----
+<<<<<<< HEAD
 SPDX-License-Identifier: PMPL-1.0-or-later-or-later
+=======
+SPDX-License-Identifier: MPL-2.0-or-later
+>>>>>>> 1637fa5 (chore: sync from parent repo automation)
 
 This software is dual-licensed under:
 1. GNU Affero General Public License v3.0 or later
