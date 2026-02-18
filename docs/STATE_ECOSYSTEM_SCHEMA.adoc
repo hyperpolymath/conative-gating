@@ -325,7 +325,7 @@ Domain categorization:
   (color . "#ff6b6b"))
 
  ((name . "Developer Tools")
-  (projects . ("gitvisor" "git-rsr-certified" "scaffoldia"))
+  (projects . ("git-hud" "git-rsr-certified" "scaffoldia"))
   (color . "#4ecdc4"))
 
  ((name . "Citation Management")
