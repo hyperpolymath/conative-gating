@@ -80,3 +80,6 @@ htmlcov/
 
 # Generated test baselines
 .conative/
+
+# Crash recovery artifacts
+ai-cli-crash-capture/
