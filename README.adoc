@@ -314,3 +314,8 @@ Copyright (C) 2025 Jonathan D.A. Jewell
 * link:docs/ARCHITECTURE.md[Full Architecture Specification]
 * link:docs/MAAF_INTEGRATION.adoc[MAAF Integration]
 * link:docs/STATE_ECOSYSTEM_SCHEMA.adoc[STATE/ECOSYSTEM Schema]
+
+
+== Architecture
+
+See link:TOPOLOGY.md[TOPOLOGY.md] for a visual architecture map and completion dashboard.
