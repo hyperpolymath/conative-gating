@@ -6,7 +6,7 @@ set -e
 
 UNIFIED_DIR="/run/media/hyper/eclipse/gitprojects/unified"
 TEMPLATES_DIR="$UNIFIED_DIR/conative-gating/templates"
-LOG_FILE="/tmp/standardization_$(date +%Y%m%d_%H%M%S).log"
+LOG_FILE=""$HYPATIA_TMPDIR/standardization_"$(date +%Y%m%d_%H%M%S).log"
 
 log() {
     echo "[$(date '+%H:%M:%S')] $*" | tee -a "$LOG_FILE"
