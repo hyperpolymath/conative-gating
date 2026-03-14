@@ -5,9 +5,9 @@
 name = "gating-contract"
 version = "0.1.0"
 edition = "2021"
-authors = ["Jonathan D.A. Jewell <jonathan@hyperpolymath.org>"]
+authors = ["Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"]
 description = "Testable gating contract: inputs, outputs, refusal taxonomy, audit logging"
-license = "AGPL-3.0-or-later"
+license = "PMPL-1.0-or-later"
 repository = "https://github.com/hyperpolymath/conative-gating"
 
 [dependencies]

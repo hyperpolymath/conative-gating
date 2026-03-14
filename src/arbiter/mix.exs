@@ -1,5 +1,5 @@
-# SPDX-FileCopyrightText: 2025 Jonathan D.A. Jewell <jonathan@hyperpolymath.org>
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2025 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+# SPDX-License-Identifier: PMPL-1.0-or-later
 
 defmodule ConativeGating.MixProject do
   use Mix.Project
@@ -32,7 +32,7 @@ defmodule ConativeGating.MixProject do
 
   defp package do
     [
-      licenses: ["AGPL-3.0-or-later"],
+      licenses: ["PMPL-1.0-or-later"],
       links: %{"GitHub" => "https://github.com/hyperpolymath/conative-gating"}
     ]
   end
