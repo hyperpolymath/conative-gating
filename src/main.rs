@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
 //! Conative Gating CLI
 //!
 //! Command-line interface for the policy oracle.

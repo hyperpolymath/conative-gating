@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
 //! SLM Evaluator - Adversarial policy evaluation using Small Language Models
 //!
 //! This crate will provide SLM-based evaluation for detecting "spirit violations"

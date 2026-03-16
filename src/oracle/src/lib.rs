@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
 //! Policy Oracle - Deterministic rule checking for Conative Gating
 //!
 //! The Policy Oracle checks proposals against hard rules without ML.
