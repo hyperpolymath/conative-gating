@@ -5,6 +5,7 @@
 //! It catches obvious violations (forbidden languages, toolchain rules)
 //! before the SLM evaluates spirit violations.
 
+#![forbid(unsafe_code)]
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fs;

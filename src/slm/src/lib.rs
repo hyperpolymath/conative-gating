@@ -10,6 +10,7 @@
 //! - PBFT consensus with asymmetric weighting (1.5x for inhibition)
 //! - Training data from rhodibot categories
 
+#![forbid(unsafe_code)]
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
