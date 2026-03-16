@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: PMPL-1.0-or-later
+# Clade declaration — part of the gv-clade-index registry
+# See: https://github.com/hyperpolymath/gv-clade-index
+
+[identity]
+uuid = "ff849040-5acf-56e4-97c4-346bf2289290"
+primary-forge = "github"
+primary-owner = "hyperpolymath"
+canonical-name = "conative-gating"
+prefixed-name = "ax-conative-gating"
+
+[clade]
+primary = "ax"
+secondary = ["gv"]
+assigned = "2026-03-16"
+rationale = ""
+
+[forges]
+github = "hyperpolymath/conative-gating"
+gitlab = "hyperpolymath/conative-gating"
+bitbucket = "hyperpolymath/conative-gating"
+
+[lineage]
+type = "standalone"
+parent = "SLM-as-Cerebellum for LLM policy enforcement"
+born = "2026-03-16"
