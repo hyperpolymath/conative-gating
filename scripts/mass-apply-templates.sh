@@ -257,7 +257,7 @@ apply_state_scm() {
      (slug . "$project_slug")
      (version . "0.1.0")
      (author . "$AUTHOR")
-     (license . "AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5")
+     (license . "PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5")
      (created . "$YEAR"))
 
     (rsr
@@ -305,7 +305,7 @@ authors:
     given-names: "Jonathan D.A."
     email: "$AUTHOR_EMAIL"
     orcid: "https://orcid.org/0000-0000-0000-0000"
-license: "AGPL-3.0-or-later"
+license: "PMPL-1.0-or-later"
 repository-code: "https://github.com/hyperpolymath/$project_slug"
 keywords:
   - RSR
@@ -335,7 +335,7 @@ apply_codemeta() {
   "name": "$project_name",
   "description": "$description",
   "version": "0.1.0",
-  "license": "https://spdx.org/licenses/AGPL-3.0-or-later.html",
+  "license": "https://spdx.org/licenses/PMPL-1.0-or-later.html",
   "codeRepository": "https://github.com/hyperpolymath/$project_slug",
   "author": [{
     "@type": "Person",

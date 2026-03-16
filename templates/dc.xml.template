@@ -2,7 +2,7 @@
 <!--
   Dublin Core Metadata for {{PROJECT_NAME}}
   https://www.dublincore.org/specifications/dublin-core/dcmi-terms/
-  SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+  SPDX-License-Identifier: PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5
 
   Place in: .well-known/dc.xml
 -->
@@ -29,7 +29,7 @@
   <language>en</language>
   <relation>https://rhodium.sh</relation>
   <coverage>Global</coverage>
-  <rights>AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5</rights>
+  <rights>PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5</rights>
 
   <!-- Dublin Core Terms (Extended) -->
   <dcterms:abstract>{{DESCRIPTION}}</dcterms:abstract>
@@ -50,7 +50,7 @@
   <dcterms:hasVersion>{{VERSION}}</dcterms:hasVersion>
   <dcterms:isPartOf>RSR Framework</dcterms:isPartOf>
   <dcterms:issued>{{RELEASE_DATE}}</dcterms:issued>
-  <dcterms:license>https://spdx.org/licenses/AGPL-3.0-or-later.html</dcterms:license>
+  <dcterms:license>https://spdx.org/licenses/PMPL-1.0-or-later.html</dcterms:license>
   <dcterms:mediator>GitHub</dcterms:mediator>
   <dcterms:medium>Digital</dcterms:medium>
   <dcterms:modified>{{MODIFIED_DATE}}</dcterms:modified>

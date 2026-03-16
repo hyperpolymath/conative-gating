@@ -11,7 +11,7 @@
     version | String | default = "0.1.0",
     author | String | default = "Jonathan D.A. Jewell",
     email | String | default = "jonathan.jewell@gmail.com",
-    license | String | default = "AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5",
+    license | String | default = "PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5",
     domain | String,
     tags | Array String | default = ["RSR", "Rhodium Standard"],
     created | String,

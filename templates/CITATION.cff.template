@@ -1,6 +1,6 @@
 # CITATION.cff - Citation File Format for {{PROJECT_NAME}}
 # https://citation-file-format.github.io/
-# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+# SPDX-License-Identifier: PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5
 #
 # Pre-formatted citations available in docs/CITATIONS.adoc
 
@@ -20,7 +20,7 @@ keywords:
   - RSR
   - rhodium-standard
   - {{DOMAIN}}
-license: "AGPL-3.0-or-later"
+license: "PMPL-1.0-or-later"
 license-url: "https://github.com/hyperpolymath/{{PROJECT_NAME}}/blob/main/LICENSE.txt"
 version: "{{VERSION}}"
 date-released: "{{RELEASE_DATE}}"

@@ -1,5 +1,5 @@
 ;;; STATE.scm - Project State Checkpoint for zoterho-template
-;;; SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+;;; SPDX-License-Identifier: PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5
 ;;; Generated: {{GENERATED_DATE}}
 
 (define-module (zoterho-template state)
@@ -88,7 +88,7 @@
      (version . "{{EXTENSION_VERSION}}")
      (description . "{{EXTENSION_DESCRIPTION}}")
      (author . "Jonathan D.A. Jewell")
-     (license . "AGPL-3.0-or-later"))
+     (license . "PMPL-1.0-or-later"))
 
     (zotero
      (min-version . "7.0")

@@ -1,7 +1,7 @@
 = {{PROJECT_NAME}} - Citation Guide
 :toc:
 :sectnums:
-// SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+// SPDX-License-Identifier: PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5
 
 == Quick Copy Citations
 
@@ -15,7 +15,7 @@
   year = {{YEAR}},
   version = {{{VERSION}}},
   url = {https://github.com/hyperpolymath/{{PROJECT_NAME}}},
-  license = {AGPL-3.0-or-later},
+  license = {PMPL-1.0-or-later},
   note = {RSR-compliant software}
 }
 ----
@@ -127,7 +127,7 @@ For project websites, include these Open Graph and Twitter Card tags:
 <meta name="DC.creator" content="Jonathan D.A. Jewell">
 <meta name="DC.date" content="{{YEAR}}">
 <meta name="DC.type" content="Software">
-<meta name="DC.rights" content="AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5">
+<meta name="DC.rights" content="PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5">
 <meta name="DC.identifier" content="https://github.com/hyperpolymath/{{PROJECT_NAME}}">
 
 <!-- Schema.org JSON-LD -->
@@ -143,7 +143,7 @@ For project websites, include these Open Graph and Twitter Card tags:
     "email": "hyperpolymath@proton.me"
   },
   "codeRepository": "https://github.com/hyperpolymath/{{PROJECT_NAME}}",
-  "license": "https://spdx.org/licenses/AGPL-3.0-or-later.html",
+  "license": "https://spdx.org/licenses/PMPL-1.0-or-later.html",
   "version": "{{VERSION}}"
 }
 </script>
@@ -177,7 +177,7 @@ Use **Computer Program** or **Software** type in Zotero:
 |GitHub
 
 |Rights
-|AGPL-3.0-or-later
+|PMPL-1.0-or-later
 |===
 
 === Zotero Web Connector
@@ -185,7 +185,7 @@ The GitHub repository includes proper `<meta>` tags for Zotero's web connector t
 
 == License for Citations
 
-All citation formats in this document are provided under CC0 (public domain) for ease of use. The software itself remains under AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5.
+All citation formats in this document are provided under CC0 (public domain) for ease of use. The software itself remains under PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5.
 
 == See Also
 

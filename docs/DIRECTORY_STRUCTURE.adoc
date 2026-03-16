@@ -125,7 +125,7 @@ See link:docs/[docs/] for full documentation.
 
 == License
 
-AGPL-3.0-or-later OR Palimpsest-0.5
+PMPL-1.0-or-later OR Palimpsest-0.5
 ----
 
 == Required Directories

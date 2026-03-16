@@ -8,7 +8,7 @@
   "dateCreated": "{{CREATED_DATE}}",
   "dateModified": "{{MODIFIED_DATE}}",
   "datePublished": "{{RELEASE_DATE}}",
-  "license": "https://spdx.org/licenses/AGPL-3.0-or-later.html",
+  "license": "https://spdx.org/licenses/PMPL-1.0-or-later.html",
   "codeRepository": "https://github.com/hyperpolymath/{{PROJECT_NAME}}",
   "issueTracker": "https://github.com/hyperpolymath/{{PROJECT_NAME}}/issues",
   "readme": "https://github.com/hyperpolymath/{{PROJECT_NAME}}/blob/main/README.adoc",

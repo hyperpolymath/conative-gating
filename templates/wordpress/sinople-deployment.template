@@ -1,6 +1,6 @@
 {{!--
   Sinople WordPress Deployment Template
-  SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+  SPDX-License-Identifier: PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5
 
   This template generates WordPress deployment configs for RSR projects.
   Uses Sinople theme with project-specific color schemes.
@@ -15,7 +15,7 @@
 
 # Sinople WordPress Deployment for {{PROJECT_NAME}}
 # Generated from RSR template
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-License-Identifier: PMPL-1.0-or-later
 
 ## Project Configuration
 project:

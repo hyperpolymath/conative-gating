@@ -1,6 +1,6 @@
 # RSR Git Hooks Management
 # Add these recipes to your justfile for hook management
-# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+# SPDX-License-Identifier: PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5
 
 # === Git Hooks ===
 

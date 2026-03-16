@@ -1,8 +1,8 @@
-SPDX-License-Identifier: AGPL-3.0-or-later AND Palimpsest-0.4
+SPDX-License-Identifier: PMPL-1.0-or-later AND Palimpsest-0.4
 SPDX-FileCopyrightText: 2024-2025 Jonathan D.A. Jewell
 
 ================================================================================
-DUAL LICENSE: AGPL-3.0-or-later AND PALIMPSEST LICENSE v0.4
+DUAL LICENSE: PMPL-1.0-or-later AND PALIMPSEST LICENSE v0.4
 ================================================================================
 
 This project is dual-licensed. You may choose to use, copy, modify, and
@@ -55,12 +55,12 @@ CHOOSING YOUR LICENSE
 --------------------------------------------------------------------------------
 
 You may choose to use this work under:
-  1. AGPL-3.0-or-later only (copyleft, network use triggers sharing)
+  1. PMPL-1.0-or-later only (copyleft, network use triggers sharing)
   2. Palimpsest License v0.4 only (enhanced protections for creative work)
   3. Both licenses simultaneously (maximum compatibility and protection)
 
 For derivative works:
-  - Network services: AGPL-3.0-or-later applies
+  - Network services: PMPL-1.0-or-later applies
   - Creative/narrative content: Palimpsest License recommended
   - Mixed projects: Dual licensing provides flexibility
 

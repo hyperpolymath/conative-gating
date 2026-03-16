@@ -50,7 +50,7 @@ Everywhere you see author information, use:
 ### License
 
 The correct license identifier is `PMPL-1.0-or-later`.
-NEVER use `AGPL-3.0-or-later`. That is the old license being replaced.
+NEVER use `PMPL-1.0-or-later`. That is the old license being replaced.
 
 ---
 
@@ -58,7 +58,7 @@ NEVER use `AGPL-3.0-or-later`. That is the old license being replaced.
 
 ### Files
 
-Every file listed below currently has `AGPL-3.0-or-later` somewhere in it and must be changed to `PMPL-1.0-or-later`.
+Every file listed below currently has `PMPL-1.0-or-later` somewhere in it and must be changed to `PMPL-1.0-or-later`.
 
 **Category A — Source files (SPDX header line 1 or 2):**
 
@@ -85,8 +85,8 @@ Every file listed below currently has `AGPL-3.0-or-later` somewhere in it and mu
 
 | File | Line | Current |
 |------|------|---------|
-| `Cargo.toml` (root) | 7 | `license = "AGPL-3.0-or-later"` |
-| `src/contract/Cargo.toml` | 10 | `license = "AGPL-3.0-or-later"` |
+| `Cargo.toml` (root) | 7 | `license = "PMPL-1.0-or-later"` |
+| `src/contract/Cargo.toml` | 10 | `license = "PMPL-1.0-or-later"` |
 
 Change both to: `license = "PMPL-1.0-or-later"`
 
@@ -94,7 +94,7 @@ Change both to: `license = "PMPL-1.0-or-later"`
 
 | File | Line | Current |
 |------|------|---------|
-| `src/arbiter/mix.exs` | 35 | `licenses: ["AGPL-3.0-or-later"]` |
+| `src/arbiter/mix.exs` | 35 | `licenses: ["PMPL-1.0-or-later"]` |
 
 Change to: `licenses: ["PMPL-1.0-or-later"]`
 
@@ -108,12 +108,12 @@ Change the echoed string to: `# SPDX-License-Identifier: PMPL-1.0-or-later`
 
 **Category E — Template files (these generate files for OTHER repos, also must be PMPL):**
 
-Every file under `templates/` that contains `AGPL-3.0-or-later` must have that string replaced with `PMPL-1.0-or-later`. The full list:
+Every file under `templates/` that contains `PMPL-1.0-or-later` must have that string replaced with `PMPL-1.0-or-later`. The full list:
 
 - `templates/rsr-metadata.ncl` (line 2 SPDX header, line 14 default value)
 - `templates/rsr-antipattern.yml.template` (line 2)
 - `templates/pre-commit.template` (line 3)
-- `templates/justfile-hooks.template` (line 3 — change `AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5` to `PMPL-1.0-or-later`)
+- `templates/justfile-hooks.template` (line 3 — change `PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5` to `PMPL-1.0-or-later`)
 - `templates/dc.xml.template` (lines 5, 32, 53)
 - `templates/LICENSE.txt.template` (lines 1, 5, 58, 63 — entire file references AGPL, rewrite to reference PMPL)
 - `templates/STATE-zoterho-template.scm.template` (lines 2, 91)
@@ -134,13 +134,13 @@ Every file under `templates/` that contains `AGPL-3.0-or-later` must have that s
 
 ### Problem
 
-All these files use the old AGPL-3.0-or-later license. The project license is PMPL-1.0-or-later. The LICENSE file in the repo root already has the correct PMPL text. But the source files, Cargo.toml fields, mix.exs, templates, and hooks still reference AGPL.
+All these files use the old PMPL-1.0-or-later license. The project license is PMPL-1.0-or-later. The LICENSE file in the repo root already has the correct PMPL text. But the source files, Cargo.toml fields, mix.exs, templates, and hooks still reference AGPL.
 
 ### What to Do
 
-1. In every file listed in Categories A-E above, replace `AGPL-3.0-or-later` with `PMPL-1.0-or-later`.
-2. For dual-license strings like `AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5`, replace with just `PMPL-1.0-or-later` (PMPL already incorporates Palimpsest concepts).
-3. For `AGPL-3.0-or-later AND Palimpsest-0.4`, replace with `PMPL-1.0-or-later`.
+1. In every file listed in Categories A-E above, replace `PMPL-1.0-or-later` with `PMPL-1.0-or-later`.
+2. For dual-license strings like `PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5`, replace with just `PMPL-1.0-or-later` (PMPL already incorporates Palimpsest concepts).
+3. For `PMPL-1.0-or-later AND Palimpsest-0.4`, replace with `PMPL-1.0-or-later`.
 4. In template files: also fix any human-readable text that says "AGPL" to say "PMPL" or "Palimpsest-MPL".
 5. Do NOT touch the WordPress template GPL headers (`templates/wordpress/style.css.template`, `templates/wordpress/functions.php.template`) - those correctly use `GPL-3.0-or-later` because WordPress requires GPL.
 
@@ -148,7 +148,7 @@ All these files use the old AGPL-3.0-or-later license. The project license is PM
 
 ```bash
 # Must return ZERO results (excluding WordPress GPL files and this SONNET-TASKS.md file):
-grep -r "AGPL-3.0-or-later" --include="*.rs" --include="*.toml" --include="*.ex" --include="*.exs" --include="*.sh" --include="*.ncl" --include="*.md" --include="*.yml" --include="*.template" . | grep -v "wordpress/" | grep -v "SONNET-TASKS"
+grep -r "PMPL-1.0-or-later" --include="*.rs" --include="*.toml" --include="*.ex" --include="*.exs" --include="*.sh" --include="*.ncl" --include="*.md" --include="*.yml" --include="*.template" . | grep -v "wordpress/" | grep -v "SONNET-TASKS"
 
 # Must still compile:
 cargo build --workspace
@@ -488,7 +488,7 @@ Rewrite `.machine_readable/STATE.scm` with accurate data. Keep the SPDX header (
 
   (blockers-and-issues
     (critical
-      ("License headers use AGPL-3.0-or-later instead of PMPL-1.0-or-later"))
+      ("License headers use PMPL-1.0-or-later instead of PMPL-1.0-or-later"))
     (high
       ("SLM evaluator is a placeholder returning hardcoded results")
       ("Fuzzer tests generic string ops, not project code"))

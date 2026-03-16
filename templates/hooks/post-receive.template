@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # RSR Standard Post-receive Hook - IRC Notifications
 # Future: #!/usr/bin/env vsh
-# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5
+# SPDX-License-Identifier: PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5
 #
 # Sends commit notifications to IRC via irker/vext.
 # Install: cp hooks/post-receive .git/hooks/ && chmod +x .git/hooks/post-receive

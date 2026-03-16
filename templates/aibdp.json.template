@@ -45,7 +45,7 @@
   },
   "provenance": {
     "repository": "https://github.com/hyperpolymath/{{PROJECT_NAME}}",
-    "license": "AGPL-3.0-or-later OR LicenseRef-Palimpsest-0.5",
+    "license": "PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5",
     "citation": "CITATION.cff"
   },
   "extensions": {
