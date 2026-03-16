@@ -44,7 +44,7 @@ Do NOT create new files unless a task explicitly says to. Do NOT add dependencie
 
 Everywhere you see author information, use:
 - **Name:** `Jonathan D.A. Jewell`
-- **Email:** `jonathan.jewell@open.ac.uk`
+- **Email:** `j.d.a.jewell@open.ac.uk`
 - NEVER use `jonathan@hyperpolymath.org`
 
 ### License
@@ -64,22 +64,22 @@ Every file listed below currently has `AGPL-3.0-or-later` somewhere in it and mu
 
 | File | Line | Current |
 |------|------|---------|
-| `src/contract/src/lib.rs` | 1 | `// SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `src/arbiter/mix.exs` | 2 | `# SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `src/arbiter/lib/conative_gating/consensus_arbiter.ex` | 2 | `# SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `src/arbiter/lib/conative_gating/application.ex` | 2 | `# SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `examples/SafeDOMExample.res` | 1 | `// SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `ffi/zig/build.zig` | 2 | `// SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `ffi/zig/src/main.zig` | 6 | `// SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `ffi/zig/test/integration_test.zig` | 2 | `// SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `hooks/validate-spdx.sh` | 2 | `# SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `hooks/validate-sha-pins.sh` | 2 | `# SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `hooks/validate-permissions.sh` | 2 | `# SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `hooks/validate-codeql.sh` | 2 | `# SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `Mustfile` | 1 | `# SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `.gitignore` | 1 | `# SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `.gitattributes` | 1 | `# SPDX-License-Identifier: AGPL-3.0-or-later` |
-| `CODE_OF_CONDUCT.md` | 1 | `<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->` |
+| `src/contract/src/lib.rs` | 1 | `// SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `src/arbiter/mix.exs` | 2 | `# SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `src/arbiter/lib/conative_gating/consensus_arbiter.ex` | 2 | `# SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `src/arbiter/lib/conative_gating/application.ex` | 2 | `# SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `examples/SafeDOMExample.res` | 1 | `// SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `ffi/zig/build.zig` | 2 | `// SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `ffi/zig/src/main.zig` | 6 | `// SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `ffi/zig/test/integration_test.zig` | 2 | `// SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `hooks/validate-spdx.sh` | 2 | `# SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `hooks/validate-sha-pins.sh` | 2 | `# SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `hooks/validate-permissions.sh` | 2 | `# SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `hooks/validate-codeql.sh` | 2 | `# SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `Mustfile` | 1 | `# SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `.gitignore` | 1 | `# SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `.gitattributes` | 1 | `# SPDX-License-Identifier: PMPL-1.0-or-later` |
+| `CODE_OF_CONDUCT.md` | 1 | `<!-- SPDX-License-Identifier: PMPL-1.0-or-later -->` |
 
 **Category B — Cargo.toml `license` fields:**
 
@@ -102,7 +102,7 @@ Change to: `licenses: ["PMPL-1.0-or-later"]`
 
 | File | Line | Current |
 |------|------|---------|
-| `hooks/validate-spdx.sh` | 16 | `echo "  First line should be: # SPDX-License-Identifier: AGPL-3.0-or-later"` |
+| `hooks/validate-spdx.sh` | 16 | `echo "  First line should be: # SPDX-License-Identifier: PMPL-1.0-or-later"` |
 
 Change the echoed string to: `# SPDX-License-Identifier: PMPL-1.0-or-later`
 
@@ -163,25 +163,25 @@ cargo test --workspace
 
 | File | Line | Current | Required |
 |------|------|---------|----------|
-| `Cargo.toml` (root) | 5 | `authors = ["Jonathan D.A. Jewell <jonathan@hyperpolymath.org>"]` | `authors = ["Jonathan D.A. Jewell <jonathan.jewell@open.ac.uk>"]` |
-| `src/contract/Cargo.toml` | 8 | `authors = ["Jonathan D.A. Jewell <jonathan@hyperpolymath.org>"]` | `authors = ["Jonathan D.A. Jewell <jonathan.jewell@open.ac.uk>"]` |
+| `Cargo.toml` (root) | 5 | `authors = ["Jonathan D.A. Jewell <jonathan@hyperpolymath.org>"]` | `authors = ["Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"]` |
+| `src/contract/Cargo.toml` | 8 | `authors = ["Jonathan D.A. Jewell <jonathan@hyperpolymath.org>"]` | `authors = ["Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"]` |
 
 Also check and fix if present:
-- `src/oracle/Cargo.toml` — currently has NO `authors` field. Add `authors = ["Jonathan D.A. Jewell <jonathan.jewell@open.ac.uk>"]` after line 5 (after `description`).
-- `src/slm/Cargo.toml` — currently has NO `authors` field. Add `authors = ["Jonathan D.A. Jewell <jonathan.jewell@open.ac.uk>"]` after line 5 (after `description`).
-- `src/arbiter/mix.exs` — line 1 says `jonathan@hyperpolymath.org`. Change to `jonathan.jewell@open.ac.uk`.
+- `src/oracle/Cargo.toml` — currently has NO `authors` field. Add `authors = ["Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"]` after line 5 (after `description`).
+- `src/slm/Cargo.toml` — currently has NO `authors` field. Add `authors = ["Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"]` after line 5 (after `description`).
+- `src/arbiter/mix.exs` — line 1 says `jonathan@hyperpolymath.org`. Change to `j.d.a.jewell@open.ac.uk`.
 
 ### Problem
 
-The author email `jonathan@hyperpolymath.org` is wrong. The correct email is `jonathan.jewell@open.ac.uk`.
+The author email `jonathan@hyperpolymath.org` is wrong. The correct email is `j.d.a.jewell@open.ac.uk`.
 
 ### What to Do
 
-1. In `Cargo.toml` (root), line 5: change `jonathan@hyperpolymath.org` to `jonathan.jewell@open.ac.uk`.
-2. In `src/contract/Cargo.toml`, line 8: change `jonathan@hyperpolymath.org` to `jonathan.jewell@open.ac.uk`.
+1. In `Cargo.toml` (root), line 5: change `jonathan@hyperpolymath.org` to `j.d.a.jewell@open.ac.uk`.
+2. In `src/contract/Cargo.toml`, line 8: change `jonathan@hyperpolymath.org` to `j.d.a.jewell@open.ac.uk`.
 3. Add `authors` field to `src/oracle/Cargo.toml` after `description`.
 4. Add `authors` field to `src/slm/Cargo.toml` after `description`.
-5. In `src/arbiter/mix.exs`, line 1: change `jonathan@hyperpolymath.org` to `jonathan.jewell@open.ac.uk`.
+5. In `src/arbiter/mix.exs`, line 1: change `jonathan@hyperpolymath.org` to `j.d.a.jewell@open.ac.uk`.
 
 ### Verification
 
@@ -190,7 +190,7 @@ The author email `jonathan@hyperpolymath.org` is wrong. The correct email is `jo
 grep -r "jonathan@hyperpolymath.org" . --include="*.toml" --include="*.exs"
 
 # Must find 4 Cargo.toml files with correct email:
-grep -r "jonathan.jewell@open.ac.uk" . --include="*.toml" --include="*.exs"
+grep -r "j.d.a.jewell@open.ac.uk" . --include="*.toml" --include="*.exs"
 
 cargo build --workspace
 ```
@@ -501,7 +501,7 @@ Rewrite `.machine_readable/STATE.scm` with accurate data. Keep the SPDX header (
   (critical-next-actions
     (immediate
       ("Fix all AGPL license headers to PMPL")
-      ("Fix author email to jonathan.jewell@open.ac.uk"))
+      ("Fix author email to j.d.a.jewell@open.ac.uk"))
     (this-week
       ("Implement SLM evaluator with llama.cpp bindings")
       ("Make fuzzer target real project code"))

@@ -333,7 +333,7 @@ IRC channels      → #rhodium, #rsr-commits, project channels
 ----
 # Send IRC notification on release
 notify-release version:
-    echo '{"to": ["irc://irc.libera.chat/#rhodium"], "privmsg": "Released {{PROJECT_NAME}} v{{version}}"}' | \
+    echo '{"to": ["irc://irc.libera.chat/#rhodium"], "privmsg": "Released Conative Gating v{{version}}"}' | \
     nc localhost 6659
 
 # Configure git hook
@@ -535,7 +535,7 @@ All RSR repos should include MAAF-compatible `.well-known/` files:
 {
   "aibdp_version": "0.2",
   "contact": "mailto:hyperpolymath@proton.me",
-  "manifest_url": "https://github.com/hyperpolymath/{{PROJECT_NAME}}/.well-known/aibdp.json",
+  "manifest_url": "https://github.com/hyperpolymath/Conative Gating/.well-known/aibdp.json",
   "expires": "2026-01-01T00:00:00Z",
   "policies": {
     "training": {
