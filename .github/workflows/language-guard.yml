@@ -13,7 +13,8 @@ on:
       - '**.java'
       - 'package.json'
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   check:
