@@ -1,6 +1,6 @@
 # SONNET-TASKS.md — conative-gating
 
-**Repo:** `/var/mnt/eclipse/repos/conative-gating/`
+**Repo:** `/var$REPOS_DIR/conative-gating/`
 **What this is:** Rust workspace (3 crates + CLI binary) implementing a three-tier LLM constraint system inspired by basal ganglia GO/NO-GO model. SLM acts as inhibitory antagonist to LLM proposals; a Policy Oracle does deterministic rule-checking; a Consensus Arbiter (Elixir GenServer) mediates.
 **Date:** 2026-02-12
 **Written for:** Claude 3.5 Sonnet (or equivalent)
