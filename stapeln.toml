@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: PMPL-1.0-or-later
+
+[project]
+name = "conative-gating"
+description = "Conative Gating"
+
+[container]
+base = "cgr.dev/chainguard/wolfi-base:latest"
+
+[build]
+builder = "rust"
