@@ -700,10 +700,7 @@ impl ContractRunner {
     }
 
     /// Process oracle evaluation into verdict and refusal
-    fn process_oracle_result(
-        &self,
-        eval: &OracleEvaluation,
-    ) -> (Verdict, Option<Refusal>) {
+    fn process_oracle_result(&self, eval: &OracleEvaluation) -> (Verdict, Option<Refusal>) {
         match &eval.verdict {
             PolicyVerdict::Compliant => (Verdict::Allow, None),
 
@@ -715,7 +712,9 @@ impl ContractRunner {
                         category,
                         code,
                         message,
-                        remediation: Some("Consider refactoring to address the concern".to_string()),
+                        remediation: Some(
+                            "Consider refactoring to address the concern".to_string(),
+                        ),
                         evidence: Vec::new(),
                         overridable: true,
                         override_level: Some(AuthorizationLevel::User),
@@ -762,7 +761,10 @@ impl ContractRunner {
             ConcernType::Tier2Language { language } => (
                 RefusalCategory::ForbiddenLanguage,
                 RefusalCode::Lang199OtherForbidden,
-                format!("Tier 2 language '{}' - consider Tier 1 alternative", language),
+                format!(
+                    "Tier 2 language '{}' - consider Tier 1 alternative",
+                    language
+                ),
             ),
         }
     }
@@ -795,9 +797,9 @@ impl ContractRunner {
 
                 let remediation = match language.to_lowercase().as_str() {
                     "typescript" => Some("Use ReScript instead of TypeScript".to_string()),
-                    "python" => Some(
-                        "Python is only allowed in salt/ for SaltStack configs".to_string(),
-                    ),
+                    "python" => {
+                        Some("Python is only allowed in salt/ for SaltStack configs".to_string())
+                    }
                     "go" => Some("Use Rust instead of Go".to_string()),
                     "java" => Some("Use Rust/Tauri/Dioxus instead of Java".to_string()),
                     _ => None,
@@ -1267,7 +1269,8 @@ impl RegressionHarness {
             results: self.current_results.clone(),
         };
         let baseline = RegressionBaseline::from_summary(&summary, git_commit);
-        let json = baseline.to_json()
+        let json = baseline
+            .to_json()
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
         std::fs::write(path, json)
     }
@@ -1291,7 +1294,11 @@ impl RegressionHarness {
                     improvements: Vec::new(),
                     behavior_changes: Vec::new(),
                     stable_count: 0,
-                    new_tests: self.current_results.iter().map(|r| r.name.clone()).collect(),
+                    new_tests: self
+                        .current_results
+                        .iter()
+                        .map(|r| r.name.clone())
+                        .collect(),
                     removed_tests: Vec::new(),
                 };
             }
