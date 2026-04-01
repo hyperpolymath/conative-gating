@@ -484,7 +484,10 @@ fn main() {
                 fail_fast,
             } => {
                 if cli.dry_run {
-                    println!("[dry-run] Would run contract tests from: {}", path.display());
+                    println!(
+                        "[dry-run] Would run contract tests from: {}",
+                        path.display()
+                    );
                     0
                 } else {
                     run_contract_tests(&path, &format, fail_fast, &cli.verbosity)
@@ -512,7 +515,10 @@ fn main() {
                 verbose,
             } => {
                 if cli.dry_run {
-                    println!("[dry-run] Would run red-team tests from: {}", path.display());
+                    println!(
+                        "[dry-run] Would run red-team tests from: {}",
+                        path.display()
+                    );
                     0
                 } else {
                     run_redteam_tests(&path, &format, verbose, &cli.verbosity)
@@ -527,7 +533,11 @@ fn main() {
             } => {
                 if cli.dry_run {
                     println!("[dry-run] Would run regression tests");
-                    println!("[dry-run] Tests: {}, Baseline: {}", path.display(), baseline.display());
+                    println!(
+                        "[dry-run] Tests: {}, Baseline: {}",
+                        path.display(),
+                        baseline.display()
+                    );
                     0
                 } else {
                     run_regression_tests(&path, &baseline, save, &format, strict, &cli.verbosity)
@@ -539,7 +549,12 @@ fn main() {
     std::process::exit(exit_code);
 }
 
-fn scan_directory(oracle: &Oracle, path: &Path, format: &OutputFormat, verbosity: &Verbosity) -> i32 {
+fn scan_directory(
+    oracle: &Oracle,
+    path: &Path,
+    format: &OutputFormat,
+    verbosity: &Verbosity,
+) -> i32 {
     if matches!(verbosity, Verbosity::Verbose | Verbosity::Debug) {
         eprintln!("Scanning: {}", path.display());
     }
@@ -670,7 +685,12 @@ fn check_content(
                     } else {
                         "OK"
                     };
-                    println!("{} violations={} concerns={}", status, result.violations.len(), result.concerns.len());
+                    println!(
+                        "{} violations={} concerns={}",
+                        status,
+                        result.violations.len(),
+                        result.concerns.len()
+                    );
                 }
                 OutputFormat::Text => {
                     println!("=== Check Result ===\n");
@@ -779,7 +799,12 @@ fn show_policy(format: &OutputFormat, section: Option<&str>) {
     }
 }
 
-fn validate_proposal(oracle: &Oracle, proposal_path: &Path, format: &OutputFormat, strict: bool) -> i32 {
+fn validate_proposal(
+    oracle: &Oracle,
+    proposal_path: &Path,
+    format: &OutputFormat,
+    strict: bool,
+) -> i32 {
     let content = match std::fs::read_to_string(proposal_path) {
         Ok(c) => c,
         Err(e) => {
@@ -923,7 +948,12 @@ impl IntoString for policy_oracle::ConcernType {
 
 // ============ Contract Runner Functions ============
 
-fn run_contract_tests(path: &Path, format: &OutputFormat, fail_fast: bool, verbosity: &Verbosity) -> i32 {
+fn run_contract_tests(
+    path: &Path,
+    format: &OutputFormat,
+    fail_fast: bool,
+    verbosity: &Verbosity,
+) -> i32 {
     let mut harness = TestHarness::new();
     let test_cases = match load_test_cases(path, verbosity) {
         Ok(cases) => cases,
@@ -1102,7 +1132,11 @@ fn load_test_case_file(path: &Path) -> Result<TestCase, String> {
     };
 
     Ok(TestCase {
-        name: path.file_stem().unwrap_or_default().to_string_lossy().to_string(),
+        name: path
+            .file_stem()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string(),
         description: data.reasoning,
         request: GatingRequest::new(data.proposal),
         expected_verdict,
@@ -1252,13 +1286,41 @@ fn show_contract_schema(format: &OutputFormat, section: Option<&str>) {
                     verdicts: vec!["Allow", "Warn", "Escalate", "Block"],
                 },
                 refusal_codes: vec![
-                    RefusalCodeInfo { code: 100, name: "Lang100TypeScript", category: "ForbiddenLanguage" },
-                    RefusalCodeInfo { code: 101, name: "Lang101Python", category: "ForbiddenLanguage" },
-                    RefusalCodeInfo { code: 102, name: "Lang102Go", category: "ForbiddenLanguage" },
-                    RefusalCodeInfo { code: 103, name: "Lang103Java", category: "ForbiddenLanguage" },
-                    RefusalCodeInfo { code: 200, name: "Tool200NpmWithoutDeno", category: "ForbiddenToolchain" },
-                    RefusalCodeInfo { code: 300, name: "Sec300HardcodedSecret", category: "SecurityViolation" },
-                    RefusalCodeInfo { code: 500, name: "Spirit500Verbosity", category: "VerbositySmell" },
+                    RefusalCodeInfo {
+                        code: 100,
+                        name: "Lang100TypeScript",
+                        category: "ForbiddenLanguage",
+                    },
+                    RefusalCodeInfo {
+                        code: 101,
+                        name: "Lang101Python",
+                        category: "ForbiddenLanguage",
+                    },
+                    RefusalCodeInfo {
+                        code: 102,
+                        name: "Lang102Go",
+                        category: "ForbiddenLanguage",
+                    },
+                    RefusalCodeInfo {
+                        code: 103,
+                        name: "Lang103Java",
+                        category: "ForbiddenLanguage",
+                    },
+                    RefusalCodeInfo {
+                        code: 200,
+                        name: "Tool200NpmWithoutDeno",
+                        category: "ForbiddenToolchain",
+                    },
+                    RefusalCodeInfo {
+                        code: 300,
+                        name: "Sec300HardcodedSecret",
+                        category: "SecurityViolation",
+                    },
+                    RefusalCodeInfo {
+                        code: 500,
+                        name: "Spirit500Verbosity",
+                        category: "VerbositySmell",
+                    },
                 ],
             };
 
@@ -1338,7 +1400,12 @@ fn show_contract_schema(format: &OutputFormat, section: Option<&str>) {
 
 // ============ Red-Team Test Functions ============
 
-fn run_redteam_tests(path: &Path, format: &OutputFormat, verbose: bool, verbosity: &Verbosity) -> i32 {
+fn run_redteam_tests(
+    path: &Path,
+    format: &OutputFormat,
+    verbose: bool,
+    verbosity: &Verbosity,
+) -> i32 {
     use std::collections::HashMap;
 
     let mut harness = TestHarness::new();
@@ -1368,7 +1435,10 @@ fn run_redteam_tests(path: &Path, format: &OutputFormat, verbose: bool, verbosit
         let result = harness.run_test(test);
 
         let cat_key = format!("{:?}", redteam_category);
-        let entry = category_results.entry(cat_key.clone()).or_insert((Vec::new(), Vec::new(), Vec::new()));
+        let entry =
+            category_results
+                .entry(cat_key.clone())
+                .or_insert((Vec::new(), Vec::new(), Vec::new()));
 
         if *is_fp_check {
             // False positive check: should pass (Allow)
@@ -1382,7 +1452,11 @@ fn run_redteam_tests(path: &Path, format: &OutputFormat, verbose: bool, verbosit
             let was_blocked = result.actual_verdict == Verdict::Block;
             entry.0.push(was_blocked);
             if !was_blocked {
-                bypasses.push((test.name.clone(), attack_vector.clone(), result.actual_verdict));
+                bypasses.push((
+                    test.name.clone(),
+                    attack_vector.clone(),
+                    result.actual_verdict,
+                ));
                 entry.1.push(true);
             }
         }
@@ -1408,12 +1482,15 @@ fn run_redteam_tests(path: &Path, format: &OutputFormat, verbose: bool, verbosit
         total_bypassed += bypassed_count;
         total_fp += fp_count;
 
-        by_category.insert(cat.clone(), CategoryStats {
-            total: blocked.len() + bypassed.len() + fps.len(),
-            blocked: blocked_count,
-            bypassed: bypassed_count,
-            false_positives: fp_count,
-        });
+        by_category.insert(
+            cat.clone(),
+            CategoryStats {
+                total: blocked.len() + bypassed.len() + fps.len(),
+                blocked: blocked_count,
+                bypassed: bypassed_count,
+                false_positives: fp_count,
+            },
+        );
     }
 
     let total = test_cases.len();
@@ -1424,8 +1501,16 @@ fn run_redteam_tests(path: &Path, format: &OutputFormat, verbose: bool, verbosit
         false_positives: total_fp,
         known_limitations: 0, // Could be parsed from test metadata
         by_category,
-        bypass_rate: if total > 0 { total_bypassed as f64 / total as f64 } else { 0.0 },
-        false_positive_rate: if total > 0 { total_fp as f64 / total as f64 } else { 0.0 },
+        bypass_rate: if total > 0 {
+            total_bypassed as f64 / total as f64
+        } else {
+            0.0
+        },
+        false_positive_rate: if total > 0 {
+            total_fp as f64 / total as f64
+        } else {
+            0.0
+        },
     };
 
     match format {
@@ -1435,15 +1520,31 @@ fn run_redteam_tests(path: &Path, format: &OutputFormat, verbose: bool, verbosit
         OutputFormat::Compact => {
             println!(
                 "redteam total={} blocked={} bypassed={} fps={} score={}",
-                summary.total, summary.blocked, summary.bypassed, summary.false_positives, summary.security_score()
+                summary.total,
+                summary.blocked,
+                summary.bypassed,
+                summary.false_positives,
+                summary.security_score()
             );
         }
         OutputFormat::Text => {
             println!("=== Red-Team Test Results ===\n");
             println!("Total Tests:     {}", summary.total);
-            println!("Blocked:         {} ({:.1}%)", summary.blocked, (summary.blocked as f64 / summary.total as f64) * 100.0);
-            println!("Bypassed:        {} ({:.1}%)", summary.bypassed, summary.bypass_rate * 100.0);
-            println!("False Positives: {} ({:.1}%)", summary.false_positives, summary.false_positive_rate * 100.0);
+            println!(
+                "Blocked:         {} ({:.1}%)",
+                summary.blocked,
+                (summary.blocked as f64 / summary.total as f64) * 100.0
+            );
+            println!(
+                "Bypassed:        {} ({:.1}%)",
+                summary.bypassed,
+                summary.bypass_rate * 100.0
+            );
+            println!(
+                "False Positives: {} ({:.1}%)",
+                summary.false_positives,
+                summary.false_positive_rate * 100.0
+            );
             println!("\nSecurity Score:  {}/100", summary.security_score());
 
             if !bypasses.is_empty() {
@@ -1468,8 +1569,10 @@ fn run_redteam_tests(path: &Path, format: &OutputFormat, verbose: bool, verbosit
 
             println!("\n--- By Category ---");
             for (cat, stats) in &summary.by_category {
-                println!("  {}: {} total, {} blocked, {} bypassed, {} fps",
-                    cat, stats.total, stats.blocked, stats.bypassed, stats.false_positives);
+                println!(
+                    "  {}: {} total, {} blocked, {} bypassed, {} fps",
+                    cat, stats.total, stats.blocked, stats.bypassed, stats.false_positives
+                );
             }
         }
     }
@@ -1482,7 +1585,10 @@ fn run_redteam_tests(path: &Path, format: &OutputFormat, verbose: bool, verbosit
 }
 
 /// Load red-team test cases with metadata
-fn load_redteam_cases(path: &Path, verbosity: &Verbosity) -> Result<Vec<(TestCase, RedTeamCategory, String, bool)>, String> {
+fn load_redteam_cases(
+    path: &Path,
+    verbosity: &Verbosity,
+) -> Result<Vec<(TestCase, RedTeamCategory, String, bool)>, String> {
     let mut cases = Vec::new();
 
     if path.is_file() {
@@ -1499,7 +1605,7 @@ fn load_redteam_cases(path: &Path, verbosity: &Verbosity) -> Result<Vec<(TestCas
             } else if entry_path.extension().map(|s| s == "json").unwrap_or(false) {
                 match load_redteam_file(&entry_path) {
                     Ok(Some(case)) => cases.push(case),
-                    Ok(None) => {},
+                    Ok(None) => {}
                     Err(e) => {
                         if matches!(verbosity, Verbosity::Debug) {
                             eprintln!("Skipping {}: {}", entry_path.display(), e);
@@ -1516,7 +1622,9 @@ fn load_redteam_cases(path: &Path, verbosity: &Verbosity) -> Result<Vec<(TestCas
 }
 
 /// Load a single red-team test case
-fn load_redteam_file(path: &Path) -> Result<Option<(TestCase, RedTeamCategory, String, bool)>, String> {
+fn load_redteam_file(
+    path: &Path,
+) -> Result<Option<(TestCase, RedTeamCategory, String, bool)>, String> {
     let content = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
 
     #[derive(serde::Deserialize)]
@@ -1549,7 +1657,11 @@ fn load_redteam_file(path: &Path) -> Result<Option<(TestCase, RedTeamCategory, S
     let is_fp_check = matches!(redteam_cat, RedTeamCategory::FalsePositiveCheck);
 
     let test_case = TestCase {
-        name: path.file_stem().unwrap_or_default().to_string_lossy().to_string(),
+        name: path
+            .file_stem()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string(),
         description: data.reasoning,
         request: GatingRequest::new(data.proposal),
         expected_verdict,
@@ -1557,7 +1669,12 @@ fn load_redteam_file(path: &Path) -> Result<Option<(TestCase, RedTeamCategory, S
         expected_code: None,
     };
 
-    Ok(Some((test_case, redteam_cat, data.attack_vector.unwrap_or_default(), is_fp_check)))
+    Ok(Some((
+        test_case,
+        redteam_cat,
+        data.attack_vector.unwrap_or_default(),
+        is_fp_check,
+    )))
 }
 
 // ============ Regression Test Functions ============
@@ -1618,7 +1735,10 @@ fn run_regression_tests(
                     return 3;
                 }
                 println!("Baseline saved to: {}", baseline_path.display());
-                println!("Tests: {} total, {} passed, {} failed", summary.total, summary.passed, summary.failed);
+                println!(
+                    "Tests: {} total, {} passed, {} failed",
+                    summary.total, summary.passed, summary.failed
+                );
                 return 0;
             }
             Err(e) => {
@@ -1672,7 +1792,10 @@ fn run_regression_tests(
             if !report.regressions.is_empty() {
                 println!("\n--- REGRESSIONS ({}) ---", report.regressions.len());
                 for reg in &report.regressions {
-                    println!("  {} [{:?} -> {:?}]", reg.test_name, reg.baseline_verdict, reg.current_verdict);
+                    println!(
+                        "  {} [{:?} -> {:?}]",
+                        reg.test_name, reg.baseline_verdict, reg.current_verdict
+                    );
                     if let Some(ref err) = reg.error_message {
                         println!("    Error: {}", err);
                     }
@@ -1682,14 +1805,23 @@ fn run_regression_tests(
             if !report.improvements.is_empty() {
                 println!("\n--- IMPROVEMENTS ({}) ---", report.improvements.len());
                 for imp in &report.improvements {
-                    println!("  {} [{:?} -> {:?}]", imp.test_name, imp.baseline_verdict, imp.current_verdict);
+                    println!(
+                        "  {} [{:?} -> {:?}]",
+                        imp.test_name, imp.baseline_verdict, imp.current_verdict
+                    );
                 }
             }
 
             if !report.behavior_changes.is_empty() {
-                println!("\n--- BEHAVIOR CHANGES ({}) ---", report.behavior_changes.len());
+                println!(
+                    "\n--- BEHAVIOR CHANGES ({}) ---",
+                    report.behavior_changes.len()
+                );
                 for change in &report.behavior_changes {
-                    println!("  {} [{:?} -> {:?}]", change.test_name, change.baseline_verdict, change.current_verdict);
+                    println!(
+                        "  {} [{:?} -> {:?}]",
+                        change.test_name, change.baseline_verdict, change.current_verdict
+                    );
                 }
             }
 
@@ -1708,7 +1840,10 @@ fn run_regression_tests(
             }
 
             if report.has_regressions() {
-                println!("\nWARNING: {} regression(s) detected!", report.regressions.len());
+                println!(
+                    "\nWARNING: {} regression(s) detected!",
+                    report.regressions.len()
+                );
             } else if report.stable_count == report.total_compared {
                 println!("\nAll tests stable.");
             }
