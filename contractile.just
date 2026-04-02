@@ -71,5 +71,3 @@ trust-no-secrets-committed:
 # Containerfile base images use pinned digests
 trust-container-images-pinned:
     test ! -f Containerfile || grep -q '@sha256:' Containerfile
-
-
