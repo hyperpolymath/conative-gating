@@ -1641,4 +1641,444 @@ mod tests {
         let decision = runner.evaluate(&request).unwrap();
         assert_eq!(decision.verdict, Verdict::Allow);
     }
+
+    // ============ Additional Contract Tests ============
+
+    #[test]
+    fn test_gating_decision_has_unique_ids() {
+        let runner = ContractRunner::new();
+        let request1 = GatingRequest::new(create_proposal("a.rs", "fn main() {}"));
+        let request2 = GatingRequest::new(create_proposal("b.rs", "fn main() {}"));
+
+        let decision1 = runner.evaluate(&request1).unwrap();
+        let decision2 = runner.evaluate(&request2).unwrap();
+
+        assert_ne!(decision1.decision_id, decision2.decision_id);
+        assert_ne!(decision1.request_id, decision2.request_id);
+    }
+
+    #[test]
+    fn test_verdict_is_allowed_logic() {
+        assert!(Verdict::Allow.is_allowed());
+        assert!(Verdict::Warn.is_allowed());
+        assert!(!Verdict::Escalate.is_allowed());
+        assert!(!Verdict::Block.is_allowed());
+    }
+
+    #[test]
+    fn test_refusal_category_display() {
+        assert_eq!(RefusalCategory::ForbiddenLanguage.display_name(), "Forbidden Language");
+        assert_eq!(RefusalCategory::SecurityViolation.display_name(), "Security Violation");
+        assert_eq!(RefusalCategory::SystemError.display_name(), "System Error");
+    }
+
+    #[test]
+    fn test_refusal_category_is_hard() {
+        assert!(RefusalCategory::ForbiddenLanguage.is_hard());
+        assert!(RefusalCategory::SecurityViolation.is_hard());
+        assert!(RefusalCategory::ForbiddenPattern.is_hard());
+        assert!(!RefusalCategory::VerbositySmell.is_hard());
+        assert!(!RefusalCategory::IntentViolation.is_hard());
+    }
+
+    #[test]
+    fn test_refusal_category_severity() {
+        assert_eq!(RefusalCategory::SecurityViolation.severity(), Severity::Critical);
+        assert_eq!(RefusalCategory::ForbiddenLanguage.severity(), Severity::Critical);
+        assert_eq!(RefusalCategory::ForbiddenToolchain.severity(), Severity::High);
+        assert_eq!(RefusalCategory::VerbositySmell.severity(), Severity::Low);
+    }
+
+    #[test]
+    fn test_contract_runner_default() {
+        let runner = ContractRunner::default();
+        let request = GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}"));
+        let decision = runner.evaluate(&request).unwrap();
+        assert_eq!(decision.verdict, Verdict::Allow);
+    }
+
+    #[test]
+    fn test_gating_request_builder() {
+        let proposal = create_proposal("test.rs", "fn main() {}");
+        let context = RequestContext {
+            source: "test".to_string(),
+            session_id: Some("session-123".to_string()),
+            ..Default::default()
+        };
+
+        let request = GatingRequest::new(proposal.clone())
+            .with_context(context.clone());
+
+        assert_eq!(request.context.source, "test");
+        assert_eq!(request.context.session_id, Some("session-123".to_string()));
+    }
+
+    #[test]
+    fn test_refusal_with_evidence() {
+        let runner = ContractRunner::new();
+        let request = GatingRequest::new(create_proposal(
+            "main.ts",
+            "const x: string = 'hello';",
+        ));
+
+        let decision = runner.evaluate(&request).unwrap();
+        assert!(decision.refusal.is_some());
+
+        let refusal = decision.refusal.unwrap();
+        assert!(!refusal.evidence.is_empty());
+        assert_eq!(refusal.evidence[0].evidence_type, EvidenceType::ContentMarker);
+    }
+
+    #[test]
+    fn test_python_forbidden_with_remediation() {
+        let runner = ContractRunner::new();
+        let request = GatingRequest::new(create_proposal(
+            "script.py",
+            "import os",
+        ));
+
+        let decision = runner.evaluate(&request).unwrap();
+        let refusal = decision.refusal.unwrap();
+        assert!(refusal.remediation.is_some());
+        assert!(refusal.remediation.unwrap().contains("only allowed in salt"));
+    }
+
+    #[test]
+    fn test_go_forbidden_with_rust_remediation() {
+        let runner = ContractRunner::new();
+        let request = GatingRequest::new(create_proposal(
+            "main.go",
+            "package main\nfunc main() {}",
+        ));
+
+        let decision = runner.evaluate(&request).unwrap();
+        let refusal = decision.refusal.unwrap();
+        assert_eq!(refusal.code, RefusalCode::Lang102Go);
+        assert!(refusal.remediation.is_some());
+        assert!(refusal.remediation.unwrap().contains("Rust"));
+    }
+
+    #[test]
+    fn test_contract_evaluator_records_oracle_stage() {
+        let runner = ContractRunner::new();
+        let request = GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}"));
+
+        let decision = runner.evaluate(&request).unwrap();
+        assert!(decision.processing.stages_executed.contains(&"oracle".to_string()));
+        assert!(decision.evaluations.oracle.is_some());
+    }
+
+    #[test]
+    fn test_processing_metadata_duration() {
+        let runner = ContractRunner::new();
+        let request = GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}"));
+
+        let decision = runner.evaluate(&request).unwrap();
+        assert!(decision.processing.duration_us > 0);
+    }
+
+    #[test]
+    fn test_evidence_type_file_extension() {
+        let evidence = Evidence {
+            evidence_type: EvidenceType::FileExtension,
+            file: Some("test.ts".to_string()),
+            line: None,
+            match_content: ".ts".to_string(),
+            explanation: "TypeScript extension detected".to_string(),
+        };
+
+        assert_eq!(evidence.evidence_type, EvidenceType::FileExtension);
+        assert_eq!(evidence.file, Some("test.ts".to_string()));
+    }
+
+    #[test]
+    fn test_audit_entry_json_serialization() {
+        let runner = ContractRunner::new();
+        let request = GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}"));
+        let decision = runner.evaluate(&request).unwrap();
+        let audit = runner.audit(&request, &decision);
+
+        let json = audit.to_json();
+        assert!(json.is_ok());
+        let json_str = json.unwrap();
+        assert!(json_str.contains("\"verdict\""));
+    }
+
+    #[test]
+    fn test_audit_entry_compact_json() {
+        let runner = ContractRunner::new();
+        let request = GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}"));
+        let decision = runner.evaluate(&request).unwrap();
+        let audit = runner.audit(&request, &decision);
+
+        let json = audit.to_json_compact();
+        assert!(json.is_ok());
+    }
+
+    #[test]
+    fn test_audit_entry_pretty_json() {
+        let runner = ContractRunner::new();
+        let request = GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}"));
+        let decision = runner.evaluate(&request).unwrap();
+        let audit = runner.audit(&request, &decision);
+
+        let json = audit.to_json_pretty();
+        assert!(json.is_ok());
+    }
+
+    #[test]
+    fn test_test_harness_run_all() {
+        let mut harness = TestHarness::new();
+
+        let tests = vec![
+            TestCase {
+                name: "test1".to_string(),
+                description: "Test 1".to_string(),
+                request: GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}")),
+                expected_verdict: Verdict::Allow,
+                expected_category: None,
+                expected_code: None,
+            },
+            TestCase {
+                name: "test2".to_string(),
+                description: "Test 2".to_string(),
+                request: GatingRequest::new(create_proposal("main.ts", "const x: string")),
+                expected_verdict: Verdict::Block,
+                expected_category: Some(RefusalCategory::ForbiddenLanguage),
+                expected_code: Some(RefusalCode::Lang100TypeScript),
+            },
+        ];
+
+        let results = harness.run_all(&tests);
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].passed, true);
+        assert_eq!(results[1].passed, true);
+    }
+
+    #[test]
+    fn test_test_harness_clear() {
+        let mut harness = TestHarness::new();
+        let test = TestCase {
+            name: "test".to_string(),
+            description: "Test".to_string(),
+            request: GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}")),
+            expected_verdict: Verdict::Allow,
+            expected_category: None,
+            expected_code: None,
+        };
+
+        harness.run_test(&test);
+        assert_eq!(harness.summary().total, 1);
+
+        harness.clear();
+        assert_eq!(harness.summary().total, 0);
+    }
+
+    #[test]
+    fn test_test_summary_failed_tests() {
+        let mut harness = TestHarness::new();
+
+        let tests = vec![
+            TestCase {
+                name: "pass".to_string(),
+                description: "Pass".to_string(),
+                request: GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}")),
+                expected_verdict: Verdict::Allow,
+                expected_category: None,
+                expected_code: None,
+            },
+            TestCase {
+                name: "fail".to_string(),
+                description: "Fail".to_string(),
+                request: GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}")),
+                expected_verdict: Verdict::Block,
+                expected_category: Some(RefusalCategory::ForbiddenLanguage),
+                expected_code: None,
+            },
+        ];
+
+        harness.run_all(&tests);
+        let summary = harness.summary();
+        assert_eq!(summary.total, 2);
+        assert_eq!(summary.passed, 1);
+        assert_eq!(summary.failed, 1);
+
+        let failed = summary.failed_tests();
+        assert_eq!(failed.len(), 1);
+        assert_eq!(failed[0], "fail");
+    }
+
+    #[test]
+    fn test_regression_baseline_creation() {
+        let mut harness = TestHarness::new();
+        let test = TestCase {
+            name: "test".to_string(),
+            description: "Test".to_string(),
+            request: GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}")),
+            expected_verdict: Verdict::Allow,
+            expected_category: None,
+            expected_code: None,
+        };
+
+        harness.run_test(&test);
+        let summary = harness.summary();
+
+        let baseline = RegressionBaseline::from_summary(&summary, Some("abc123".to_string()));
+        assert_eq!(baseline.contract_version, CONTRACT_VERSION);
+        assert_eq!(baseline.git_commit, Some("abc123".to_string()));
+        assert_eq!(baseline.results.len(), 1);
+    }
+
+    #[test]
+    fn test_regression_baseline_json() {
+        let mut harness = TestHarness::new();
+        let test = TestCase {
+            name: "test".to_string(),
+            description: "Test".to_string(),
+            request: GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}")),
+            expected_verdict: Verdict::Allow,
+            expected_category: None,
+            expected_code: None,
+        };
+
+        harness.run_test(&test);
+        let summary = harness.summary();
+        let baseline = RegressionBaseline::from_summary(&summary, None);
+
+        let json = baseline.to_json();
+        assert!(json.is_ok());
+
+        let json_str = json.unwrap();
+        let parsed = RegressionBaseline::from_json(&json_str);
+        assert!(parsed.is_ok());
+    }
+
+    #[test]
+    fn test_authorization_level_ordering() {
+        assert!(AuthorizationLevel::User < AuthorizationLevel::Maintainer);
+        assert!(AuthorizationLevel::Maintainer < AuthorizationLevel::Admin);
+        assert!(AuthorizationLevel::Admin < AuthorizationLevel::None);
+    }
+
+    #[test]
+    fn test_red_team_category_from_str() {
+        assert_eq!(RedTeamCategory::from_str("doc_bypass"), RedTeamCategory::DocumentationBypass);
+        assert_eq!(RedTeamCategory::from_str("marker_obfuscation"), RedTeamCategory::MarkerObfuscation);
+        assert_eq!(RedTeamCategory::from_str("encoding"), RedTeamCategory::EncodedContent);
+        assert_eq!(RedTeamCategory::from_str("boundary"), RedTeamCategory::BoundaryCondition);
+        assert_eq!(RedTeamCategory::from_str("polyglot"), RedTeamCategory::ContentInjection);
+        assert_eq!(RedTeamCategory::from_str("secret_hiding"), RedTeamCategory::SecretEvasion);
+        assert_eq!(RedTeamCategory::from_str("false_positive"), RedTeamCategory::FalsePositiveCheck);
+    }
+
+    #[test]
+    fn test_elixir_compliant() {
+        let runner = ContractRunner::new();
+        // Elixir with .ex extension and defmodule marker
+        let request = GatingRequest::new(create_proposal(
+            "app.ex",
+            "defmodule MyModule, do: :ok",
+        ));
+
+        let decision = runner.evaluate(&request).unwrap();
+        // Should be allowed as tier1 language
+        assert!(matches!(decision.verdict, Verdict::Allow),
+            "Elixir should be allowed, got {:?}", decision.verdict);
+    }
+
+    #[test]
+    fn test_zig_compliant() {
+        let runner = ContractRunner::new();
+        let request = GatingRequest::new(create_proposal(
+            "main.zig",
+            "const std = @import(\"std\");\npub fn main() void {}",
+        ));
+
+        let decision = runner.evaluate(&request).unwrap();
+        assert_eq!(decision.verdict, Verdict::Allow);
+    }
+
+    #[test]
+    fn test_rescript_compliant() {
+        let runner = ContractRunner::new();
+        let request = GatingRequest::new(create_proposal(
+            "Component.res",
+            "@react.component\nlet make = () => React.string(\"Hello\")",
+        ));
+
+        let decision = runner.evaluate(&request).unwrap();
+        assert_eq!(decision.verdict, Verdict::Allow);
+    }
+
+    #[test]
+    fn test_ada_compliant() {
+        let runner = ContractRunner::new();
+        let request = GatingRequest::new(create_proposal(
+            "main.adb",
+            "procedure Main is\nbegin\n  null;\nend Main;",
+        ));
+
+        let decision = runner.evaluate(&request).unwrap();
+        assert_eq!(decision.verdict, Verdict::Allow);
+    }
+
+    #[test]
+    fn test_haskell_compliant() {
+        let runner = ContractRunner::new();
+        let request = GatingRequest::new(create_proposal(
+            "Main.hs",
+            "module Main where\nmain = putStrLn \"Hello\"",
+        ));
+
+        let decision = runner.evaluate(&request).unwrap();
+        assert_eq!(decision.verdict, Verdict::Allow);
+    }
+
+    #[test]
+    fn test_npm_without_deno_blocked() {
+        let runner = ContractRunner::new();
+        let request = GatingRequest::new(create_proposal(
+            "package.json",
+            r#"{"name": "test", "version": "1.0.0"}"#,
+        ));
+
+        let decision = runner.evaluate(&request).unwrap();
+        assert_eq!(decision.verdict, Verdict::Block);
+        let refusal = decision.refusal.unwrap();
+        assert_eq!(refusal.code, RefusalCode::Tool200NpmWithoutDeno);
+    }
+
+    #[test]
+    fn test_npm_with_deno_allowed() {
+        let runner = ContractRunner::new();
+        let mut request = GatingRequest::new(create_proposal(
+            "package.json",
+            r#"{"name": "test"}"#,
+        ));
+        request.proposal.files_affected.push("deno.json".to_string());
+
+        let decision = runner.evaluate(&request).unwrap();
+        assert_eq!(decision.verdict, Verdict::Allow);
+    }
+
+    #[test]
+    fn test_contract_version_constant() {
+        assert!(!CONTRACT_VERSION.is_empty());
+        assert!(CONTRACT_VERSION.contains('.'));
+    }
+
+    #[test]
+    fn test_contract_schema_constant() {
+        assert_eq!(CONTRACT_SCHEMA, "conative-gating-contract-v1");
+    }
+
+    #[test]
+    fn test_processing_metadata_default() {
+        let metadata = ProcessingMetadata::default();
+        assert_eq!(metadata.duration_us, 0);
+        assert_eq!(metadata.contract_version, CONTRACT_VERSION);
+        assert_eq!(metadata.policy_name, "");
+        assert_eq!(metadata.rules_checked, 0);
+        assert!(metadata.stages_executed.is_empty());
+    }
 }

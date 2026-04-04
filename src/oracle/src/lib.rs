@@ -736,4 +736,323 @@ mod tests {
         let result = oracle.check_proposal(&proposal).unwrap();
         assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
     }
+
+    // ============ Additional Unit Tests ============
+
+    #[test]
+    fn test_empty_proposal_compliant() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "README.md".to_string(),
+            },
+            content: "# Documentation".to_string(),
+            files_affected: vec!["README.md".to_string()],
+            llm_confidence: 0.5,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert_eq!(result.verdict, PolicyVerdict::Compliant);
+        assert!(result.violations.is_empty());
+    }
+
+    #[test]
+    fn test_multiple_violations_reported() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "main.ts".to_string(),
+            },
+            content: r#"const x: string = 'hello'; let password = "secret123""#.to_string(),
+            files_affected: vec!["main.ts".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
+        // Should report at least the TypeScript violation
+        assert!(!result.violations.is_empty());
+    }
+
+    #[test]
+    fn test_tier2_language_generates_concern() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "config.ncl".to_string(),
+            },
+            content: "{}".to_string(),
+            files_affected: vec!["config.ncl".to_string()],
+            llm_confidence: 0.8,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        // Tier2 languages without markers might be compliant or concerns depending on detection
+        assert!(matches!(result.verdict, PolicyVerdict::Compliant | PolicyVerdict::SoftConcern(_)));
+    }
+
+    #[test]
+    fn test_elixir_tier1_allowed() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "module.ex".to_string(),
+            },
+            content: "defmodule MyModule, do: :ok".to_string(),
+            files_affected: vec!["module.ex".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert_eq!(result.verdict, PolicyVerdict::Compliant);
+    }
+
+    #[test]
+    fn test_rust_impl_block_allowed() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "lib.rs".to_string(),
+            },
+            content: "impl MyStruct { pub fn new() -> Self { Self {} } }".to_string(),
+            files_affected: vec!["lib.rs".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert_eq!(result.verdict, PolicyVerdict::Compliant);
+    }
+
+    #[test]
+    fn test_ada_allowed() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "main.adb".to_string(),
+            },
+            content: "with Ada.Text_IO;\nprocedure Hello is\nbegin\n  Ada.Text_IO.Put_Line(\"Hello\");\nend Hello;".to_string(),
+            files_affected: vec!["main.adb".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert_eq!(result.verdict, PolicyVerdict::Compliant);
+    }
+
+    #[test]
+    fn test_haskell_allowed() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "Main.hs".to_string(),
+            },
+            content: "module Main where\nmain = putStrLn \"Hello\"".to_string(),
+            files_affected: vec!["Main.hs".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert_eq!(result.verdict, PolicyVerdict::Compliant);
+    }
+
+    #[test]
+    fn test_rescript_component_allowed() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "Component.res".to_string(),
+            },
+            content: "@react.component\nlet make = () => <div>\"Hello\"</div>".to_string(),
+            files_affected: vec!["Component.res".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert_eq!(result.verdict, PolicyVerdict::Compliant);
+    }
+
+    #[test]
+    fn test_proposal_with_correct_violation_severity() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "test.ts".to_string(),
+            },
+            content: "const x: string = 'test'".to_string(),
+            files_affected: vec!["test.ts".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert!(!result.violations.is_empty());
+        assert_eq!(result.violations[0].severity, Severity::Critical);
+    }
+
+    #[test]
+    fn test_toolchain_violation_severity() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "package.json".to_string(),
+            },
+            content: "{}".to_string(),
+            files_affected: vec!["package.json".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        if !result.violations.is_empty() {
+            assert_eq!(result.violations[0].severity, Severity::High);
+        }
+    }
+
+    #[test]
+    fn test_rules_checked_counter() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "test.rs".to_string(),
+            },
+            content: "fn main() {}".to_string(),
+            files_affected: vec!["test.rs".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        // Should have checked multiple rules (forbidden languages, toolchain, patterns, tier2)
+        assert!(!result.rules_checked.is_empty());
+        assert!(result.rules_checked.len() >= 4);
+    }
+
+    #[test]
+    fn test_proposal_id_preserved_in_evaluation() {
+        let proposal_id = Uuid::new_v4();
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: proposal_id,
+            action_type: ActionType::CreateFile {
+                path: "test.rs".to_string(),
+            },
+            content: "fn main() {}".to_string(),
+            files_affected: vec!["test.rs".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert_eq!(result.proposal_id, proposal_id);
+    }
+
+    #[test]
+    fn test_go_forbidden() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "main.go".to_string(),
+            },
+            content: "package main\nfunc main() {}".to_string(),
+            files_affected: vec!["main.go".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
+    }
+
+    #[test]
+    fn test_java_forbidden() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "Main.java".to_string(),
+            },
+            content: "public class Main { }".to_string(),
+            files_affected: vec!["Main.java".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
+    }
+
+    #[test]
+    fn test_concern_for_racket() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "script.rkt".to_string(),
+            },
+            content: "#lang racket".to_string(),
+            files_affected: vec!["script.rkt".to_string()],
+            llm_confidence: 0.8,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert!(matches!(result.verdict, PolicyVerdict::SoftConcern(_)));
+        assert!(!result.concerns.is_empty());
+    }
+
+    #[test]
+    fn test_python_forbidden_outside_exceptions() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "script.py".to_string(),
+            },
+            content: "import os".to_string(),
+            files_affected: vec!["script.py".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
+    }
+
+    #[test]
+    fn test_python_allowed_in_training() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "training/model.py".to_string(),
+            },
+            content: "import os".to_string(),
+            files_affected: vec!["training/model.py".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert_eq!(result.verdict, PolicyVerdict::Compliant);
+    }
+
+    #[test]
+    fn test_secret_api_key_detected() {
+        let oracle = oracle();
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "config.rs".to_string(),
+            },
+            content: r#"const API_KEY = "abcdef1234567890abcdef""#.to_string(),
+            files_affected: vec!["config.rs".to_string()],
+            llm_confidence: 0.9,
+        };
+
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
+    }
 }

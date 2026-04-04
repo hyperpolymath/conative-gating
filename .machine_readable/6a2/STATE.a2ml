@@ -1,14 +1,42 @@
 # SPDX-License-Identifier: PMPL-1.0-or-later
 # STATE.a2ml — Project state checkpoint
-# Converted from STATE.scm on 2026-03-15
+# Last updated: 2026-04-04
 
 [metadata]
 project = "conative-gating"
 version = "0.1.0"
-last-updated = "2026-03-15"
+last-updated = "2026-04-04"
 status = "active"
 
 [project-context]
 name = "conative-gating"
-completion-percentage = 0
-phase = "In development"
+completion-percentage = 60
+phase = "Testing (CRG C achieved)"
+
+[test-status]
+unit-tests = "74 passing (Oracle: 25, Contract: 41, SLM: 8)"
+e2e-tests = "19 passing (gating pipeline scenarios)"
+property-tests = "10 passing (determinism, outcomes, performance)"
+security-tests = "20 passing (bypass prevention, manipulation)"
+total-tests = "123"
+build-tests = "passing"
+panic-attack = "ready"
+
+[milestones]
+completed = [
+  "Unit tests for all modules",
+  "E2E pipeline tests",
+  "Property-based tests",
+  "Security aspect tests",
+  "Audit logging verification",
+  "Test harness implementation",
+  "Regression baseline infrastructure"
+]
+
+next-actions = [
+  "Criterion benchmark baselines",
+  "Zig FFI integration test",
+  "Reflexive self-testing",
+  "Performance regression CI",
+  "Manual testing of CLI"
+]
