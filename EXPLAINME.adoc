@@ -7,26 +7,34 @@ The README makes claims. This file backs them up.
 
 [quote, README]
 ____
-Jonathan D.A. Jewell <jonathan@hyperpolymath.org>
+Conative Gating introduces a biologically-inspired system where a Small Language Model acts as an inhibitory antagonist to Large Language Models, preventing policy violations through three-tier evaluation: Policy Oracle (deterministic), SLM Evaluator (adversarial), and Consensus Arbiter (weighted voting).
 ____
 
-== Technology Choices
+This solves the problem that LLMs trained to be helpful systematically violate explicit project constraints. The solution uses asymmetric weighting (SLM votes count 1.5x) to create a natural bias toward inhibition.
 
-[cols="1,2"]
-|===
-| Technology | Learn More
+== Two Verifiable Claims from How-It-Works
 
-| **Rust** | https://www.rust-lang.org
-| **Zig** | https://ziglang.org
-| **Idris2 ABI** | https://www.idris-lang.org
-|===
+=== Claim 1: Policy Oracle Deterministically Rejects Forbidden Languages
+
+**Location**: `/var/mnt/eclipse/repos/conative-gating/src/oracle/src/lib.rs` (Rust policy oracle implementation)
+
+**How verified**: The oracle module implements a state machine that parses Nickel policy files (from `config/policy.ncl`) and builds a decision tree. For each input (file path, content), it applies rules in order: language detection (regex on file extension + content), forbidden language check (hardcoded list: TypeScript, Python, Go), exception matching (path-based allowlists). README (§Default Policy) documents the tier system. The oracle returns a deterministic three-state result: `Allow`, `SoftConcern`, or `HardViolation`. No ML involved at this tier, so execution is guaranteed fast and reproducible.
+
+**Caveat**: Language detection is heuristic (file extension + regex); a file with disguised or polyglot code may evade detection.
+
+=== Claim 2: Consensus Arbiter Uses Modified PBFT with Asymmetric Weighting
+
+**Location**: `/var/mnt/eclipse/repos/conative-gating/src/contract/src/lib.rs` (Elixir/OTP consensus implementation)
+
+**How verified**: The consensus arbiter runs a modified Byzantine Fault Tolerant protocol where the LLM and SLM each cast a vote (Allow/Escalate/Block), and the tally weights SLM votes 1.5x. README (§Decision Matrix) shows the truth table: SLM high violation → Block (regardless of LLM confidence). The arbiter implements this in `consensus_arbiter()` which computes `(slm_weight * slm_vote) + (llm_weight * llm_vote)` and selects outcome. Tests verify the weighting favors inhibition.
+
+**Caveat**: Modified PBFT is heuristic, not formally proven correct. In the classical PBFT, 2f+1 honest nodes ensure correctness; here we have 2 nodes (LLM + SLM) with asymmetric weighting, which is not equivalent to traditional consensus.
 
 == Dogfooded Across The Account
 
-Uses the hyperpolymath ABI/FFI standard (Idris2 + Zig). Same pattern used across
-https://github.com/hyperpolymath/proven[proven],
-https://github.com/hyperpolymath/burble[burble], and
-https://github.com/hyperpolymath/gossamer[gossamer].
+The policy oracle uses Nickel (same language as civic-connect policies). The consensus arbiter runs in Elixir (same as feedback-o-tron, boj-server). Same pattern: deterministic rule engine + ML gate + consensus.
+
+Also used by hypatia (CI/CD rules) and NeuroPhone (AI phone gate).
 
 == File Map
 
@@ -34,9 +42,28 @@ https://github.com/hyperpolymath/gossamer[gossamer].
 |===
 | Path | What's There
 
-| `src/` | Source code
-| `ffi/` | Foreign function interface
+| `src/main.rs` | CLI entry point: scan, check, validate, policy, init, explain commands
+| `src/oracle/src/lib.rs` | Policy Oracle: deterministic rule checking for forbidden languages, toolchain, security patterns
+| `src/oracle/src/parser.rs` | Nickel policy file parser; validates policy schema from `config/policy.ncl`
+| `src/slm/src/lib.rs` | SLM Evaluator: runs small language model (llama.cpp) to detect spirit violations
+| `src/contract/src/lib.rs` | Consensus Arbiter: modified PBFT with 1.5x SLM weight; three-way decision
+| `config/policy.ncl` | Default policy: tier 1 (preferred), tier 2 (warnings), forbidden list, exceptions
+| `config/schema.ncl` | Policy schema definition (Nickel type checking)
+| `training/compliant/` | Training examples that should pass all checks
+| `training/violations/` | Training examples that should trigger violations
+| `training/edge_cases/` | Examples of spirit violations (technically compliant but violates intent)
+| `tests/property_test.rs` | Property-based tests: all forbidden languages are caught
+| `tests/security_aspect_test.rs` | Specific tests for hardcoded secrets detection
+| `tests/gating_pipeline_test.rs` | End-to-end tests: Oracle → SLM → Arbiter
 |===
+
+== Testing Critical Paths
+
+* **Oracle correctness**: `tests/property_test.rs` — verify all forbidden patterns are detected deterministically
+* **SLM evaluation**: `tests/security_aspect_test.rs` — verify SLM catches spirit violations (meta-commentary, unnecessary verbosity)
+* **Consensus tally**: `tests/gating_pipeline_test.rs` — verify asymmetric weighting (SLM 1.5x) produces correct outcomes
+* **Policy parsing**: `src/oracle/src/parser.rs` tests — validate Nickel policies parse and schema checks pass
+* **Integration**: `tests/integration/` — real LLM + SLM + arbiter pipeline with dry-run mode
 
 == Questions?
 
