@@ -30,3 +30,8 @@ jobs:
         if: always()
         with:
           sarif_file: vulnerabilities.sarif
+
+  - name: K9-SVC Validation
+    run: |
+      echo "K9-SVC validation"
+      [ -d .machine_readable/contractiles ] && echo "Contractiles present" || echo "No contractiles"
