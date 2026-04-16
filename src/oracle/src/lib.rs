@@ -630,7 +630,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
         assert!(!result.violations.is_empty());
     }
@@ -648,7 +648,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
     }
 
@@ -665,7 +665,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(matches!(result.verdict, PolicyVerdict::Compliant));
     }
 
@@ -682,7 +682,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(matches!(result.verdict, PolicyVerdict::Compliant));
     }
 
@@ -699,7 +699,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
     }
 
@@ -716,7 +716,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(matches!(result.verdict, PolicyVerdict::Compliant));
     }
 
@@ -733,7 +733,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
     }
 
@@ -752,7 +752,7 @@ mod tests {
             llm_confidence: 0.5,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert_eq!(result.verdict, PolicyVerdict::Compliant);
         assert!(result.violations.is_empty());
     }
@@ -770,7 +770,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
         // Should report at least the TypeScript violation
         assert!(!result.violations.is_empty());
@@ -789,7 +789,7 @@ mod tests {
             llm_confidence: 0.8,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         // Tier2 languages without markers might be compliant or concerns depending on detection
         assert!(matches!(result.verdict, PolicyVerdict::Compliant | PolicyVerdict::SoftConcern(_)));
     }
@@ -807,7 +807,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert_eq!(result.verdict, PolicyVerdict::Compliant);
     }
 
@@ -824,7 +824,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert_eq!(result.verdict, PolicyVerdict::Compliant);
     }
 
@@ -841,7 +841,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert_eq!(result.verdict, PolicyVerdict::Compliant);
     }
 
@@ -858,7 +858,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert_eq!(result.verdict, PolicyVerdict::Compliant);
     }
 
@@ -875,7 +875,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert_eq!(result.verdict, PolicyVerdict::Compliant);
     }
 
@@ -892,7 +892,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(!result.violations.is_empty());
         assert_eq!(result.violations[0].severity, Severity::Critical);
     }
@@ -910,7 +910,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         if !result.violations.is_empty() {
             assert_eq!(result.violations[0].severity, Severity::High);
         }
@@ -929,7 +929,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         // Should have checked multiple rules (forbidden languages, toolchain, patterns, tier2)
         assert!(!result.rules_checked.is_empty());
         assert!(result.rules_checked.len() >= 4);
@@ -949,7 +949,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert_eq!(result.proposal_id, proposal_id);
     }
 
@@ -966,7 +966,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
     }
 
@@ -983,7 +983,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
     }
 
@@ -1000,7 +1000,7 @@ mod tests {
             llm_confidence: 0.8,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(matches!(result.verdict, PolicyVerdict::SoftConcern(_)));
         assert!(!result.concerns.is_empty());
     }
@@ -1018,7 +1018,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
     }
 
@@ -1035,7 +1035,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert_eq!(result.verdict, PolicyVerdict::Compliant);
     }
 
@@ -1052,7 +1052,7 @@ mod tests {
             llm_confidence: 0.9,
         };
 
-        let result = oracle.check_proposal(&proposal).unwrap();
+        let result = oracle.check_proposal(&proposal).expect("TODO: handle error");
         assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
     }
 }

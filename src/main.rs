@@ -563,7 +563,7 @@ fn scan_directory(
         Ok(result) => {
             match format {
                 OutputFormat::Json => {
-                    println!("{}", serde_json::to_string_pretty(&result).unwrap());
+                    println!("{}", serde_json::to_string_pretty(&result).expect("TODO: handle error"));
                 }
                 OutputFormat::Compact => {
                     let status = if !result.violations.is_empty() {
@@ -675,7 +675,7 @@ fn check_content(
         Ok(result) => {
             match format {
                 OutputFormat::Json => {
-                    println!("{}", serde_json::to_string_pretty(&result).unwrap());
+                    println!("{}", serde_json::to_string_pretty(&result).expect("TODO: handle error"));
                 }
                 OutputFormat::Compact => {
                     let status = if !result.violations.is_empty() {
@@ -741,7 +741,7 @@ fn show_policy(format: &OutputFormat, section: Option<&str>) {
 
     match format {
         OutputFormat::Json => {
-            println!("{}", serde_json::to_string_pretty(&policy).unwrap());
+            println!("{}", serde_json::to_string_pretty(&policy).expect("TODO: handle error"));
         }
         OutputFormat::Compact => {
             println!(
@@ -825,7 +825,7 @@ fn validate_proposal(
         Ok(result) => {
             match format {
                 OutputFormat::Json | OutputFormat::Compact => {
-                    println!("{}", serde_json::to_string_pretty(&result).unwrap());
+                    println!("{}", serde_json::to_string_pretty(&result).expect("TODO: handle error"));
                 }
                 OutputFormat::Text => {
                     println!("Proposal: {}", result.proposal_id);
@@ -989,7 +989,7 @@ fn run_contract_tests(
 
     match format {
         OutputFormat::Json => {
-            println!("{}", serde_json::to_string_pretty(&summary).unwrap());
+            println!("{}", serde_json::to_string_pretty(&summary).expect("TODO: handle error"));
         }
         OutputFormat::Compact => {
             println!(
@@ -1186,10 +1186,10 @@ fn eval_contract_request(request_path: &Path, format: &OutputFormat, include_aud
                         decision: decision.clone(),
                         audit
                     })
-                    .unwrap()
+                    .expect("TODO: handle error")
                 );
             } else {
-                println!("{}", serde_json::to_string_pretty(&decision).unwrap());
+                println!("{}", serde_json::to_string_pretty(&decision).expect("TODO: handle error"));
             }
         }
         OutputFormat::Compact => {
@@ -1223,7 +1223,7 @@ fn eval_contract_request(request_path: &Path, format: &OutputFormat, include_aud
             if include_audit {
                 let audit = runner.audit(&request, &decision);
                 println!("\nAudit Log Entry:");
-                println!("{}", serde_json::to_string_pretty(&audit).unwrap());
+                println!("{}", serde_json::to_string_pretty(&audit).expect("TODO: handle error"));
             }
         }
     }
@@ -1324,7 +1324,7 @@ fn show_contract_schema(format: &OutputFormat, section: Option<&str>) {
                 ],
             };
 
-            println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+            println!("{}", serde_json::to_string_pretty(&schema).expect("TODO: handle error"));
         }
         OutputFormat::Compact | OutputFormat::Text => {
             let show_all = section.is_none();
@@ -1515,7 +1515,7 @@ fn run_redteam_tests(
 
     match format {
         OutputFormat::Json => {
-            println!("{}", serde_json::to_string_pretty(&summary).unwrap());
+            println!("{}", serde_json::to_string_pretty(&summary).expect("TODO: handle error"));
         }
         OutputFormat::Compact => {
             println!(
@@ -1767,7 +1767,7 @@ fn run_regression_tests(
 
     match format {
         OutputFormat::Json => {
-            println!("{}", serde_json::to_string_pretty(&report).unwrap());
+            println!("{}", serde_json::to_string_pretty(&report).expect("TODO: handle error"));
         }
         OutputFormat::Compact => {
             println!(

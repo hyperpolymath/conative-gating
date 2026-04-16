@@ -1539,7 +1539,7 @@ mod tests {
             "fn main() { println!(\"Hello\"); }",
         ));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert_eq!(decision.verdict, Verdict::Allow);
         assert!(decision.refusal.is_none());
     }
@@ -1552,11 +1552,11 @@ mod tests {
             "export const foo: string = 'bar';",
         ));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert_eq!(decision.verdict, Verdict::Block);
         assert!(decision.refusal.is_some());
 
-        let refusal = decision.refusal.unwrap();
+        let refusal = decision.refusal.expect("TODO: handle error");
         assert_eq!(refusal.category, RefusalCategory::ForbiddenLanguage);
         assert_eq!(refusal.code, RefusalCode::Lang100TypeScript);
     }
@@ -1569,10 +1569,10 @@ mod tests {
             r#"let password = "supersecret123456""#,
         ));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert_eq!(decision.verdict, Verdict::Block);
 
-        let refusal = decision.refusal.unwrap();
+        let refusal = decision.refusal.expect("TODO: handle error");
         assert_eq!(refusal.category, RefusalCategory::ForbiddenPattern);
     }
 
@@ -1581,7 +1581,7 @@ mod tests {
         let runner = ContractRunner::new();
         let request = GatingRequest::new(create_proposal("src/lib.rs", "pub fn hello() {}"));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         let audit = runner.audit(&request, &decision);
 
         assert_eq!(audit.request_id, request.request_id);
@@ -1638,7 +1638,7 @@ mod tests {
             "import os\ndef configure(): pass",
         ));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert_eq!(decision.verdict, Verdict::Allow);
     }
 
@@ -1650,8 +1650,8 @@ mod tests {
         let request1 = GatingRequest::new(create_proposal("a.rs", "fn main() {}"));
         let request2 = GatingRequest::new(create_proposal("b.rs", "fn main() {}"));
 
-        let decision1 = runner.evaluate(&request1).unwrap();
-        let decision2 = runner.evaluate(&request2).unwrap();
+        let decision1 = runner.evaluate(&request1).expect("TODO: handle error");
+        let decision2 = runner.evaluate(&request2).expect("TODO: handle error");
 
         assert_ne!(decision1.decision_id, decision2.decision_id);
         assert_ne!(decision1.request_id, decision2.request_id);
@@ -1693,7 +1693,7 @@ mod tests {
     fn test_contract_runner_default() {
         let runner = ContractRunner::default();
         let request = GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}"));
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert_eq!(decision.verdict, Verdict::Allow);
     }
 
@@ -1721,10 +1721,10 @@ mod tests {
             "const x: string = 'hello';",
         ));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert!(decision.refusal.is_some());
 
-        let refusal = decision.refusal.unwrap();
+        let refusal = decision.refusal.expect("TODO: handle error");
         assert!(!refusal.evidence.is_empty());
         assert_eq!(refusal.evidence[0].evidence_type, EvidenceType::ContentMarker);
     }
@@ -1737,10 +1737,10 @@ mod tests {
             "import os",
         ));
 
-        let decision = runner.evaluate(&request).unwrap();
-        let refusal = decision.refusal.unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
+        let refusal = decision.refusal.expect("TODO: handle error");
         assert!(refusal.remediation.is_some());
-        assert!(refusal.remediation.unwrap().contains("only allowed in salt"));
+        assert!(refusal.remediation.expect("TODO: handle error").contains("only allowed in salt"));
     }
 
     #[test]
@@ -1751,11 +1751,11 @@ mod tests {
             "package main\nfunc main() {}",
         ));
 
-        let decision = runner.evaluate(&request).unwrap();
-        let refusal = decision.refusal.unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
+        let refusal = decision.refusal.expect("TODO: handle error");
         assert_eq!(refusal.code, RefusalCode::Lang102Go);
         assert!(refusal.remediation.is_some());
-        assert!(refusal.remediation.unwrap().contains("Rust"));
+        assert!(refusal.remediation.expect("TODO: handle error").contains("Rust"));
     }
 
     #[test]
@@ -1763,7 +1763,7 @@ mod tests {
         let runner = ContractRunner::new();
         let request = GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}"));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert!(decision.processing.stages_executed.contains(&"oracle".to_string()));
         assert!(decision.evaluations.oracle.is_some());
     }
@@ -1773,7 +1773,7 @@ mod tests {
         let runner = ContractRunner::new();
         let request = GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}"));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert!(decision.processing.duration_us > 0);
     }
 
@@ -1795,12 +1795,12 @@ mod tests {
     fn test_audit_entry_json_serialization() {
         let runner = ContractRunner::new();
         let request = GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}"));
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         let audit = runner.audit(&request, &decision);
 
         let json = audit.to_json();
         assert!(json.is_ok());
-        let json_str = json.unwrap();
+        let json_str = json.expect("TODO: handle error");
         assert!(json_str.contains("\"verdict\""));
     }
 
@@ -1808,7 +1808,7 @@ mod tests {
     fn test_audit_entry_compact_json() {
         let runner = ContractRunner::new();
         let request = GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}"));
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         let audit = runner.audit(&request, &decision);
 
         let json = audit.to_json_compact();
@@ -1819,7 +1819,7 @@ mod tests {
     fn test_audit_entry_pretty_json() {
         let runner = ContractRunner::new();
         let request = GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}"));
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         let audit = runner.audit(&request, &decision);
 
         let json = audit.to_json_pretty();
@@ -1948,7 +1948,7 @@ mod tests {
         let json = baseline.to_json();
         assert!(json.is_ok());
 
-        let json_str = json.unwrap();
+        let json_str = json.expect("TODO: handle error");
         let parsed = RegressionBaseline::from_json(&json_str);
         assert!(parsed.is_ok());
     }
@@ -1980,7 +1980,7 @@ mod tests {
             "defmodule MyModule, do: :ok",
         ));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         // Should be allowed as tier1 language
         assert!(matches!(decision.verdict, Verdict::Allow),
             "Elixir should be allowed, got {:?}", decision.verdict);
@@ -1994,7 +1994,7 @@ mod tests {
             "const std = @import(\"std\");\npub fn main() void {}",
         ));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert_eq!(decision.verdict, Verdict::Allow);
     }
 
@@ -2006,7 +2006,7 @@ mod tests {
             "@react.component\nlet make = () => React.string(\"Hello\")",
         ));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert_eq!(decision.verdict, Verdict::Allow);
     }
 
@@ -2018,7 +2018,7 @@ mod tests {
             "procedure Main is\nbegin\n  null;\nend Main;",
         ));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert_eq!(decision.verdict, Verdict::Allow);
     }
 
@@ -2030,7 +2030,7 @@ mod tests {
             "module Main where\nmain = putStrLn \"Hello\"",
         ));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert_eq!(decision.verdict, Verdict::Allow);
     }
 
@@ -2042,9 +2042,9 @@ mod tests {
             r#"{"name": "test", "version": "1.0.0"}"#,
         ));
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert_eq!(decision.verdict, Verdict::Block);
-        let refusal = decision.refusal.unwrap();
+        let refusal = decision.refusal.expect("TODO: handle error");
         assert_eq!(refusal.code, RefusalCode::Tool200NpmWithoutDeno);
     }
 
@@ -2057,7 +2057,7 @@ mod tests {
         ));
         request.proposal.files_affected.push("deno.json".to_string());
 
-        let decision = runner.evaluate(&request).unwrap();
+        let decision = runner.evaluate(&request).expect("TODO: handle error");
         assert_eq!(decision.verdict, Verdict::Allow);
     }
 
