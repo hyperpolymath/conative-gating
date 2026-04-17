@@ -10,7 +10,7 @@
     description | String,
     version | String | default = "0.1.0",
     author | String | default = "Jonathan D.A. Jewell",
-    email | String | default = "jonathan.jewell@gmail.com",
+    email | String | default = "j.d.a.jewell@open.ac.uk",
     license | String | default = "PMPL-1.0-or-later OR LicenseRef-Palimpsest-0.5",
     domain | String,
     tags | Array String | default = ["RSR", "Rhodium Standard"],
