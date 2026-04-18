@@ -166,7 +166,7 @@ RSR projects are distributed across GitHub and GitLab. This guide documents the 
 
 |Content
 |extension/, slm/, ui/, manifest.json
-|Just .well-known/, justfile
+|Just .well-known/, Justfile
 
 |Use Case
 |Building real Zotero extensions
@@ -214,7 +214,7 @@ Root files:
 ├── CITATION.cff     # Citation metadata
 ├── STATE.scm        # Guile state checkpoint
 ├── codemeta.json    # CodeMeta metadata
-└── justfile         # Build automation
+└── Justfile         # Build automation
 ----
 
 === Platform-Specific Files
@@ -412,7 +412,7 @@ fi
 
 == Justfile Recipe
 
-Add to each repository's justfile:
+Add to each repository's Justfile:
 
 [source,makefile]
 ----

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Apply language-specific justfiles to repos
+# Apply language-specific Justfiles to repos
 # Usage: ./apply-justfiles.sh [--dry-run]
 
 set -e
@@ -363,13 +363,13 @@ for repo in */; do
     name="${repo%/}"
     [ "$name" = "conative-gating" ] && continue
 
-    # Skip if justfile exists (file or directory)
+    # Skip if Justfile exists (file or directory)
     [ -e "$repo/justfile" ] && continue
 
     lang=$(detect_language "$repo")
 
     if $DRY_RUN; then
-        log "[DRY] Would add justfile to $name ($lang)"
+        log "[DRY] Would add Justfile to $name ($lang)"
         ((added++)) || true
         continue
     fi
@@ -395,7 +395,7 @@ for repo in */; do
             ;;
     esac
 
-    log "Added justfile to $name ($lang)"
+    log "Added Justfile to $name ($lang)"
     ((added++)) || true
 done
 

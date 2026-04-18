@@ -98,7 +98,7 @@ end
 
 === CI/CD Variations
 
-==== justfile Recipes (Language-Specific)
+==== Justfile Recipes (Language-Specific)
 
 [cols="1,3"]
 |===

@@ -360,13 +360,13 @@ apply_justfile_hooks() {
             return
         fi
 
-        verbose "Appending hooks recipes to existing justfile"
+        verbose "Appending hooks recipes to existing Justfile"
         if ! $DRY_RUN && [[ -f "$TEMPLATE_DIR/justfile-hooks.template" ]]; then
             echo "" >> "$repo_dir/justfile"
             cat "$TEMPLATE_DIR/justfile-hooks.template" >> "$repo_dir/justfile"
         fi
     else
-        verbose "Creating justfile with hooks"
+        verbose "Creating Justfile with hooks"
         if ! $DRY_RUN && [[ -f "$TEMPLATE_DIR/justfile-hooks.template" ]]; then
             cat > "$repo_dir/justfile" << 'EOF'
 # RSR Project Justfile

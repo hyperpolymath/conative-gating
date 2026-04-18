@@ -599,7 +599,7 @@ grimrepo-scripts/
 │   └── ...
 ├── rescript.json
 ├── deno.json
-├── justfile
+├── Justfile
 └── STATE.scm
 ----
 
@@ -607,7 +607,7 @@ grimrepo-scripts/
 
 [source,makefile]
 ----
-# grimrepo-scripts justfile
+# grimrepo-scripts Justfile
 
 default: build
 

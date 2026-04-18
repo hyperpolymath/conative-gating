@@ -200,7 +200,7 @@ ACTIONEOF
             action_count=0
             [ "$ec_check" = "✗" ] && echo "* Add .editorconfig" >> "$repo/RSR_COMPLIANCE.adoc" && ((action_count++)) || true
             [ "$wk_check" = "✗" ] && echo "* Add .well-known/ directory" >> "$repo/RSR_COMPLIANCE.adoc" && ((action_count++)) || true
-            [ "$jf_check" = "✗" ] && echo "* Add justfile" >> "$repo/RSR_COMPLIANCE.adoc" && ((action_count++)) || true
+            [ "$jf_check" = "✗" ] && echo "* Add Justfile" >> "$repo/RSR_COMPLIANCE.adoc" && ((action_count++)) || true
             [ "$cont_check" = "✗" ] && echo "* Add Containerfile" >> "$repo/RSR_COMPLIANCE.adoc" && ((action_count++)) || true
             [ "$flake_check" = "✗" ] && echo "* Add flake.nix" >> "$repo/RSR_COMPLIANCE.adoc" && ((action_count++)) || true
             [ "$action_count" -eq 0 ] && echo "None - fully compliant" >> "$repo/RSR_COMPLIANCE.adoc"

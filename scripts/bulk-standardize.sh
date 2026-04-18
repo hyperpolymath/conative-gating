@@ -71,17 +71,17 @@ for repo in */; do
 done
 log "  Found $converted MD files to convert (manual review needed)"
 
-# Phase 4: Add justfile
-log "=== Phase 4: Adding justfile ==="
+# Phase 4: Add Justfile
+log "=== Phase 4: Adding Justfile ==="
 added=0
 for repo in */; do
     if [ ! -f "$repo/justfile" ] && [ -f "$TEMPLATES_DIR/justfile.template" ]; then
         # Don't auto-copy - needs customization
-        log "  Missing justfile: $repo"
+        log "  Missing Justfile: $repo"
         ((added++)) || true
     fi
 done
-log "  $added repos need justfile"
+log "  $added repos need Justfile"
 
 # Phase 5: Add Containerfile
 log "=== Phase 5: Checking Containerfile ==="

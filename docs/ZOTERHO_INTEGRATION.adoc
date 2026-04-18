@@ -506,7 +506,7 @@ zoterho-template/
 │   ├── build-manifest.scm
 │   └── migrate-cue.scm
 ├── STATE.scm
-├── justfile
+├── Justfile
 ├── rescript.json
 ├── deno.json
 └── README.adoc

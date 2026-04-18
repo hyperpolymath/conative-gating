@@ -572,7 +572,7 @@ just --show build
 [source,bash]
 ----
 # Parse Justfile into vsh functions
-source justfile
+source Justfile
 
 # Now recipes are available as functions
 build
@@ -614,7 +614,7 @@ just --watch test
 
 [source,bash]
 ----
-# Native vsh justfile syntax
+# Native vsh Justfile syntax
 recipe build {
     cargo build --release
 }
@@ -643,13 +643,13 @@ recipe build {
 [source,bash]
 ----
 # Convert Justfile to native vsh
-just2vsh convert justfile > recipes.vsh
+just2vsh convert Justfile > recipes.vsh
 
 # Validate conversion
-just2vsh validate justfile
+just2vsh validate Justfile
 
 # Diff original vs converted
-just2vsh diff justfile recipes.vsh
+just2vsh diff Justfile recipes.vsh
 ----
 
 == Implementation Priority

@@ -23,7 +23,7 @@ project-name/
 ├── config/                # Configuration files (if needed)
 ├── docs/                  # Documentation (required)
 ├── guix.scm               # Guix package definition (required)
-├── justfile               # Task runner (required)
+├── Justfile               # Task runner (required)
 ├── LICENSE.txt            # AGPL + Palimpsest dual license (required)
 ├── README.adoc            # Project overview (required)
 ├── RSR_COMPLIANCE.adoc    # Compliance tracking (required)
@@ -157,7 +157,7 @@ docs/
 ├── ARCHITECTURE.adoc      # Technical design (optional)
 ├── CONTRIBUTING.adoc      # Contribution guide
 ├── GOVERNANCE.adoc        # Decision-making process
-├── just-cookbook.adoc     # Auto-generated justfile docs
+├── just-cookbook.adoc     # Auto-generated Justfile docs
 ├── BADGE_SCHEMA.adoc      # Badge documentation
 └── security/
     ├── sbom.spdx.json     # SPDX SBOM
@@ -371,7 +371,7 @@ To apply this structure to a new or existing repo:
 # From conative-gating/scripts
 ./apply-directory-structure.sh /path/to/repo
 
-# Or via justfile
+# Or via Justfile
 just setup-structure
 ----
 
