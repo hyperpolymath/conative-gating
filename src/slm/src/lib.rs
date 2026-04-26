@@ -76,21 +76,21 @@ mod tests {
     #[test]
     fn test_placeholder_evaluation() {
         let evaluator = SlmEvaluator::new();
-        let result = evaluator.evaluate("test content", "test context").expect("TODO: handle error");
+        let result = evaluator.evaluate("test content", "test context").unwrap();
         assert!(!result.should_block);
     }
 
     #[test]
     fn test_evaluator_default() {
         let evaluator = SlmEvaluator::default();
-        let result = evaluator.evaluate("test", "ctx").expect("TODO: handle error");
+        let result = evaluator.evaluate("test", "ctx").unwrap();
         assert!(!result.should_block);
     }
 
     #[test]
     fn test_slm_evaluation_always_compliant_placeholder() {
         let evaluator = SlmEvaluator::new();
-        let result = evaluator.evaluate("even forbidden content", "context").expect("TODO: handle error");
+        let result = evaluator.evaluate("even forbidden content", "context").unwrap();
         // Placeholder always returns compliant
         assert_eq!(result.should_block, false);
         assert_eq!(result.spirit_score, 0.0);
@@ -100,7 +100,7 @@ mod tests {
     #[test]
     fn test_slm_evaluation_has_valid_uuid() {
         let evaluator = SlmEvaluator::new();
-        let result = evaluator.evaluate("test", "ctx").expect("TODO: handle error");
+        let result = evaluator.evaluate("test", "ctx").unwrap();
         // UUID should be valid
         assert!(!result.proposal_id.to_string().is_empty());
     }
@@ -108,7 +108,7 @@ mod tests {
     #[test]
     fn test_slm_evaluation_includes_reasoning() {
         let evaluator = SlmEvaluator::new();
-        let result = evaluator.evaluate("test", "ctx").expect("TODO: handle error");
+        let result = evaluator.evaluate("test", "ctx").unwrap();
         assert!(!result.reasoning.is_empty());
         assert!(result.reasoning.contains("not yet implemented"));
     }
@@ -116,8 +116,8 @@ mod tests {
     #[test]
     fn test_slm_evaluation_different_ids_on_each_call() {
         let evaluator = SlmEvaluator::new();
-        let result1 = evaluator.evaluate("test", "ctx").expect("TODO: handle error");
-        let result2 = evaluator.evaluate("test", "ctx").expect("TODO: handle error");
+        let result1 = evaluator.evaluate("test", "ctx").unwrap();
+        let result2 = evaluator.evaluate("test", "ctx").unwrap();
         // Each evaluation should get a new UUID
         assert_ne!(result1.proposal_id, result2.proposal_id);
     }
