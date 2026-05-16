@@ -33,7 +33,7 @@ This project follows the **Rhodium Standard Repository** (RSR) conventions.
 |===
 | Technology | Reason | Status
 
-| TypeScript | Use ReScript instead | ❌ Blocked
+| TypeScript | Use AffineScript instead | ❌ Blocked
 | Go | Use Rust/WASM instead | ❌ Blocked
 | Python | Use Guile/Deno (except SaltStack) | ❌ Blocked
 | npm/yarn | Use Deno instead | ❌ Blocked

@@ -21,7 +21,7 @@ STAGED=$(git diff --cached --name-only --diff-filter=ACM)
 # Check for TypeScript files
 TS_FILES=$(echo "$STAGED" | grep -E '\.(ts|tsx)$' || true)
 if [ -n "$TS_FILES" ]; then
-    echo -e "${RED}❌ TypeScript files detected (use ReScript instead):${NC}"
+    echo -e "${RED}❌ TypeScript files detected (use AffineScript instead):${NC}"
     echo "$TS_FILES" | sed 's/^/   /'
     ERRORS=$((ERRORS + 1))
 fi

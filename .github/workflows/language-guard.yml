@@ -32,7 +32,7 @@ jobs:
         run: |
           # TypeScript files (not allowed)
           if find . -name "*.ts" -o -name "*.tsx" | grep -q .; then
-            echo "::error::TypeScript files detected. Use ReScript instead."
+            echo "::error::TypeScript files detected. Use AffineScript instead."
             exit 1
           fi
 
