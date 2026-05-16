@@ -796,7 +796,7 @@ impl ContractRunner {
                 };
 
                 let remediation = match language.to_lowercase().as_str() {
-                    "typescript" => Some("Use ReScript instead of TypeScript".to_string()),
+                    "typescript" => Some("Use AffineScript instead of TypeScript".to_string()),
                     "python" => {
                         Some("Python is only allowed in salt/ for SaltStack configs".to_string())
                     }
