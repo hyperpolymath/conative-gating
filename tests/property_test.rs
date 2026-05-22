@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: PMPL-1.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 //! Property-Based Tests for Conative Gating
 //!
 //! Uses invariant testing to verify contract properties:

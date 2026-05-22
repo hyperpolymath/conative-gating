@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: PMPL-1.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // Copyright (C) 2025 Jonathan D.A. Jewell
 
 //! Gating Contract - Testable specification for conative gating decisions

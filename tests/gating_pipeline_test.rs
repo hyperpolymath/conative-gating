@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: PMPL-1.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 //! End-to-End Gating Pipeline Tests
 //!
 //! Tests the complete gating workflow from proposal input through

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: PMPL-1.0-or-later
+# SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2025 Jonathan D.A. Jewell
 
 [package]
@@ -7,7 +7,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"]
 description = "Testable gating contract: inputs, outputs, refusal taxonomy, audit logging"
-license = "PMPL-1.0-or-later"
+license = "MPL-2.0"
 repository = "https://github.com/hyperpolymath/conative-gating"
 
 [dependencies]

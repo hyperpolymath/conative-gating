@@ -310,7 +310,7 @@ Proposal format:
 == License
 
 <<<<<<< HEAD
-SPDX-License-Identifier: PMPL-1.0-or-later-or-later
+SPDX-License-Identifier: MPL-2.0-or-later
 =======
 SPDX-License-Identifier: MPL-2.0-or-later
 >>>>>>> 1637fa5 (chore: sync from parent repo automation)

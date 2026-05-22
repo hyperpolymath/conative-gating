@@ -88,7 +88,7 @@ Dual license header:
 [source]
 ----
 <<<<<<< HEAD
-SPDX-License-Identifier: PMPL-1.0-or-later-or-later
+SPDX-License-Identifier: MPL-2.0-or-later
 =======
 SPDX-License-Identifier: MPL-2.0-or-later
 >>>>>>> 1637fa5 (chore: sync from parent repo automation)
@@ -129,7 +129,7 @@ See link:docs/[docs/] for full documentation.
 
 == License
 
-PMPL-1.0-or-later OR Palimpsest-0.5
+MPL-2.0 OR Palimpsest-0.5
 ----
 
 == Required Directories
