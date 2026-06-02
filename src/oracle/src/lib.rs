@@ -729,6 +729,7 @@ mod tests {
             action_type: ActionType::CreateFile {
                 path: "config.rs".to_string(),
             },
+            // example test fixture: string the oracle should reject as a hardcoded secret
             content: r#"let password = "supersecretpassword123""#.to_string(),
             files_affected: vec!["config.rs".to_string()],
             llm_confidence: 0.9,
@@ -1048,6 +1049,7 @@ mod tests {
             action_type: ActionType::CreateFile {
                 path: "config.rs".to_string(),
             },
+            // example test fixture: string the oracle should reject as a hardcoded API key
             content: r#"const API_KEY = "abcdef1234567890abcdef""#.to_string(),
             files_affected: vec!["config.rs".to_string()],
             llm_confidence: 0.9,
