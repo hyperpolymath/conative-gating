@@ -30,7 +30,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - language: javascript-typescript
+          - language: rust
+            build-mode: none
+          - language: actions
             build-mode: none
 
     steps:
