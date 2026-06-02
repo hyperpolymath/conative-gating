@@ -1,11 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 = GitHub/GitLab Repository Consistency Guide
 :toc:
 :sectnums:
-<<<<<<< HEAD
-// SPDX-License-Identifier: MPL-2.0
-=======
-// SPDX-License-Identifier: MPL-2.0-or-later
->>>>>>> 1637fa5 (chore: sync from parent repo automation)
 
 == Overview
 

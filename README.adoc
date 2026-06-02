@@ -1,10 +1,8 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 = Conative Gating
 
-<<<<<<< HEAD
-image:https://img.shields.io/badge/License-PMPL--1.0-blue.svg[License: PMPL-1.0,link="https://github.com/hyperpolymath/palimpsest-license"]
-=======
 image:https://img.shields.io/badge/License-MPL_2.0-blue.svg[MPL-2.0-or-later,link="https://opensource.org/licenses/MPL-2.0"]
->>>>>>> 1637fa5 (chore: sync from parent repo automation)
 image:https://img.shields.io/badge/Philosophy-Palimpsest-indigo.svg[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-license"]
 
 
@@ -309,11 +307,7 @@ Proposal format:
 
 == License
 
-<<<<<<< HEAD
 SPDX-License-Identifier: MPL-2.0-or-later
-=======
-SPDX-License-Identifier: MPL-2.0-or-later
->>>>>>> 1637fa5 (chore: sync from parent repo automation)
 
 Copyright (C) 2025 Jonathan D.A. Jewell
 

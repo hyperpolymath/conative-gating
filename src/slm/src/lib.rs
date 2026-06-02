@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 //! SLM Evaluator - Adversarial policy evaluation using Small Language Models
 //!
 //! This crate will provide SLM-based evaluation for detecting "spirit violations"

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 = RSR Standard Directory Structure
 :toc:
 :sectnums:
@@ -87,15 +89,11 @@ Thumbs.db
 Dual license header:
 [source]
 ----
-<<<<<<< HEAD
 SPDX-License-Identifier: MPL-2.0-or-later
-=======
-SPDX-License-Identifier: MPL-2.0-or-later
->>>>>>> 1637fa5 (chore: sync from parent repo automation)
 
 This software is dual-licensed under:
 1. GNU Affero General Public License v3.0 or later
-2. Palimpsest License v0.5
+2. MPL-2.0 v0.5
 
 See LICENSE-AGPL3.txt and LICENSE-PALIMPSEST.txt for full terms.
 ----

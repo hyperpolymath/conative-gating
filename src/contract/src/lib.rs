@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2025 Jonathan D.A. Jewell
-
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 //! Gating Contract - Testable specification for conative gating decisions
 //!
 //! This module defines the complete contract for policy enforcement:
