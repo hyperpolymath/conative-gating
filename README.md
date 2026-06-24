@@ -2,7 +2,7 @@
 
 = Conative Gating
 
-image:https://img.shields.io/badge/License-PMPL--1.0-blue.svg[License: PMPL-1.0,link="https://github.com/hyperpolymath/palimpsest-license"]
+image:https://img.shields.io/badge/License-MPL--2.0-blue.svg[License: PMPL-1.0,link="https://github.com/hyperpolymath/palimpsest-license"]
 image:https://img.shields.io/badge/Philosophy-Palimpsest-indigo.svg[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-license"]
 
 
@@ -307,7 +307,7 @@ Proposal format:
 
 == License
 
-SPDX-License-Identifier: MPL-2.0-or-later
+SPDX-License-Identifier: CC-BY-SA-4.0
 
 Copyright (C) 2025 Jonathan D.A. Jewell
 
