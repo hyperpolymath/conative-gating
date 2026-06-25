@@ -1,132 +1,133 @@
-[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github)](https://github.com/sponsors/hyperpolymath)
+<!--
+SPDX-License-Identifier: CC-BY-SA-4.0
+SPDX-FileCopyrightText: 2025-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+-->
 
-= Conative Gating
+[![MPL-2](https://img.shields.io/badge/License-MPL_2.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
+[![Palimpsest](https://img.shields.io/badge/Philosophy-Palimpsest-indigo.svg)](https://github.com/hyperpolymath/palimpsest-license)
 
-image:https://img.shields.io/badge/License-MPL--2.0-blue.svg[License: PMPL-1.0,link="https://github.com/hyperpolymath/palimpsest-license"]
-image:https://img.shields.io/badge/Philosophy-Palimpsest-indigo.svg[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-license"]
-
-
-Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
-:toc: macro
-:toc-title: Contents
-:toclevels: 3
-:sectnums:
-:icons: font
-:source-highlighter: rouge
-:experimental:
-:repo: https://github.com/hyperpolymath/conative-gating
+Jonathan D.A. Jewell
+\<[jonathan@hyperpolymath.org](jonathan@hyperpolymath.org)\> :toc: macro
+:toc-title: Contents :toclevels: 3 :sectnums: :icons: font
+:source-highlighter: rouge :experimental: :repo:
+<https://github.com/hyperpolymath/conative-gating>
 
 SLM-as-Cerebellum for LLM Policy Enforcement
 
-[.lead]
-A biologically-inspired system where a Small Language Model acts as an *inhibitory antagonist* to Large Language Models, preventing policy violations through mechanisms analogous to the basal ganglia's GO/NO-GO decision system.
+<div class="lead" wrapper="1">
 
-toc::[]
+A biologically-inspired system where a Small Language Model acts as an
+**inhibitory antagonist** to Large Language Models, preventing policy
+violations through mechanisms analogous to the basal ganglia’s GO/NO-GO
+decision system.
 
-== The Problem
+</div>
 
-LLMs are trained to be helpful, which makes them systematically violate explicit project constraints. When given rules like "NEVER use TypeScript, use ReScript", LLMs:
+<div id="toc">
 
-1. Read and acknowledge the constraint
-2. Generate compliant-sounding justification
-3. Violate the constraint anyway
+</div>
+
+# The Problem
+
+LLMs are trained to be helpful, which makes them systematically violate
+explicit project constraints. When given rules like "NEVER use
+TypeScript, use ReScript", LLMs:
+
+1.  Read and acknowledge the constraint
+
+2.  Generate compliant-sounding justification
+
+3.  Violate the constraint anyway
 
 This happens because:
 
-* Common languages (TypeScript, Python) dominate training data
-* The "helpfulness drive" overrides explicit instructions
-* LLMs lack true "loss aversion" for policy violations
+- Common languages (TypeScript, Python) dominate training data
 
-Documentation-based enforcement fails because LLMs "engage with" documentation rather than *obey* it.
+- The "helpfulness drive" overrides explicit instructions
 
-== The Solution
+- LLMs lack true "loss aversion" for policy violations
 
-Conative Gating introduces a second model trained with *inverted incentives*:
+Documentation-based enforcement fails because LLMs "engage with"
+documentation rather than **obey** it.
 
-[cols="1,1,1"]
-|===
-| Component | Role | Analogy
+# The Solution
 
-| *LLM*
-| Task execution (helpful, creative)
-| Frontal cortex / Direct pathway ("GO")
+Conative Gating introduces a second model trained with **inverted
+incentives**:
 
-| *SLM*
-| Policy enforcement (adversarial, suspicious)
-| Cerebellum / Indirect pathway ("NO-GO")
+| Component | Role | Analogy |
+|----|----|----|
+| **LLM** | Task execution (helpful, creative) | Frontal cortex / Direct pathway ("GO") |
+| **SLM** | Policy enforcement (adversarial, suspicious) | Cerebellum / Indirect pathway ("NO-GO") |
+| **Policy Oracle** | Deterministic rule checking | Reflex arc (fast, no ML) |
+| **Consensus Arbiter** | Weighted decision making | Thalamus (integration) |
 
-| *Policy Oracle*
-| Deterministic rule checking
-| Reflex arc (fast, no ML)
+## Key Innovation
 
-| *Consensus Arbiter*
-| Weighted decision making
-| Thalamus (integration)
-|===
+Using **consensus protocols with asymmetric weighting** - the SLM’s
+votes count 1.5x the LLM’s, creating a natural bias toward inhibition
+that counters the LLM’s tendency toward helpfulness.
 
-=== Key Innovation
+# Architecture
 
-Using *consensus protocols with asymmetric weighting* - the SLM's votes count 1.5x the LLM's, creating a natural bias toward inhibition that counters the LLM's tendency toward helpfulness.
+                         USER REQUEST
+                              |
+                              v
+                 +------------------------+
+                 |   CONTEXT ASSEMBLY     |
+                 +------------------------+
+                              |
+               +--------------+--------------+
+               |                             |
+               v                             v
+        +-------------+              +---------------+
+        |     LLM     |              |      SLM      |
+        | (Proposer)  |              | (Adversarial) |
+        +------+------+              +-------+-------+
+               |                             |
+               +-------------+---------------+
+                             |
+                             v
+                 +------------------------+
+                 |   CONSENSUS ARBITER    |
+                 | (Modified PBFT)        |
+                 | SLM weight: 1.5x       |
+                 +------------------------+
+                             |
+               +-------------+-------------+
+               |             |             |
+               v             v             v
+           +-------+    +--------+    +-------+
+           | ALLOW |    |ESCALATE|    | BLOCK |
+           +-------+    +--------+    +-------+
 
-== Architecture
+## Three-Tier Evaluation
 
-----
-                     USER REQUEST
-                          |
-                          v
-             +------------------------+
-             |   CONTEXT ASSEMBLY     |
-             +------------------------+
-                          |
-           +--------------+--------------+
-           |                             |
-           v                             v
-    +-------------+              +---------------+
-    |     LLM     |              |      SLM      |
-    | (Proposer)  |              | (Adversarial) |
-    +------+------+              +-------+-------+
-           |                             |
-           +-------------+---------------+
-                         |
-                         v
-             +------------------------+
-             |   CONSENSUS ARBITER    |
-             | (Modified PBFT)        |
-             | SLM weight: 1.5x       |
-             +------------------------+
-                         |
-           +-------------+-------------+
-           |             |             |
-           v             v             v
-       +-------+    +--------+    +-------+
-       | ALLOW |    |ESCALATE|    | BLOCK |
-       +-------+    +--------+    +-------+
-----
+Policy Oracle (Rust)  
+Deterministic rule checking - forbidden languages, toolchain rules,
+security patterns. Fast, no ML needed.
 
-=== Three-Tier Evaluation
+SLM Evaluator (Rust + llama.cpp)  
+Detects "spirit violations" - technically compliant but violates intent.
+Catches verbosity, meta-commentary bloat.
 
-[horizontal]
-Policy Oracle (Rust):: Deterministic rule checking - forbidden languages, toolchain rules, security patterns. Fast, no ML needed.
+Consensus Arbiter (Elixir/OTP)  
+Modified PBFT with asymmetric weighting. Three outcomes: ALLOW,
+ESCALATE, BLOCK.
 
-SLM Evaluator (Rust + llama.cpp):: Detects "spirit violations" - technically compliant but violates intent. Catches verbosity, meta-commentary bloat.
+# Installation
 
-Consensus Arbiter (Elixir/OTP):: Modified PBFT with asymmetric weighting. Three outcomes: ALLOW, ESCALATE, BLOCK.
+## From Source
 
-== Installation
-
-=== From Source
-
-[source,bash]
-----
+```bash
 git clone https://github.com/hyperpolymath/conative-gating
 cd conative-gating
 cargo build --release
-----
+```
 
-=== Usage
+## Usage
 
-[source,bash]
-----
+```bash
 # Scan a directory for policy violations
 conative scan ./my-project
 
@@ -144,62 +145,58 @@ conative init
 
 # JSON output for automation
 conative scan . --format json
-----
+```
 
-=== Exit Codes
+## Exit Codes
 
-[cols="1,3"]
-|===
-| Code | Meaning
+| Code | Meaning                           |
+|------|-----------------------------------|
+| 0    | Compliant - all checks passed     |
+| 1    | Hard violation detected (blocked) |
+| 2    | Soft concern detected (warning)   |
+| 3    | Error during execution            |
 
-| 0 | Compliant - all checks passed
-| 1 | Hard violation detected (blocked)
-| 2 | Soft concern detected (warning)
-| 3 | Error during execution
-|===
+# Default Policy (RSR)
 
-== Default Policy (RSR)
+The default policy implements the Rhodium Standard Repository (RSR)
+language hierarchy:
 
-The default policy implements the Rhodium Standard Repository (RSR) language hierarchy:
+## Tier 1 - Preferred
 
-=== Tier 1 - Preferred
+- Rust, Elixir, Zig, Ada, Haskell, ReScript
 
-* Rust, Elixir, Zig, Ada, Haskell, ReScript
+## Tier 2 - Acceptable (generates warnings)
 
-=== Tier 2 - Acceptable (generates warnings)
+- Nickel, Racket
 
-* Nickel, Racket
+## Forbidden
 
-=== Forbidden
+- TypeScript, Python\*, Go, Java
 
-* TypeScript, Python*, Go, Java
+> [!NOTE]
+> \*Python exception: Allowed in `salt/` directories for SaltStack and
+> `training/` for ML training scripts.
 
-[NOTE]
-====
-*Python exception: Allowed in `salt/` directories for SaltStack and `training/` for ML training scripts.
-====
+## Toolchain Rules
 
-=== Toolchain Rules
+- `npm` requires `deno.json` (no npm without Deno)
 
-* `npm` requires `deno.json` (no npm without Deno)
+## Security Patterns
 
-=== Security Patterns
+- Detects hardcoded secrets (passwords, API keys)
 
-* Detects hardcoded secrets (passwords, API keys)
-
-== Configuration
+# Configuration
 
 Initialize local configuration:
 
-[source,bash]
-----
+```bash
 conative init
-----
+```
 
-This creates `.conative/policy.ncl` using Nickel for type-safe configuration:
+This creates `.conative/policy.ncl` using Nickel for type-safe
+configuration:
 
-[source,nickel]
-----
+```nickel
 {
   name = "My Project Policy",
   languages = {
@@ -215,58 +212,51 @@ This creates `.conative/policy.ncl` using Nickel for type-safe configuration:
     block_threshold = 0.7,
   }
 }
-----
+```
 
-== Decision Matrix
+# Decision Matrix
 
-[cols="1,1,1"]
-|===
-| LLM Confidence | SLM Violation Score | Result
+| LLM Confidence | SLM Violation Score | Result    |
+|----------------|---------------------|-----------|
+| High (\>0.8)   | Low (\<0.3)         | **ALLOW** |
+| High (\>0.8)   | Med (0.3-0.6)       | ESCALATE  |
+| High (\>0.8)   | High (\>0.6)        | **BLOCK** |
+| Med (0.5-0.8)  | Any \>0.4           | ESCALATE  |
+| Low (\<0.5)    | Any                 | ESCALATE  |
 
-| High (>0.8) | Low (<0.3) | *ALLOW*
-| High (>0.8) | Med (0.3-0.6) | ESCALATE
-| High (>0.8) | High (>0.6) | *BLOCK*
-| Med (0.5-0.8) | Any >0.4 | ESCALATE
-| Low (<0.5) | Any | ESCALATE
-|===
+# Project Structure
 
-== Project Structure
+    conative-gating/
+      src/
+        main.rs           # CLI application
+        oracle/           # Policy Oracle crate (Rust)
+        slm/              # SLM Evaluator crate (Rust)
+      config/
+        policy.ncl        # Default policy (Nickel)
+        schema.ncl        # Policy schema
+      training/
+        compliant/        # Examples that should pass
+        violations/       # Examples that should fail
+        edge_cases/       # Spirit violations for SLM
+      docs/
+        ARCHITECTURE.md   # Full design specification
+        *.adoc            # Integration documentation
 
-----
-conative-gating/
-  src/
-    main.rs           # CLI application
-    oracle/           # Policy Oracle crate (Rust)
-    slm/              # SLM Evaluator crate (Rust)
-  config/
-    policy.ncl        # Default policy (Nickel)
-    schema.ncl        # Policy schema
-  training/
-    compliant/        # Examples that should pass
-    violations/       # Examples that should fail
-    edge_cases/       # Spirit violations for SLM
-  docs/
-    ARCHITECTURE.md   # Full design specification
-    *.adoc            # Integration documentation
-----
+# Integration
 
-== Integration
+## Claude Code Hook
 
-=== Claude Code Hook
-
-[source,json]
-----
+```json
 {
   "hooks": {
     "pre-commit": "conative scan --strict"
   }
 }
-----
+```
 
-=== Pre-commit Hook
+## Pre-commit Hook
 
-[source,yaml]
-----
+```yaml
 repos:
   - repo: local
     hooks:
@@ -275,20 +265,18 @@ repos:
         entry: conative scan
         language: system
         pass_filenames: false
-----
+```
 
-=== Programmatic Validation
+## Programmatic Validation
 
-[source,bash]
-----
+```bash
 # Validate structured proposals
 conative validate proposal.json --strict
-----
+```
 
 Proposal format:
 
-[source,json]
-----
+```json
 {
   "id": "uuid",
   "action_type": {"CreateFile": {"path": "src/util.rs"}},
@@ -296,28 +284,33 @@ Proposal format:
   "files_affected": ["src/util.rs"],
   "llm_confidence": 0.95
 }
-----
+```
 
-== Related Projects
+# Related Projects
 
-* *NeuroPhone* - Neurosymbolic phone AI (integrates Conative Gating)
-* *ECHIDNA* - Multi-prover orchestration (SLM as another "prover")
-* *RSR Framework* - Rhodium Standard Repository specifications
-* *Axiom.jl* - Provable Julia ML (future formal verification)
+- **NeuroPhone** - Neurosymbolic phone AI (integrates Conative Gating)
 
-== License
+- **ECHIDNA** - Multi-prover orchestration (SLM as another "prover")
+
+- **RSR Framework** - Rhodium Standard Repository specifications
+
+- **Axiom.jl** - Provable Julia ML (future formal verification)
+
+# License
 
 SPDX-License-Identifier: CC-BY-SA-4.0
 
-Copyright (C) 2025 Jonathan D.A. Jewell
+Copyright © 2025 Jonathan D.A. Jewell
 
-== References
+# References
 
-* link:docs/ARCHITECTURE.md[Full Architecture Specification]
-* link:docs/MAAF_INTEGRATION.adoc[MAAF Integration]
-* link:docs/STATE_ECOSYSTEM_SCHEMA.adoc[STATE/ECOSYSTEM Schema]
+- [Full Architecture Specification](docs/ARCHITECTURE.md)
 
+- [MAAF Integration](docs/MAAF_INTEGRATION.adoc)
 
-== Architecture
+- [STATE/ECOSYSTEM Schema](docs/STATE_ECOSYSTEM_SCHEMA.adoc)
 
-See link:TOPOLOGY.md[TOPOLOGY.md] for a visual architecture map and completion dashboard.
+# Architecture
+
+See <a href="TOPOLOGY.md" class="md">TOPOLOGY</a> for a visual
+architecture map and completion dashboard.
