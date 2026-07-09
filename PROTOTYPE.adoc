@@ -1,0 +1,83 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= ⚠️ Prototype status, disclaimers & how this fits the ethics work
+
+[.lead]
+*Conative Gating is an early-stage research prototype, not a product.* It
+explores one idea — using a small model as an inhibitory "NO-GO" antagonist
+to a larger one — and shares it openly so others can poke holes in it.
+
+== What "prototype" means here
+
+* *Experimental.* Interfaces, schemas, the ABI/FFI surface, config formats
+  and the gating model itself are all subject to change without notice, and
+  the whole approach may be revised or abandoned.
+* *Unproven.* Nothing here has been independently evaluated. Benchmarks and
+  claims in this repo are exploratory, not validated results.
+* *No warranty.* Provided "as is", with no warranty of any kind, to the
+  extent permitted by the licence. See `LICENSE` / `NOTICE`.
+
+== Safety disclaimer (please read)
+
+Conative Gating is *about* policy enforcement, which makes it easy to
+over-trust. It must not be treated as a safety guarantee.
+
+* *Not a sole guardrail.* Do not rely on this — or any single mechanism —
+  as the only thing standing between a model and a harmful action. A gate
+  that is analogous to the basal ganglia is still just a heuristic: it will
+  have false "GO"s and false "NO-GO"s.
+* *Not security-audited.* Do not deploy it in production, in safety-critical
+  settings, or anywhere an incorrect allow/deny decision could hurt someone,
+  without your own independent review, defence-in-depth, and a human in the
+  loop.
+* *Claims are hypotheses.* Statements about LLM behaviour and "loss aversion"
+  are framing for an experiment, not established science.
+
+== Interest and collaboration warmly welcome
+
+This is shared to *invite scrutiny*, not to advertise a finished thing. If
+the idea interests, annoys, or worries you — that is all useful.
+
+* Open an *issue* or a *discussion* with questions, counter-examples,
+  failure modes, or "this can't work because…".
+* Critique of the *ethics framing* (below) is especially valued.
+* See `CONTRIBUTING` and `CODE_OF_CONDUCT` before opening a PR.
+
+== Where the ethics thinking lives
+
+Conative Gating is one piece of a wider estate exploring how to make AI
+tools *trustworthy and humane by construction*. The normative / ethical and
+human-experience reasoning is developed in dedicated sibling projects — this
+repo deliberately defers to them rather than re-deriving ethics locally:
+
+[cols="1,3",options="header"]
+|===
+| Project | Role in the ethics picture
+
+| https://github.com/hyperpolymath/phronesis[*Phronesis*]
+| A "practical wisdom" language — the estate's substrate for expressing
+  normative and ethical reasoning, distinct from a model's raw knowledge.
+
+| https://github.com/hyperpolymath/phronesiser[*Phronesiser*]
+| Adds *normative ethical constraints* to AI agents via Phronesis. This is
+  the natural home for the *why* and *what* of a NO-GO decision, where
+  Conative Gating is only a *mechanism* for the *when/whether*.
+
+| https://github.com/hyperpolymath/vexometer[*Vexometer*]
+| The *interaction-ethics / UX* side: an "Irritation Surface Analyser" that
+  measures the friction and indignity LLM tools impose on people. Gating
+  that is technically correct can still be a bad experience — Vexometer is
+  how that cost gets named.
+
+| https://github.com/hyperpolymath/action-trust-layers[*action-trust-layers*]
+| Sibling prototype on *layered trust* for automated actions — the same
+  "don't grant blanket permission" instinct applied to supply chains.
+
+| https://github.com/hyperpolymath/palimpsest-license[*Palimpsest License*]
+| The ethical-use licence family this repo ships under; its Exhibit A sets
+  out shared ethical-use expectations for the code.
+|===
+
+If you only read one of the above for the ethics rationale, read
+*Phronesiser* (the *normative* side) and *Vexometer* (the *human-experience*
+side) — together they bracket what "good behaviour" means here.
