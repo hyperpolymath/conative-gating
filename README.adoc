@@ -6,6 +6,20 @@ image:https://img.shields.io/badge/OpenSSF-Best_Practices-green?logo=openssource
 
 image:https://img.shields.io/badge/License-MPL_2.0-blue.svg[MPL-2.0-or-later,link="https://opensource.org/licenses/MPL-2.0"]
 image:https://img.shields.io/badge/Philosophy-Palimpsest-indigo.svg[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-license"]
+image:https://img.shields.io/badge/status-prototype-orange.svg[Prototype,link="PROTOTYPE.adoc"]
+
+[WARNING]
+====
+*Early-stage research prototype — not a product, not a safety guarantee.*
+Interfaces and claims are experimental and may change or be abandoned. Do
+*not* rely on this as a sole guardrail for model behaviour. Interest,
+critique and collaboration are warmly welcome. +
+See link:PROTOTYPE.adoc[*PROTOTYPE.adoc*] for the full disclaimer and how
+this connects to the ethics work —
+https://github.com/hyperpolymath/phronesiser[Phronesiser] (normative
+constraints) and https://github.com/hyperpolymath/vexometer[Vexometer]
+(interaction ethics / UX).
+====
 
 
 Jonathan D.A. Jewell <jonathan@hyperpolymath.org>
