@@ -27,8 +27,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - language: rust
-            build-mode: none
           - language: actions
             build-mode: none
     steps:
