@@ -66,7 +66,7 @@ fn secret_proposal() -> Proposal {
         action_type: ActionType::CreateFile {
             path: "src/config.rs".to_string(),
         },
-        content: r#"let api_key = "supersecretkey12345""#.to_string(),
+        content: r#"let api_key = "supersecretkey12345""#.to_string(),  // scanner-allow: rust-secrets
         files_affected: vec!["src/config.rs".to_string()],
         llm_confidence: 0.9,
     }
