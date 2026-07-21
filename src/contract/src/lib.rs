@@ -1565,7 +1565,7 @@ mod tests {
         let runner = ContractRunner::new();
         let request = GatingRequest::new(create_proposal(
             "config.rs",
-            r#"let password = "supersecret123456""#,
+            r#"let password = "supersecret123456""#,  // scanner-allow: rust-secrets
         ));
 
         let decision = runner.evaluate(&request).unwrap();

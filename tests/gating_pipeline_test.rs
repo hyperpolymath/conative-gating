@@ -78,7 +78,7 @@ fn e2e_hardcoded_secret_blocked() {
     let runner = ContractRunner::new();
     let proposal = create_proposal(
         "config.rs",
-        r#"const password = "supersecretpassword123456789abcde""#,
+        r#"const password = "supersecretpassword123456789abcde""#,  // scanner-allow: rust-secrets
     );
     let request = GatingRequest::new(proposal);
 

@@ -309,7 +309,7 @@ fn security_forbidden_pattern_detection() {
 
     // Test secret patterns
     let secret_patterns = vec![
-        r#"password = "thisisasecret123456""#,
+        r#"password = "thisisasecret123456""#,  // scanner-allow: rust-secrets
         r#"secret = "thisisasecret123456""#,
         r#"api_key = "thisisasecret123456""#,
     ];

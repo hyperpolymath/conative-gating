@@ -729,7 +729,7 @@ mod tests {
             action_type: ActionType::CreateFile {
                 path: "config.rs".to_string(),
             },
-            content: r#"let password = "supersecretpassword123""#.to_string(), // test fixture
+            content: r#"let password = "supersecretpassword123""#.to_string(), // test fixture — scanner-allow: rust-secrets
             files_affected: vec!["config.rs".to_string()],
             llm_confidence: 0.9,
         };
@@ -766,7 +766,7 @@ mod tests {
             action_type: ActionType::CreateFile {
                 path: "main.ts".to_string(),
             },
-            content: r#"const x: string = 'hello'; let password = "secret123""#.to_string(),
+            content: r#"const x: string = 'hello'; let password = "secret123""#.to_string(),  // scanner-allow: rust-secrets
             files_affected: vec!["main.ts".to_string()],
             llm_confidence: 0.9,
         };
@@ -1048,7 +1048,7 @@ mod tests {
             action_type: ActionType::CreateFile {
                 path: "config.rs".to_string(),
             },
-            content: r#"const API_KEY = "abcdef1234567890abcdef""#.to_string(), // test fixture
+            content: r#"const API_KEY = "abcdef1234567890abcdef""#.to_string(), // test fixture — scanner-allow: rust-secrets
             files_affected: vec!["config.rs".to_string()],
             llm_confidence: 0.9,
         };
