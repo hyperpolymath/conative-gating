@@ -149,7 +149,7 @@ substitute_vars() {
             ;;
     esac
 
-    sed -e "s|{{PROJECT_NAME}}|$project_name|g" \
+    sed -e "s|Conative Gating|$project_name|g" \
         -e "s|{{PROJECT_SLUG}}|$project_slug|g" \
         -e "s|{{COLOR_SCHEME}}|$color_scheme|g" \
         -e "s|{{PRIMARY_COLOR}}|$primary_color|g" \
@@ -161,8 +161,8 @@ substitute_vars() {
         -e "s|{{BORDER_COLOR}}|#dfe6e9|g" \
         -e "s|{{DOMAIN}}|${domain:-$project_slug}|g" \
         -e "s|{{DESCRIPTION}}|$description|g" \
-        -e "s|{{AUTHOR}}|$AUTHOR|g" \
-        -e "s|{{AUTHOR_EMAIL}}|$AUTHOR_EMAIL|g" \
+        -e "s|Jonathan D.A. Jewell|$AUTHOR|g" \
+        -e "s|j.d.a.jewell@open.ac.uk|$AUTHOR_EMAIL|g" \
         -e "s|{{YEAR}}|$YEAR|g" \
         -e "s|{{RSR_TIER}}|1|g" \
         -e "s|{{VERSION}}|0.1.0|g" \

@@ -60,7 +60,7 @@ for repo in */; do
         if $DRY_RUN; then
             log "[DRY] Would add .editorconfig to $name"
         else
-            sed "s/{{PROJECT_NAME}}/$name/g" "$TEMPLATES_DIR/.editorconfig.template" > "$repo/.editorconfig"
+            sed "s/Conative Gating/$name/g" "$TEMPLATES_DIR/.editorconfig.template" > "$repo/.editorconfig"
             log "Added .editorconfig to $name"
         fi
         ((ec_added++)) || true
@@ -74,25 +74,25 @@ for repo in */; do
             mkdir -p "$repo/.well-known"
 
             # ai.txt
-            sed -e "s/{{PROJECT_NAME}}/$name/g" \
-                -e "s/{{DATE}}/$DATE/g" \
+            sed -e "s/Conative Gating/$name/g" \
+                -e "s/2026-08-05/$DATE/g" \
                 "$TEMPLATES_DIR/.well-known/ai.txt.template" > "$repo/.well-known/ai.txt" 2>/dev/null || true
 
             # security.txt
-            sed -e "s/{{PROJECT_NAME}}/$name/g" \
-                -e "s/{{DATE}}/$DATE/g" \
+            sed -e "s/Conative Gating/$name/g" \
+                -e "s/2026-08-05/$DATE/g" \
                 "$TEMPLATES_DIR/.well-known/security.txt.template" > "$repo/.well-known/security.txt" 2>/dev/null || true
 
             # humans.txt
-            sed -e "s/{{PROJECT_NAME}}/$name/g" \
+            sed -e "s/Conative Gating/$name/g" \
                 "$TEMPLATES_DIR/.well-known/humans.txt.template" > "$repo/.well-known/humans.txt" 2>/dev/null || true
 
             # consent-required.txt
             cp "$TEMPLATES_DIR/.well-known/consent-required.txt.template" "$repo/.well-known/consent-required.txt" 2>/dev/null || true
 
             # provenance.json
-            sed -e "s/{{PROJECT_NAME}}/$name/g" \
-                -e "s/{{DATE}}/$DATE/g" \
+            sed -e "s/Conative Gating/$name/g" \
+                -e "s/2026-08-05/$DATE/g" \
                 "$TEMPLATES_DIR/.well-known/provenance.json.template" > "$repo/.well-known/provenance.json" 2>/dev/null || true
 
             log "Added .well-known/ to $name"

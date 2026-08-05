@@ -22,7 +22,7 @@ substitute() {
   local template="$1"
   local output="$2"
 
-  sed -e "s/{{PROJECT_NAME}}/$PROJECT_NAME/g" \
+  sed -e "s/Conative Gating/$PROJECT_NAME/g" \
       -e "s/{{PROJECT_NAME_SNAKE}}/$(echo "$PROJECT_NAME" | tr '-' '_')/g" \
       -e "s/{{LANGUAGE}}/$LANGUAGE/g" \
       -e "s/{{TIER}}/$TIER/g" \
