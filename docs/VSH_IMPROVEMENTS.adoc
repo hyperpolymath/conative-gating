@@ -187,8 +187,8 @@ fi
 
 RSR defines language tiers for project standardization:
 
-* **Tier 1**: Rust, Elixir, Zig, Ada/SPARK, Haskell, ReScript
-* **Tier 2**: Nickel, Racket, Guile Scheme, Nix
+* **Tier 1**: Rust, Elixir, Zig, Ada/SPARK, Haskell, AffineScript
+* **Tier 2**: Nickel, Racket, Guile Scheme, Guix
 * **Prohibited**: TypeScript, JavaScript, Python (except salt/), Go, CUE
 
 Native tier awareness would help enforce standards and provide helpful tooling.
@@ -200,8 +200,8 @@ Native tier awareness would help enforce standards and provide helpful tooling.
 [source,bash]
 ----
 # ~/.config/vsh/rsr.conf or project .vshrc
-rsr_tier_1=(rust elixir zig ada haskell rescript)
-rsr_tier_2=(nickel racket guile nix)
+rsr_tier_1=(rust elixir zig ada haskell affinescript)
+rsr_tier_2=(nickel racket guile guix)
 rsr_prohibited=(typescript javascript python go cue)
 ----
 
@@ -247,17 +247,17 @@ rsr build
 # - mix.exs → mix compile
 # - build.zig → zig build
 # - *.gpr → gprbuild
-# - rescript.json → rescript
+# - affinescript.json → affinescript
 
 # Run tests by tier
 rsr test --tier 1
 ----
 
-== Proposal 4: Guix/Nix Package Management Primitives
+== Proposal 4: Guix/Guix Package Management Primitives
 
 === Rationale
 
-RSR uses Guix as primary package manager with Nix as fallback. Native primitives would:
+RSR uses Guix as primary package manager with Guix as fallback. Native primitives would:
 
 * Simplify reproducible builds
 * Enable declarative environment management
@@ -288,30 +288,30 @@ guix environment --pure --manifest=guix.scm
 guix challenge <package>
 ----
 
-==== Nix Primitives (Fallback)
+==== Guix Primitives (Fallback)
 
 [source,bash]
 ----
-# Enter Nix shell
-nix shell nixpkgs#rust nixpkgs#cargo
+# Enter Guix shell
+guix shell nixpkgs#rust nixpkgs#cargo
 
 # With flake
-nix develop
+guix develop
 
 # Build
-nix build
+guix build
 
 # Run
-nix run .#default
+guix run .#default
 ----
 
 ==== Unified Interface
 
 [source,bash]
 ----
-# Auto-detect Guix vs Nix
+# Auto-detect Guix vs Guix
 pkg shell rust cargo
-# Uses Guix if available, falls back to Nix
+# Uses Guix if available, falls back to Guix
 
 # Environment management
 pkg env create dev
@@ -681,7 +681,7 @@ just2vsh diff Justfile recipes.vsh
 |Medium
 
 |6
-|Guix/Nix Primitives
+|Guix/Guix Primitives
 |Package management
 |High
 

@@ -158,7 +158,7 @@ RSR projects are distributed across GitHub and GitLab. This guide documents the 
 |**Generic RSR template demo**
 
 |Stack
-|ReScript + Deno + CUE
+|AffineScript + Deno + CUE
 |Minimal RSR compliance files
 
 |Content

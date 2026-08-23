@@ -8,7 +8,7 @@ Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 
 ## Requirements
 
-- [ ] `flake.nix` - Nix development environment
+- [ ] `flake.guix` - Guix development environment
 - [ ] `justfile` - Task automation
 - [ ] `.gitlab-ci.yml` or `.github/workflows/` - CI/CD
 - [ ] Container support (Containerfile/Dockerfile)
@@ -16,7 +16,7 @@ Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 ## Compliance Indicators
 
 **Compliant:**
-- Project has `flake.nix` with development shell
+- Project has `flake.guix` with development shell
 - Build/test tasks documented in `justfile`
 - CI/CD pipeline exists and passes
 - Container builds successfully
@@ -30,7 +30,7 @@ Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 ## SLM Training Notes
 
 When evaluating proposals:
-- Flag creation of projects without `flake.nix`
+- Flag creation of projects without `flake.guix`
 - Flag manual build instructions instead of `justfile`
 - Check that CI/CD changes don't break existing pipeline
 - Verify container changes are tested

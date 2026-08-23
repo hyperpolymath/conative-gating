@@ -355,7 +355,7 @@ Aggregate ecosystem statistics:
   ((phase . archived) (count . 9)))
  (by-language
   ((language . rust) (count . 21))
-  ((language . rescript) (count . 26))
+  ((language . affinescript) (count . 26))
   ((language . guix) (count . 82))
   ((language . elixir) (count . 3))
   ((language . javascript) (count . 6))

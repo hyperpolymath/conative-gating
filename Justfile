@@ -235,7 +235,7 @@ init:
 
     # Check for remaining placeholders
     PATTERN="${LB}[A-Z_]*${RB}"
-    REMAINING=$(grep -rl "$PATTERN" . --include='*.md' --include='*.adoc' --include='*.yml' --include='*.yaml' --include='*.a2ml' --include='*.toml' --include='*.scm' --include='*.ncl' --include='*.nix' --include='*.json' --include='*.sh' 2>/dev/null | grep -v '.git/' | grep -v '.machine_readable/ai/PLACEHOLDERS.adoc' || true)
+    REMAINING=$(grep -rl "$PATTERN" . --include='*.md' --include='*.adoc' --include='*.yml' --include='*.yaml' --include='*.a2ml' --include='*.toml' --include='*.scm' --include='*.ncl' --include='*.guix' --include='*.json' --include='*.sh' 2>/dev/null | grep -v '.git/' | grep -v '.machine_readable/ai/PLACEHOLDERS.adoc' || true)
     if [ -n "$REMAINING" ]; then
         echo "WARNING: Remaining placeholders in:"
         echo "$REMAINING" | sed 's/^/  /'
@@ -377,7 +377,7 @@ self-assess:
     # Detect project characteristics
     HAS_RUST=false; [ -f "Cargo.toml" ] && HAS_RUST=true
     HAS_ELIXIR=false; [ -f "mix.exs" ] && HAS_ELIXIR=true
-    HAS_RESCRIPT=false; [ -f "rescript.json" ] || [ -f "bsconfig.json" ] && HAS_RESCRIPT=true
+    HAS_RESCRIPT=false; [ -f "affinescript.json" ] || [ -f "bsconfig.json" ] && HAS_RESCRIPT=true
     HAS_IDRIS=false; ls *.ipkg >/dev/null 2>&1 && HAS_IDRIS=true
     HAS_ZIG=false; [ -f "build.zig" ] || [ -d "ffi/zig" ] && HAS_ZIG=true
     HAS_GLEAM=false; [ -f "gleam.toml" ] && HAS_GLEAM=true
@@ -386,7 +386,7 @@ self-assess:
     HAS_API=false; grep -rq 'port\|listen\|endpoint' --include="*.exs" --include="*.rs" --include="*.toml" . 2>/dev/null && HAS_API=true
     IS_LIBRARY=false; [ -f "Cargo.toml" ] && grep -q '\[lib\]' Cargo.toml 2>/dev/null && IS_LIBRARY=true
 
-    echo "Detected: Rust=$HAS_RUST Elixir=$HAS_ELIXIR ReScript=$HAS_RESCRIPT"
+    echo "Detected: Rust=$HAS_RUST Elixir=$HAS_ELIXIR AffineScript=$HAS_RESCRIPT"
     echo "          Idris=$HAS_IDRIS Zig=$HAS_ZIG Gleam=$HAS_GLEAM"
     echo "          Container=$HAS_CONTAINER Tests=$HAS_TESTS API=$HAS_API"
     echo ""
@@ -464,16 +464,16 @@ self-assess:
     echo ""
 
     if ! $HAS_RESCRIPT && [ -d "examples" ] && ls examples/*.res >/dev/null 2>&1; then
-        echo "  ○ examples/*.res — Template ReScript examples. Not your code."
+        echo "  ○ examples/*.res — Template AffineScript examples. Not your code."
     fi
 
     if [ -f ".machine_readable/ai/PLACEHOLDERS.adoc" ]; then
         echo "  ○ .machine_readable/ai/PLACEHOLDERS.adoc — Template doc. Remove after init."
     fi
 
-    if [ -f "flake.nix" ] && ! command -v nix >/dev/null 2>&1; then
-        echo "  ○ flake.nix — Nix flake. Safe to remove if you don't use Nix."
-        echo "    → KEEP if others might build with Nix."
+    if [ -f "flake.guix" ] && ! command -v guix >/dev/null 2>&1; then
+        echo "  ○ flake.guix — Guix flake. Safe to remove if you don't use Guix."
+        echo "    → KEEP if others might build with Guix."
     fi
 
     if [ -f "guix.scm" ] && ! command -v guix >/dev/null 2>&1; then
@@ -592,7 +592,7 @@ build *args:
     #   cargo build {{args}}                    # Rust
     #   mix compile {{args}}                    # Elixir
     #   zig build {{args}}                      # Zig
-    #   deno task build {{args}}                # Deno/ReScript
+    #   deno task build {{args}}                # Deno/AffineScript
     @echo "Build complete"
 
 # Build in release mode with optimizations
@@ -1155,7 +1155,7 @@ state-phase:
     @grep -oP 'phase\s*=\s*"\K[^"]+' .machine_readable/STATE.a2ml 2>/dev/null | head -1 || echo "unknown"
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# GUIX & NIX
+# GUIX & GUIX
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Enter Guix development shell (primary)
@@ -1166,9 +1166,9 @@ guix-shell:
 guix-build:
     guix build -f guix.scm
 
-# Enter Nix development shell (fallback)
-nix-shell:
-    @if [ -f "flake.nix" ]; then nix develop; else echo "No flake.nix"; fi
+# Enter Guix development shell (fallback)
+guix-shell:
+    @if [ -f "flake.guix" ]; then guix develop; else echo "No flake.guix"; fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # HYBRID AUTOMATION

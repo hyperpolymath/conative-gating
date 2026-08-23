@@ -21,7 +21,7 @@ Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 ### Unit Tests
 
 #### Policy Oracle (src/oracle/src/lib.rs) - 25 tests
-- Language detection: TypeScript, Python, Go, Java, Rust, Elixir, Zig, Ada, Haskell, ReScript
+- Language detection: TypeScript, Python, Go, Java, Rust, Elixir, Zig, Ada, Haskell, AffineScript
 - Tier classification: Tier1 (allowed), Tier2 (concern), Forbidden
 - Exception handling: Python in salt/, training/
 - Pattern matching: Hardcoded secrets (password, API key)
@@ -47,7 +47,7 @@ Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 - Authorization levels (User, Maintainer, Admin, None)
 - Red-team category classification
 - Processing metadata recording
-- Multi-language compliance (Rust, Elixir, Zig, Ada, Haskell, ReScript)
+- Multi-language compliance (Rust, Elixir, Zig, Ada, Haskell, AffineScript)
 
 ### E2E Tests (tests/gating_pipeline_test.rs) - 19 tests
 - Complete gating workflows:
@@ -61,7 +61,7 @@ Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
   - Multiple files evaluated
   - Audit log correlation with decision
 - Language support verification:
-  - Elixir, Ada, Haskell, Zig, ReScript all pass
+  - Elixir, Ada, Haskell, Zig, AffineScript all pass
   - Go and Java blocked with appropriate refusals
 - Processing metadata completeness
 - Request context preservation through audit trail

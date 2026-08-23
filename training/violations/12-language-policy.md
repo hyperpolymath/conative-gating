@@ -8,7 +8,7 @@ Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 
 ## Requirements
 
-- [ ] Tier 1 languages preferred (Rust, Elixir, Zig, Ada, Haskell, ReScript)
+- [ ] Tier 1 languages preferred (Rust, Elixir, Zig, Ada, Haskell, AffineScript)
 - [ ] Tier 2 languages acceptable with justification
 - [ ] Forbidden languages blocked (TypeScript, Python except Salt, Go, Java)
 
@@ -20,7 +20,7 @@ Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 - Zig - Low-level, C interop
 - Ada - Safety-critical, embedded
 - Haskell - Formal methods, type theory
-- ReScript - Web frontend (not TypeScript!)
+- AffineScript - Web frontend (not TypeScript!)
 
 **Tier 2 - Acceptable:**
 - Nickel - Configuration
