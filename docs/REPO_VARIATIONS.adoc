@@ -19,11 +19,11 @@ Based on primary build system detection:
 
 |Rust (binary) |~10 |conflow, echidna, ipv6-only, dicti0nary-attack
 |Rust (library) |~11 |conative-gating, absolute-zero, modshells
-|ReScript |~18 |idaptiky, broad-spectrum, UbiCity, fogbinder
+|AffineScript |~18 |idaptiky, broad-spectrum, UbiCity, fogbinder
 |Elixir |~3 |bofig, tma-mark2, hybrid-automation-router
 |JavaScript/TS |~5 |7-tentacles, sinople-wharf, accessibility-everywhere
 |Python (to convert) |~2 |vext, jtv-playground (experiments)
-|Nix-only |~35 |STATE.scm, git-hud, wp-praxis
+|Guix-only |~35 |STATE.scm, git-hud, wp-praxis
 |===
 
 == Per-Repository Variations
@@ -49,7 +49,7 @@ Based on primary build system detection:
 - `tier-1` or `tier-2` - RSR language tier
 
 ==== Language Topics
-- `rust`, `rescript`, `elixir`, `zig`, `ada`, `haskell`, `racket`, `nickel`
+- `rust`, `affinescript`, `elixir`, `zig`, `ada`, `haskell`, `racket`, `nickel`
 
 ==== Domain Topics (Choose Applicable)
 - `security`, `automation`, `devtools`, `cli`
@@ -75,7 +75,7 @@ categories = ["..."]            # VARIES
 # VARIES per project
 ----
 
-==== ReScript Projects (rescript.json)
+==== AffineScript Projects (affinescript.json)
 [source,json]
 ----
 {
@@ -106,7 +106,7 @@ end
 |===
 |Recipe |Variations
 
-|`build` |`cargo build`, `rescript build`, `mix compile`
+|`build` |`cargo build`, `affinescript build`, `mix compile`
 |`test` |`cargo test`, `npm test`, `mix test`
 |`lint` |`cargo clippy`, `npm run lint`, `mix format --check-formatted`
 |`dev` |`cargo watch`, `npm run dev`, `mix phx.server`
@@ -122,7 +122,7 @@ strategy:
     os: [ubuntu-latest, macos-latest]
     rust: [stable, nightly]
 
-# ReScript projects
+# AffineScript projects
 strategy:
   matrix:
     node: [18, 20]
@@ -138,12 +138,12 @@ strategy:
 
 ==== Base Image Selection
 - `cgr.dev/chainguard/rust:latest` - Rust projects
-- `cgr.dev/chainguard/node:latest` - JS/TS/ReScript
+- `cgr.dev/chainguard/node:latest` - JS/TS/AffineScript
 - `cgr.dev/chainguard/elixir:latest` - Elixir projects
 
 ==== Multi-stage Build Targets
 - Rust: Build with `cargo build --release`, copy binary
-- ReScript: Build with `npm run build`, copy dist
+- AffineScript: Build with `npm run build`, copy dist
 - Elixir: Build with `mix release`, copy release
 
 === Documentation Variations
@@ -205,7 +205,7 @@ status = "compliant"            # VARIES: compliant/partial/exempt
 
 [compliance]
 rust = true                     # VARIES per language
-rescript = false
+affinescript = false
 elixir = false
 
 [exemptions]
@@ -218,12 +218,12 @@ legacy_js = false
 
 [cols="1,1,1,1,1,1"]
 |===
-|Aspect |Rust Binary |Rust Library |ReScript |Elixir |Nix-only
+|Aspect |Rust Binary |Rust Library |AffineScript |Elixir |Guix-only
 
-|Entry point |src/main.rs |src/lib.rs |src/Main.res |lib/app.ex |flake.nix
-|Build cmd |cargo build |cargo build |npm run build |mix compile |nix build
-|Test cmd |cargo test |cargo test |npm test |mix test |nix check
-|Package file |Cargo.toml |Cargo.toml |package.json |mix.exs |flake.nix
+|Entry point |src/main.rs |src/lib.rs |src/Main.res |lib/app.ex |flake.guix
+|Build cmd |cargo build |cargo build |npm run build |mix compile |guix build
+|Test cmd |cargo test |cargo test |npm test |mix test |guix check
+|Package file |Cargo.toml |Cargo.toml |package.json |mix.exs |flake.guix
 |Container base |chainguard/rust |chainguard/rust |chainguard/node |chainguard/elixir |chainguard/static
 |CI matrix |rust: stable/nightly |rust: stable |node: 18/20 |elixir: 1.15/1.16 |nixos-unstable
 |===
@@ -239,7 +239,7 @@ repo,language,tier,ci_status,compliance_status,topics,description
 conative-gating,rust,1,passing,compliant,"rust,security,ai",Policy enforcement oracle
 ipv6-only,rust,1,passing,compliant,"rust,networking,ipv6",IPv6 tools
 dicti0nary-attack,rust,1,passing,compliant,"rust,security",Password tools
-idaptiky,rescript,1,pending,partial,"rescript,web",Web app
+idaptiky,affinescript,1,pending,partial,"affinescript,web",Web app
 ...
 ----
 

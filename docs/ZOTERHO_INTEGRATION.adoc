@@ -15,7 +15,7 @@
 
 **Target Stack** (RSR-compliant):
 
-* **ReScript** — Type-safe language (Tier 1)
+* **AffineScript** — Type-safe language (Tier 1)
 * **Deno** — Runtime (no npm/Node.js)
 * **Guile Scheme** — Configuration (replaces CUE)
 * **Justfile** — Build automation
@@ -125,7 +125,7 @@ cue-to-guile:
 
 |**zotero-nsai**
 |Direct use - Zotero extension
-|Migrate from TypeScript to ReScript via zoterho-template
+|Migrate from TypeScript to AffineScript via zoterho-template
 
 |**fogbinder**
 |Companion to zotero-nsai
@@ -147,7 +147,7 @@ cue-to-guile:
 === zotero-nsai Migration Path
 
 **Current State**: TypeScript + Node.js + Vite
-**Target State**: ReScript + Deno + Guile (via zoterho-template)
+**Target State**: AffineScript + Deno + Guile (via zoterho-template)
 
 ==== Phase 1: Scaffolding
 
@@ -158,17 +158,17 @@ git clone https://gitlab.com/extensions-library/zotero/zoterho-template
 
 # Create zotero-nsai-v2 branch
 cd zotero-nsai
-git checkout -b v2-rescript
+git checkout -b v2-affinescript
 
 # Copy zoterho structure
-cp -r ../zoterho-template/src/rescript src/
+cp -r ../zoterho-template/src/affinescript src/
 cp -r ../zoterho-template/config config/
 cp ../zoterho-template/justfile .
 ----
 
 ==== Phase 2: Type Migration
 
-[source,rescript]
+[source,affinescript]
 ----
 // src/Types.res
 // Migrate from TypeScript atomic.ts
@@ -197,7 +197,7 @@ type atomicCitation = {
 
 ==== Phase 3: Logic Migration
 
-[source,rescript]
+[source,affinescript]
 ----
 // src/Validator.res
 // Migrate from TypeScript validator.ts
@@ -239,10 +239,10 @@ module TractarianValidator = {
 
 ==== Phase 4: Fogbinder Handoff
 
-[source,rescript]
+[source,affinescript]
 ----
 // src/FogbinderHandoff.res
-// ReScript version of handoff.ts
+// AffineScript version of handoff.ts
 
 type uncertaintyRegion = {
   citationId: string,
@@ -350,13 +350,13 @@ default: build
 
 # Build extension
 build: validate-config
-    npx rescript
+    npx affinescript
     just build-manifest
     deno task build
 
 # Development mode
 dev:
-    npx rescript -w &
+    npx affinescript -w &
     deno task dev
 
 # Clean build
@@ -384,7 +384,7 @@ test:
 
 # Lint
 lint:
-    npx rescript format -check src/**/*.res
+    npx affinescript format -check src/**/*.res
 
 # Validate configurations
 validate-config:
@@ -504,7 +504,7 @@ zoterho-template/
 │   └── migrate-cue.scm
 ├── STATE.scm
 ├── Justfile
-├── rescript.json
+├── affinescript.json
 ├── deno.json
 └── README.adoc
 ----
@@ -518,7 +518,7 @@ zoterho-template/
 [ ] Clone zoterho-template
 [ ] Update config/extension.scm with project details
 [ ] Create validation rules in config/validation.scm
-[ ] Implement ReScript logic in src/
+[ ] Implement AffineScript logic in src/
 [ ] Add .well-known/aibdp.json for citation consent
 [ ] Configure STATE.scm
 [ ] Run: just ci-verify
@@ -528,12 +528,12 @@ zoterho-template/
 
 [source]
 ----
-[ ] Create v2-rescript branch
+[ ] Create v2-affinescript branch
 [ ] Copy zoterho-template structure
-[ ] Migrate TypeScript types to ReScript
-[ ] Migrate validation logic to ReScript
+[ ] Migrate TypeScript types to AffineScript
+[ ] Migrate validation logic to AffineScript
 [ ] Replace CUE with Guile configs
-[ ] Update Fogbinder handoff to ReScript
+[ ] Update Fogbinder handoff to AffineScript
 [ ] Run: just test
 [ ] Deprecate TypeScript version
 ----

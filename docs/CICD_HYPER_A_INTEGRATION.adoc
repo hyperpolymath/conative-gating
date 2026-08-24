@@ -53,11 +53,11 @@ cicd-hyper-a supports: Python, Go, Node.js, Rust, Java
 RSR requires templates for:
 [source]
 ----
-Tier 1: Rust, Elixir, Zig, Ada/SPARK, Haskell, ReScript
-Tier 2: Nickel, Racket, Guile Scheme, Nix
+Tier 1: Rust, Elixir, Zig, Ada/SPARK, Haskell, AffineScript
+Tier 2: Nickel, Racket, Guile Scheme, Guix
 ----
 
-**Gap**: Need Ada, Elixir, Zig, Haskell, ReScript templates
+**Gap**: Need Ada, Elixir, Zig, Haskell, AffineScript templates
 
 ==== Recommended Imports
 
@@ -126,7 +126,7 @@ security-scan:
 |Zig language CI
 |Systems programming support
 
-|ReScript/Deno
+|AffineScript/Deno
 |Type-safe frontend CI
 |Web application builds
 
@@ -171,28 +171,28 @@ validate-consent:
 
 [source,yaml]
 ----
-# templates/rescript.yml
-# GitLab CI for ReScript projects
+# templates/affinescript.yml
+# GitLab CI for AffineScript projects
 
-.rescript-base:
+.affinescript-base:
   image: node:20-alpine
   before_script:
     - npm ci
 
-rescript-build:
-  extends: .rescript-base
+affinescript-build:
+  extends: .affinescript-base
   stage: build
   script:
-    - npx rescript
+    - npx affinescript
   artifacts:
     paths:
       - lib/
 
-rescript-test:
-  extends: .rescript-base
+affinescript-test:
+  extends: .affinescript-base
   stage: test
   script:
-    - npx rescript
+    - npx affinescript
     - npm test
 ----
 
@@ -306,7 +306,7 @@ validate-state:
 === Phase 2: Export
 
 1. Submit MAAF compliance templates to cicd-hyper-a
-2. Contribute RSR language templates (Ada, Elixir, ReScript, Zig)
+2. Contribute RSR language templates (Ada, Elixir, AffineScript, Zig)
 3. Add Guix channel CI template
 4. Contribute STATE.scm validation
 

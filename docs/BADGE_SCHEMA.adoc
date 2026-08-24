@@ -39,10 +39,10 @@ Comprehensive badge structure for the 139-repo ecosystem, capturing:
 ==== RSR Tier Badges
 [source,asciidoc]
 ----
-// Tier 1 (Gold) - Rust, Elixir, Zig, Ada, Haskell, ReScript
+// Tier 1 (Gold) - Rust, Elixir, Zig, Ada, Haskell, AffineScript
 image:https://img.shields.io/badge/RSR-Tier%201-gold[RSR Tier 1]
 
-// Tier 2 (Silver) - Nickel, Racket, Guile, Nix
+// Tier 2 (Silver) - Nickel, Racket, Guile, Guix
 image:https://img.shields.io/badge/RSR-Tier%202-silver[RSR Tier 2]
 
 // Infrastructure (Bronze) - Guix channels, derivations
@@ -81,7 +81,7 @@ image:https://img.shields.io/badge/Maturity-LTS-green[LTS]
 
 |**Secondary Languages**
 |Supporting languages
-|image:{badges-url}/Also-ReScript%20%7C%20Nickel-blue[]
+|image:{badges-url}/Also-AffineScript%20%7C%20Nickel-blue[]
 
 |**Build System**
 |Package/build tooling
@@ -93,7 +93,7 @@ image:https://img.shields.io/badge/Maturity-LTS-green[LTS]
 ----
 image:https://img.shields.io/badge/Rust-1.75+-orange?logo=rust[Rust]
 image:https://img.shields.io/badge/Elixir-1.16+-purple?logo=elixir[Elixir]
-image:https://img.shields.io/badge/ReScript-11+-pink?logo=rescript[ReScript]
+image:https://img.shields.io/badge/AffineScript-11+-pink?logo=affinescript[AffineScript]
 image:https://img.shields.io/badge/Zig-0.13-yellow?logo=zig[Zig]
 image:https://img.shields.io/badge/Ada-2022-blue[Ada]
 image:https://img.shields.io/badge/Haskell-GHC%209-purple?logo=haskell[Haskell]
@@ -105,14 +105,14 @@ image:https://img.shields.io/badge/Haskell-GHC%209-purple?logo=haskell[Haskell]
 image:https://img.shields.io/badge/Nickel-1.5+-teal[Nickel]
 image:https://img.shields.io/badge/Guile-3.0+-green[Guile Scheme]
 image:https://img.shields.io/badge/Racket-8.12+-red?logo=racket[Racket]
-image:https://img.shields.io/badge/Nix-Flakes-5277C3?logo=nixos[Nix]
+image:https://img.shields.io/badge/Guix-Flakes-5277C3?logo=nixos[Guix]
 ----
 
 ==== Build System Badges
 [source,asciidoc]
 ----
 image:https://img.shields.io/badge/Guix-Primary-purple?logo=gnu[Guix Primary]
-image:https://img.shields.io/badge/Nix-Fallback-5277C3?logo=nixos[Nix Fallback]
+image:https://img.shields.io/badge/Guix-Fallback-5277C3?logo=nixos[Guix Fallback]
 image:https://img.shields.io/badge/Cargo-Workspace-orange?logo=rust[Cargo]
 image:https://img.shields.io/badge/Mix-Project-purple?logo=elixir[Mix]
 ----
@@ -381,7 +381,7 @@ image:https://img.shields.io/badge/Layer-Service-green[Layer]
 
 // Infrastructure Row
 image:https://img.shields.io/badge/Guix-Primary-purple?logo=gnu[Guix]
-image:https://img.shields.io/badge/Nix-Fallback-5277C3?logo=nixos[Nix]
+image:https://img.shields.io/badge/Guix-Fallback-5277C3?logo=nixos[Guix]
 image:https://img.shields.io/badge/Container-nerdctl%20%2B%20Wolfi-blue[Container]
 
 // CI/CD Row
@@ -521,7 +521,7 @@ The badge schema should be machine-readable from ECOSYSTEM.scm:
    (layer . service))
   ((category . infrastructure)
    (build-primary . guix)
-   (build-fallback . nix)
+   (build-fallback . guix)
    (container . (nerdctl wolfi))
    (ci . (github-actions gitlab-ci)))
   ((category . compliance)

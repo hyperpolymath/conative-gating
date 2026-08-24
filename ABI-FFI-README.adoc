@@ -1,21 +1,20 @@
-<!--
-SPDX-License-Identifier: CC-BY-SA-4.0
-Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
--->
-# Conative Gating ABI/FFI Documentation
+== Conative Gating ABI/FFI Documentation
 
-## Overview
+=== Overview
 
-This library follows the **Hyperpolymath RSR Standard** for ABI and FFI design:
+This library follows the *Hyperpolymath RSR Standard* for ABI and FFI
+design:
 
-- **ABI (Application Binary Interface)** defined in **Idris2** with formal proofs
-- **FFI (Foreign Function Interface)** implemented in **Zig** for C compatibility
-- **Generated C headers** bridge Idris2 ABI to Zig FFI
-- **Any language** can call through standard C ABI
+* *ABI (Application Binary Interface)* defined in *Idris2* with formal
+proofs
+* *FFI (Foreign Function Interface)* implemented in *Zig* for C
+compatibility
+* *Generated C headers* bridge Idris2 ABI to Zig FFI
+* *Any language* can call through standard C ABI
 
-## Architecture
+=== Architecture
 
-```
+....
 ┌─────────────────────────────────────────────┐
 │  ABI Definitions (Idris2)                   │
 │  Src/Abi/                                   │
@@ -24,11 +23,11 @@ This library follows the **Hyperpolymath RSR Standard** for ABI and FFI design:
 │  - Proofs.idr     (Formal verification)     │
 │  - Foreign.idr    (FFI declarations)        │
 └─────────────────┬───────────────────────────┘
-```
+....
 
-## Directory Structure
+=== Directory Structure
 
-```
+....
 conative-gating/
 ├── Src/
 │   ├── Abi/                    # ABI definitions (Idris2)
@@ -37,18 +36,21 @@ conative-gating/
 │   │   ├── Proofs.idr          # Formal security proofs
 │   │   └── Foreign.idr         # FFI function declarations
 │   └── lib/                    # Core library (any language)
-```
+....
 
-## Formally Verified Invariants
+=== Formally Verified Invariants
 
-- **Policy completeness**: NO-GO gate blocks ALL policy-violating outputs.
-- **Gate monotonicity**: Once a NO-GO decision is made, it cannot be overridden.
-- **Deterministic rule evaluation**: Identical inputs produce identical results.
-- **False positive boundedness**: The gate does not block clean proposals.
+* *Policy completeness*: NO-GO gate blocks ALL policy-violating outputs.
+* *Gate monotonicity*: Once a NO-GO decision is made, it cannot be
+overridden.
+* *Deterministic rule evaluation*: Identical inputs produce identical
+results.
+* *False positive boundedness*: The gate does not block clean proposals.
 
-## Building
+=== Building
 
-```bash
+[source,bash]
+----
 # Verify ABI and proofs
 idris2 --check Src/Abi/Proofs.idr
-```
+----

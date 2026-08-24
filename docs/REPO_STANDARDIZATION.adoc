@@ -22,7 +22,7 @@ toc::[]
 |.editorconfig |27 |112 |100%
 |.well-known/ files |0 |139 |100%
 |Containerfile |26 |113 |100%
-|flake.nix |60 |79 |100%
+|flake.guix |60 |79 |100%
 |STATE.scm |99 |40 |100%
 |RSR_COMPLIANCE.adoc |2 |137 |100%
 |===
@@ -33,7 +33,7 @@ toc::[]
 
 .editorconfig:: Standard formatting rules
 * Encoding: UTF-8
-* Indent: 2 spaces (YAML, JSON, Nix), 4 spaces (Rust, Python)
+* Indent: 2 spaces (YAML, JSON, Guix), 4 spaces (Rust, Python)
 * Trim trailing whitespace
 * Final newline
 
@@ -117,7 +117,7 @@ Containerfile:: Container build
 * Multi-stage build pattern
 * nerdctl compatible
 
-flake.nix:: Nix flake
+flake.guix:: Guix flake
 * Development shell
 * Build outputs
 * Language-specific devShell
@@ -164,7 +164,7 @@ CLAUDE.adoc:: Project-specific instructions
 
 ==== Standard Topics (include as applicable)
 - `rhodium-standard` (all RSR-compliant repos)
-- Language tags: `rust`, `rescript`, `elixir`, `zig`, `ada`, `haskell`
+- Language tags: `rust`, `affinescript`, `elixir`, `zig`, `ada`, `haskell`
 - Domain tags: `security`, `automation`, `devtools`, `web`
 
 === Language/Project Specific
@@ -174,7 +174,7 @@ Cargo.toml:: Rust projects
 * Dependencies
 * Features
 
-package.json:: Node/ReScript projects
+package.json:: Node/AffineScript projects
 * Dependencies
 * Scripts
 
@@ -206,7 +206,7 @@ STATE.scm:: Guile state file
 === Phase 2: Build Infrastructure
 1. `justfile` - Add to 63 repos
 2. `Containerfile` - Add to 113 repos
-3. `flake.nix` - Add to 79 repos
+3. `flake.guix` - Add to 79 repos
 
 === Phase 3: Documentation
 1. `RSR_COMPLIANCE.adoc` - Add to 137 repos
@@ -278,7 +278,7 @@ gh repo edit owner/repo --enable-issues --enable-wiki=false
 
 |Rust Library |~21 |Cargo.toml, src/lib.rs
 |Rust Binary |~15 |Cargo.toml, src/main.rs
-|ReScript |~12 |rescript.json, src/*.res
+|AffineScript |~12 |affinescript.json, src/*.res
 |Elixir |~3 |mix.exs, lib/
 |TypeScript (convert) |~19 |package.json, src/*.ts
 |Python (convert) |~5 |pyproject.toml, src/*.py

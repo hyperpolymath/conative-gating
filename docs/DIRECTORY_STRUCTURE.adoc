@@ -177,7 +177,7 @@ src/
 └── modules/               # Feature modules
 ----
 
-==== ReScript
+==== AffineScript
 [source]
 ----
 src/
@@ -249,10 +249,10 @@ tests/
 └── examples/              # Usage examples
 ----
 
-=== ReScript Projects
+=== AffineScript Projects
 [source]
 ----
-+── rescript.json          # ReScript config
++── affinescript.json          # AffineScript config
 +── package.json           # npm dependencies
 +── bsconfig.json          # Legacy (if needed)
 └── __tests__/             # Jest tests
@@ -271,13 +271,13 @@ tests/
 └── priv/                  # Private assets
 ----
 
-=== Guix/Nix Infrastructure
+=== Guix/Guix Infrastructure
 [source]
 ----
 +── guix.scm               # Guix package
 +── .guix-channel          # Channel definition
-+── flake.nix              # Nix flake (fallback)
-+── flake.lock             # Nix lockfile
++── flake.guix              # Guix flake (fallback)
++── flake.lock             # Guix lockfile
 └── modules/               # Scheme modules
 ----
 
@@ -302,7 +302,7 @@ The following should NOT appear at project root:
 |Python only in `salt/` subdirectory
 
 |`tsconfig.json`
-|TypeScript deprecated (use ReScript)
+|TypeScript deprecated (use AffineScript)
 
 |`.cue` files
 |CUE not permitted (use Guile/Nickel)
@@ -387,4 +387,4 @@ This verifies:
 * No prohibited files at root
 * Correct directory structure
 * .well-known contents complete
-* Guix/Nix configuration exists
+* Guix/Guix configuration exists
