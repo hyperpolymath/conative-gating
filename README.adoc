@@ -41,7 +41,7 @@ toc::[]
 
 == The Problem
 
-LLMs are trained to be helpful, which makes them systematically violate explicit project constraints. When given rules like "NEVER use TypeScript, use ReScript", LLMs:
+LLMs are trained to be helpful, which makes them systematically violate explicit project constraints. When given rules like "NEVER use TypeScript, use AffineScript", LLMs:
 
 1. Read and acknowledge the constraint
 2. Generate compliant-sounding justification
@@ -180,7 +180,7 @@ The default policy implements the Rhodium Standard Repository (RSR) language hie
 
 === Tier 1 - Preferred
 
-* Rust, Elixir, Zig, Ada, Haskell, ReScript
+* Rust, Elixir, Zig, Ada, Haskell, AffineScript
 
 === Tier 2 - Acceptable (generates warnings)
 

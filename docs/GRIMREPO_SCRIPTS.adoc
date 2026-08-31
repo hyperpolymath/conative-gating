@@ -8,7 +8,7 @@
 
 Recommended scripts for https://gitlab.com/extensions-library/monkey-scripts/grimrepo-scripts[grimrepo-scripts] following RSR principles:
 
-* **ReScript first** - Type-safe, compiles to clean JS
+* **AffineScript first** - Type-safe, compiles to clean JS
 * **WASM where ideal** - Performance-critical operations
 * **Deno if needed** - Server-side or build tooling
 * **Modular architecture** - Common core with pluggable extensions
@@ -19,7 +19,7 @@ Recommended scripts for https://gitlab.com/extensions-library/monkey-scripts/gri
 
 All scripts share a common core that handles:
 
-[source,rescript]
+[source,affinescript]
 ----
 // grim-core.res - Shared infrastructure
 
@@ -108,7 +108,7 @@ module UI = {
 
 Each script extends the core:
 
-[source,rescript]
+[source,affinescript]
 ----
 // Example extension pattern
 module MyScript = {
@@ -150,7 +150,7 @@ module MyScript = {
 |Target Sites |*
 |===
 
-[source,rescript]
+[source,affinescript]
 ----
 // grim-aibdp-checker.res
 module AibdpChecker = {
@@ -232,7 +232,7 @@ Features:
 |Target Sites |Academic sites, blogs
 |===
 
-[source,rescript]
+[source,affinescript]
 ----
 // grim-citation-extractor.res
 module CitationExtractor = {
@@ -346,7 +346,7 @@ Features:
 |Target Sites |*
 |===
 
-[source,rescript]
+[source,affinescript]
 ----
 // grim-a11y-overlay.res
 module A11yOverlay = {
@@ -445,7 +445,7 @@ Uses WASM for fast DOM parsing and text extraction.
 |Target Sites |*
 |===
 
-[source,rescript]
+[source,affinescript]
 ----
 // grim-dark-mode.res
 module DarkMode = {
@@ -536,9 +536,9 @@ module DarkMode = {
 |Target Sites |GitLab, GitHub
 |===
 
-==== 19. `grim-rescript-highlighter.res`
+==== 19. `grim-affinescript-highlighter.res`
 
-**Purpose**: Enhanced ReScript syntax highlighting
+**Purpose**: Enhanced AffineScript syntax highlighting
 
 [cols="1,3"]
 |===
@@ -594,7 +594,7 @@ grimrepo-scripts/
 │   ├── grim-aibdp-checker.user.js
 │   ├── grim-citation-extractor.user.js
 │   └── ...
-├── rescript.json
+├── affinescript.json
 ├── deno.json
 ├── Justfile
 └── STATE.scm
@@ -613,7 +613,7 @@ build: build-core build-scripts
 
 # Build core module
 build-core:
-    npx rescript
+    npx affinescript
     esbuild lib/es6/src/core/*.js --bundle --outfile=dist/grim-core.js
 
 # Build individual scripts
@@ -638,18 +638,18 @@ build-wasm:
 
 # Development watch
 dev:
-    npx rescript -w &
+    npx affinescript -w &
     deno task dev
 
 # Validate
-check: check-rescript check-types
+check: check-affinescript check-types
     @echo "✓ All checks passed"
 
-check-rescript:
-    npx rescript format -check src/**/*.res
+check-affinescript:
+    npx affinescript format -check src/**/*.res
 
 check-types:
-    npx rescript typecheck
+    npx affinescript typecheck
 ----
 
 == WASM Integration
@@ -675,9 +675,9 @@ pub fn calculate_contrast(fg: &str, bg: &str) -> f64 {
 }
 ----
 
-Load in ReScript:
+Load in AffineScript:
 
-[source,rescript]
+[source,affinescript]
 ----
 // WasmReadability.res
 @module("./wasm/readability.js")
@@ -712,7 +712,7 @@ external calculateContrast: (string, string) => float = "calculate_contrast"
 
 11. `grim-state-viewer.res`
 12. `grim-nickel-preview.res`
-13. `grim-rescript-highlighter.res`
+13. `grim-affinescript-highlighter.res`
 
 === Phase 5 (WASM Enhanced)
 

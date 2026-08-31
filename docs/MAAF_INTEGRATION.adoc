@@ -24,10 +24,10 @@ The **Mutually Assured Accountability Framework (MAAF)** provides consent-first 
 **Supporting Libraries**:
 
 * **bunsenite** — Nickel configuration loader with cross-language FFI
-* **zoterho-template** — Zotero 7+ extension template (ReScript, Deno, Guile)
+* **zoterho-template** — Zotero 7+ extension template (AffineScript, Deno, Guile)
 * **nickel-config-reporter** — Config→Nickel+AsciiDoc documentation generator
 * **sinople-theme** — Accessible WordPress theme for RSR project sites
-* **grimrepo-scripts** — ReScript-first userscripts for browser automation
+* **grimrepo-scripts** — AffineScript-first userscripts for browser automation
 
 == Core Components
 
@@ -162,7 +162,7 @@ just test
 **4-Language Architecture**:
 * **Rust**: Core engine and prover abstraction
 * **Julia**: ML/neural proof synthesis (no Python)
-* **ReScript**: UI with Deno runtime
+* **AffineScript**: UI with Deno runtime
 * **Mercury/Logtalk**: Logic reservoir (optional)
 
 **MAAF Integration Points**:
@@ -175,7 +175,7 @@ Knowledge graph     → OpenCyc + indieweb2-bastion
 ----
 
 **RSR Integration**:
-[source,rescript]
+[source,affinescript]
 ----
 // src/ProofProvenance.res
 module Echidna = {
@@ -247,7 +247,7 @@ vext               → Deployment notifications
 ----
 
 **MAAF Compliance**:
-[source,rescript]
+[source,affinescript]
 ----
 // src/WharfConsent.res
 module Consent = {
@@ -281,7 +281,7 @@ NOTE: The `wordpress-wharf` (gitlab) and `wharf` (github) repositories need reco
 **Architecture**:
 [source]
 ----
-Rust (nickel-lang-core) → Zig (C ABI) → Bindings (Deno, ReScript, C)
+Rust (nickel-lang-core) → Zig (C ABI) → Bindings (Deno, AffineScript, C)
 ----
 
 **RSR Integration Points**:
@@ -290,8 +290,8 @@ Rust (nickel-lang-core) → Zig (C ABI) → Bindings (Deno, ReScript, C)
 * **indieweb2-bastion**: Load Nickel configuration
 * **cadre-router**: Parse routing policies
 
-**Usage** (ReScript):
-[source,rescript]
+**Usage** (AffineScript):
+[source,affinescript]
 ----
 module Bunsenite = {
   @module("bunsenite") external loadNickel: string => Js.Json.t = "load"
@@ -386,7 +386,7 @@ CI/CD pipelines     → vsh-based automation
 . **Nickel Integration**: Native Nickel config parsing via bunsenite FFI
 . **AIBDP Support**: Built-in commands for .well-known/ management (kith-like)
 . **RSR Language Awareness**: Tier-aware tooling commands
-. **Guix/Nix Integration**: Native package management primitives
+. **Guix/Guix Integration**: Native package management primitives
 . **IRC Notifications**: Built-in irker/vext protocol support
 . **Git Workflow**: Native git hooks without Python
 . **Justfile Compatibility**: Parse/execute Justfile recipes
@@ -634,7 +634,7 @@ check-consent:
 
 For projects requiring identity/DNS:
 
-[source,rescript]
+[source,affinescript]
 ----
 // src/Identity.res
 module IndieWeb2 = {
