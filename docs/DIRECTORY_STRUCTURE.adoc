@@ -26,7 +26,7 @@ project-name/
 ├── docs/                  # Documentation (required)
 ├── guix.scm               # Guix package definition (required)
 ├── Justfile               # Task runner (required)
-├── LICENSE.txt            # AGPL + Palimpsest dual license (required)
+├── LICENSE.txt            # MPL-2.0 license (required)
 ├── README.adoc            # Project overview (required)
 ├── RSR_COMPLIANCE.adoc    # Compliance tracking (required)
 ├── src/                   # Source code (required)
@@ -86,16 +86,13 @@ Thumbs.db
 ----
 
 === LICENSE.txt
-Dual license header:
+License header:
 [source]
 ----
-SPDX-License-Identifier: CC-BY-SA-4.0
+SPDX-License-Identifier: MPL-2.0
 
-This software is dual-licensed under:
-1. GNU Affero General Public License v3.0 or later
-2. MPL-2.0 v0.5
-
-See LICENSE-AGPL3.txt and LICENSE-PALIMPSEST.txt for full terms.
+This software is licensed under the Mozilla Public License 2.0 (MPL-2.0).
+See LICENSE for full terms.
 ----
 
 === README.adoc
@@ -127,7 +124,7 @@ See link:docs/[docs/] for full documentation.
 
 == License
 
-MPL-2.0 OR Palimpsest-0.5
+MPL-2.0
 ----
 
 == Required Directories

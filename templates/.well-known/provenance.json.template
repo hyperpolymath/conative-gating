@@ -22,7 +22,7 @@
   ],
   "license": {
     "spdx": "AGPL-3.0-or-later",
-    "philosophy": "Palimpsest-0.4",
+    "philosophy": "MPL-2.0",
     "file": "LICENSE.txt"
   },
   "consent": {

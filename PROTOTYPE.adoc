@@ -74,8 +74,9 @@ repo deliberately defers to them rather than re-deriving ethics locally:
   "don't grant blanket permission" instinct applied to supply chains.
 
 | https://github.com/hyperpolymath/palimpsest-license[*Palimpsest License*]
-| The ethical-use licence family this repo ships under; its Exhibit A sets
-  out shared ethical-use expectations for the code.
+| Sibling project exploring ethical-use licensing philosophy. This repo
+  itself ships under plain MPL-2.0 (code) / CC-BY-SA-4.0 (docs); see
+  `LICENSE` and `NOTICE`.
 |===
 
 If you only read one of the above for the ethics rationale, read

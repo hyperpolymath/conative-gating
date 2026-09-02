@@ -1,7 +1,7 @@
 = {{PROJECT_NAME}} - Citation Guide
 :toc:
 :sectnums:
-// SPDX-License-Identifier: MPL-2.0 OR LicenseRef-Palimpsest-0.5
+// SPDX-License-Identifier: MPL-2.0
 
 == Quick Copy Citations
 
@@ -127,7 +127,7 @@ For project websites, include these Open Graph and Twitter Card tags:
 <meta name="DC.creator" content="Jonathan D.A. Jewell">
 <meta name="DC.date" content="{{YEAR}}">
 <meta name="DC.type" content="Software">
-<meta name="DC.rights" content="MPL-2.0 OR LicenseRef-Palimpsest-0.5">
+<meta name="DC.rights" content="MPL-2.0">
 <meta name="DC.identifier" content="https://github.com/hyperpolymath/{{PROJECT_NAME}}">
 
 <!-- Schema.org JSON-LD -->
@@ -185,7 +185,7 @@ The GitHub repository includes proper `<meta>` tags for Zotero's web connector t
 
 == License for Citations
 
-All citation formats in this document are provided under CC0 (public domain) for ease of use. The software itself remains under MPL-2.0 OR LicenseRef-Palimpsest-0.5.
+All citation formats in this document are provided under CC0 (public domain) for ease of use. The software itself remains under MPL-2.0.
 
 == See Also
 

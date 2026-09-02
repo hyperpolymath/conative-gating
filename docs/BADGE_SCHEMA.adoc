@@ -231,7 +231,7 @@ image:https://img.shields.io/badge/Layer-CLI-orange[CLI]
 
 |**License**
 |Dual license
-|image:{badges-url}/License-AGPL%20%2B%20Palimpsest-blue[]
+|image:{badges-url}/License-AGPL%20%2B%20MPL--2.0-blue[]
 |===
 
 ==== Container Badges
@@ -255,8 +255,8 @@ image:https://img.shields.io/badge/Security-Trivy%20%2B%20GitLeaks-green[Securit
 [source,asciidoc]
 ----
 image:https://img.shields.io/badge/License-AGPL%203.0-blue[AGPL 3.0]
-image:https://img.shields.io/badge/License-Palimpsest%200.5-green[Palimpsest 0.5]
-image:https://img.shields.io/badge/License-AGPL%20OR%20Palimpsest-blue[Dual License]
+image:https://img.shields.io/badge/License-MPL--2.0-green[MPL-2.0]
+image:https://img.shields.io/badge/License-AGPL%20OR%20MPL--2.0-blue[Dual License]
 ----
 
 === 6. Security & Governance
@@ -315,7 +315,7 @@ image:https://img.shields.io/badge/Phase-Implementation-blue[Phase]
 image:https://img.shields.io/badge/Maturity-Beta-blue[Maturity]
 
 // License
-image:https://img.shields.io/badge/License-AGPL%20OR%20Palimpsest-blue[License]
+image:https://img.shields.io/badge/License-AGPL%20OR%20MPL--2.0-blue[License]
 
 // Build
 image:https://img.shields.io/badge/Guix-Primary-purple?logo=gnu[Guix]
@@ -348,7 +348,7 @@ image:https://img.shields.io/badge/Container-nerdctl-blue[Container]
 image:https://img.shields.io/badge/CI-GitHub%20%2B%20GitLab-green[CI]
 
 // Compliance
-image:https://img.shields.io/badge/License-AGPL%20OR%20Palimpsest-blue[License]
+image:https://img.shields.io/badge/License-AGPL%20OR%20MPL--2.0-blue[License]
 image:https://img.shields.io/badge/Security-RFC%209116-green[Security]
 image:https://img.shields.io/badge/Privacy-GDPR%20Ready-brightgreen[Privacy]
 ----
@@ -390,7 +390,7 @@ image:https://img.shields.io/badge/CI-GitLab%20CI-FC6D26?logo=gitlab[GitLab]
 image:https://img.shields.io/badge/Security-Trivy%20%2B%20GitLeaks-green[Scanning]
 
 // Compliance Row
-image:https://img.shields.io/badge/License-AGPL%20OR%20Palimpsest-blue[License]
+image:https://img.shields.io/badge/License-AGPL%20OR%20MPL--2.0-blue[License]
 image:https://img.shields.io/badge/Security-RFC%209116-green[Security.txt]
 image:https://img.shields.io/badge/Privacy-GDPR%20Ready-brightgreen[GDPR]
 image:https://img.shields.io/badge/SBOM-Available-blue[SBOM]
@@ -525,7 +525,7 @@ The badge schema should be machine-readable from ECOSYSTEM.scm:
    (container . (nerdctl wolfi))
    (ci . (github-actions gitlab-ci)))
   ((category . compliance)
-   (license . (agpl-3 palimpsest-0.5))
+   (license . (agpl-3 mpl-2.0))
    (security . rfc-9116)
    (privacy . gdpr-ready))))
 ----

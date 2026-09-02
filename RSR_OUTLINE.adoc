@@ -2,7 +2,7 @@
 // Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 = RSR Template Repository
 
-image:[MPL-2.0-1.0,link="https://github.com/hyperpolymath/palimpsest-license"] image:[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-license"]
+image:https://img.shields.io/badge/License-MPL--2.0-blue.svg[License: MPL-2.0,link="https://opensource.org/licenses/MPL-2.0"]
 :toc:
 :sectnums:
 
@@ -71,7 +71,7 @@ just validate-rsr
 |Task runner with 50+ recipes
 
 |`LICENSE.txt`
-|AGPL + Palimpsest dual license
+|MPL-2.0 license
 
 |`README.adoc`
 |This file
@@ -159,7 +159,7 @@ project/
 * `justfile`
 * `README.adoc`
 * `RSR_COMPLIANCE.adoc`
-* `LICENSE.txt` (AGPL + Palimpsest)
+* `LICENSE.txt` (MPL-2.0)
 * `.well-known/security.txt`
 * `.well-known/ai.txt`
 * `.well-known/humans.txt`

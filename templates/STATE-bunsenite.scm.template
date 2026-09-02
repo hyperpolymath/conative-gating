@@ -95,7 +95,7 @@
        (features . ("Stable API" "Full documentation" "Production ready")))))
 
     (licensing
-     (spdx . "MIT OR LicenseRef-Palimpsest-0.6")
+     (spdx . "MIT OR MPL-2.0")
      (rsr-compatible . #t))
 
     (notes

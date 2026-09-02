@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # RSR Git Hook Installer
-# SPDX-License-Identifier: MPL-2.0 OR LicenseRef-Palimpsest-0.5
+# SPDX-License-Identifier: MPL-2.0
 #
 # Installs RSR standard git hooks from templates.
 # Usage: ./install-hooks.sh [--all | hook-name ...]
