@@ -1,5 +1,5 @@
 ;;; STATE.scm - Project State Checkpoint for zoterho-template
-;;; SPDX-License-Identifier: MPL-2.0 OR LicenseRef-Palimpsest-0.5
+;;; SPDX-License-Identifier: MPL-2.0
 ;;; Generated: {{GENERATED_DATE}}
 
 (define-module (zoterho-template state)
@@ -11,7 +11,7 @@
      (slug . "zoterho-template")
      (version . "{{VERSION}}")
      (author . "Jonathan D.A. Jewell")
-     (license . "MIT OR LicenseRef-Palimpsest-0.8")
+     (license . "MIT OR MPL-2.0")
      (created . "2024"))
 
     (rsr

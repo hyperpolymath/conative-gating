@@ -300,7 +300,7 @@ module Bunsenite = {
 let loadConsentPolicy = path => Bunsenite.loadNickel(path)
 ----
 
-**Licensing**: MIT OR Palimpsest v0.6 (RSR compatible)
+**Licensing**: MIT OR MPL-2.0 (RSR compatible)
 
 === 8. vext
 

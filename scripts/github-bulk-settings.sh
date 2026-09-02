@@ -9,7 +9,7 @@ SCRIPT_DIR="$(dirname "$0")"
 OWNER="hyperpolymath"
 
 # Common topics for all RSR projects
-BASE_TOPICS="rhodium-standard,rsr,agpl-3-0,palimpsest-license"
+BASE_TOPICS="rhodium-standard,rsr,agpl-3-0,mpl-2-0"
 
 echo "=== Bulk GitHub Settings Configuration ==="
 echo "Repos directory: $REPOS_DIR"

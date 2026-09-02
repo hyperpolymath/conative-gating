@@ -11,7 +11,7 @@
     version | String | default = "0.1.0",
     author | String | default = "Jonathan D.A. Jewell",
     email | String | default = "j.d.a.jewell@open.ac.uk",
-    license | String | default = "MPL-2.0 OR LicenseRef-Palimpsest-0.5",
+    license | String | default = "MPL-2.0",
     domain | String,
     tags | Array String | default = ["RSR", "Rhodium Standard"],
     created | String,

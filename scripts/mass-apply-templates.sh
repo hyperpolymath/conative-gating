@@ -1,6 +1,6 @@
 #!/bin/bash
 # Mass Apply RSR Templates to All Repositories
-# SPDX-License-Identifier: MPL-2.0 OR LicenseRef-Palimpsest-0.5
+# SPDX-License-Identifier: MPL-2.0
 #
 # Usage:
 #   ./mass-apply-templates.sh [--dry-run] [--repos-dir /path/to/repos]
@@ -245,7 +245,7 @@ apply_state_scm() {
     if ! $DRY_RUN; then
         cat > "$repo_dir/STATE.scm" << EOF
 ;;; STATE.scm - Project State Checkpoint for $project_name
-;;; SPDX-License-Identifier: MPL-2.0 OR LicenseRef-Palimpsest-0.5
+;;; SPDX-License-Identifier: MPL-2.0
 ;;; Generated: $(date -Iseconds)
 
 (define-module ($project_slug state)
@@ -257,7 +257,7 @@ apply_state_scm() {
      (slug . "$project_slug")
      (version . "0.1.0")
      (author . "$AUTHOR")
-     (license . "MPL-2.0 OR LicenseRef-Palimpsest-0.5")
+     (license . "MPL-2.0")
      (created . "$YEAR"))
 
     (rsr

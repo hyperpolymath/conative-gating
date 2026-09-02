@@ -173,7 +173,7 @@ This document describes the Rhodium Standard Repository (RSR) compliance status 
 |.editorconfig present |$ec_check |
 |.well-known/ directory |$wk_check |
 |justfile present |$jf_check |
-|LICENSE.txt (AGPL + Palimpsest) |$lic_check |
+|LICENSE.txt (MPL-2.0) |$lic_check |
 |Containerfile present |$cont_check |
 |flake.nix present |$flake_check |
 |===

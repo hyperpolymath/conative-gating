@@ -54,7 +54,7 @@ Current trust level: maximal
 
 #### license-content
 - description: LICENSE contains expected identifier
-- run: grep -q 'PMPL\|MPL\|MIT\|Apache\|LGPL' LICENSE
+- run: "grep -qiE 'Mozilla Public License|MIT License|Apache License|General Public License|Creative Commons' LICENSE && ! grep -qi palimpsest LICENSE"
 - severity: warning
 
 ## Template-Specific Trust

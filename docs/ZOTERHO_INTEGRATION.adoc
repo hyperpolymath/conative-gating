@@ -463,7 +463,7 @@ bump-version level="patch":
 
 |License
 |MIT
-|MIT + Palimpsest v0.8
+|MIT + MPL-2.0
 
 |Config Language
 |CUE

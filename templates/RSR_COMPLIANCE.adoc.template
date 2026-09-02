@@ -50,7 +50,7 @@ This document describes the Rhodium Standard Repository (RSR) compliance status 
 |.editorconfig present |{{EDITORCONFIG_CHECK}} |
 |.well-known/ directory |{{WELLKNOWN_CHECK}} |
 |justfile present |{{JUSTFILE_CHECK}} |
-|LICENSE.txt (AGPL + Palimpsest) |{{LICENSE_CHECK}} |
+|LICENSE.txt (MPL-2.0) |{{LICENSE_CHECK}} |
 |Containerfile present |{{CONTAINER_CHECK}} |
 |flake.nix present |{{FLAKE_CHECK}} |
 |===

@@ -18,7 +18,7 @@ Embedding-Generation: Explicit-Consent-Required
 # Attribution Requirements
 Attribution: Required
 Citation-Style: hyperpolymath/{{PROJECT_NAME}}
-License: AGPL-3.0-or-later OR MIT AND Palimpsest-0.4
+License: AGPL-3.0-or-later OR MIT AND MPL-2.0
 
 # Contact for AI/ML Use
 Contact: ai-consent@hyperpolymath.org

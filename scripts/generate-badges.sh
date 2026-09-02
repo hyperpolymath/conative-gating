@@ -138,7 +138,7 @@ badge "Phase" "$PHASE" "$PHASE_COLOR"
 badge "Maturity" "$MATURITY" "$MAT_COLOR"
 echo ""
 echo "// License"
-badge "License" "AGPL OR Palimpsest" "blue"
+badge "License" "AGPL OR MPL-2.0" "blue"
 echo ""
 
 if [ "$LEVEL" = "minimal" ]; then

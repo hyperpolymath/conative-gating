@@ -1,6 +1,6 @@
 #!/bin/bash
 # reconcile-wharf-repos.sh - Consolidate wharf repositories
-# SPDX-License-Identifier: MPL-2.0 OR LicenseRef-Palimpsest-0.5
+# SPDX-License-Identifier: MPL-2.0
 #
 # This script reconciles the wharf repository situation:
 # - wharf (GitHub) = Rust infrastructure (KEEP SEPARATE)

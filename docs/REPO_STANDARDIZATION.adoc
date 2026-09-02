@@ -41,7 +41,7 @@ toc::[]
 * Common ignores: `.DS_Store`, `*.log`, `*.tmp`, `.env`
 * Language detection adds: `/target/` (Rust), `node_modules/` (JS/TS), etc.
 
-LICENSE.txt:: AGPL-3.0 + Palimpsest v0.4 dual license
+LICENSE.txt:: MPL-2.0 license
 * Standard header referencing both licenses
 
 === .well-known/ Directory (ALL REPOS)
