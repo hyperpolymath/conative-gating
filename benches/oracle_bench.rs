@@ -66,7 +66,7 @@ fn secret_proposal() -> Proposal {
         action_type: ActionType::CreateFile {
             path: "src/config.rs".to_string(),
         },
-        content: r#"let api_key = "supersecretkey12345""#.to_string(),  // scanner-allow: rust-secrets
+        content: r#"let api_key = "supersecretkey12345""#.to_string(), // scanner-allow: rust-secrets
         files_affected: vec!["src/config.rs".to_string()],
         llm_confidence: 0.9,
     }
@@ -101,16 +101,12 @@ fn bench_language_detection_single(c: &mut Criterion) {
 
     // Forbidden language: TypeScript (.ts extension, typed content)
     group.bench_function("typescript_forbidden", |b| {
-        b.iter(|| {
-            black_box(oracle.check_proposal(black_box(&ts_proposal)).unwrap())
-        })
+        b.iter(|| black_box(oracle.check_proposal(black_box(&ts_proposal)).unwrap()))
     });
 
     // Tier-1 language: Rust (should be Compliant)
     group.bench_function("rust_allowed", |b| {
-        b.iter(|| {
-            black_box(oracle.check_proposal(black_box(&rs_proposal)).unwrap())
-        })
+        b.iter(|| black_box(oracle.check_proposal(black_box(&rs_proposal)).unwrap()))
     });
 
     group.finish();
@@ -178,7 +174,9 @@ fn bench_tier_classification(c: &mut Criterion) {
 
     group.bench_function("forbidden_typescript", |b| {
         b.iter(|| {
-            let eval = oracle.check_proposal(black_box(&forbidden_proposal)).unwrap();
+            let eval = oracle
+                .check_proposal(black_box(&forbidden_proposal))
+                .unwrap();
             black_box(eval)
         })
     });

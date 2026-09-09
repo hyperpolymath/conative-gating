@@ -564,7 +564,11 @@ fn scan_directory(
         Ok(result) => {
             match format {
                 OutputFormat::Json => {
-                    println!("{}", serde_json::to_string_pretty(&result).expect("invariant: JSON serialization of struct cannot fail"));
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&result)
+                            .expect("invariant: JSON serialization of struct cannot fail")
+                    );
                 }
                 OutputFormat::Compact => {
                     let status = if !result.violations.is_empty() {
@@ -676,7 +680,11 @@ fn check_content(
         Ok(result) => {
             match format {
                 OutputFormat::Json => {
-                    println!("{}", serde_json::to_string_pretty(&result).expect("invariant: JSON serialization of struct cannot fail"));
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&result)
+                            .expect("invariant: JSON serialization of struct cannot fail")
+                    );
                 }
                 OutputFormat::Compact => {
                     let status = if !result.violations.is_empty() {
@@ -742,7 +750,11 @@ fn show_policy(format: &OutputFormat, section: Option<&str>) {
 
     match format {
         OutputFormat::Json => {
-            println!("{}", serde_json::to_string_pretty(&policy).expect("invariant: JSON serialization of struct cannot fail"));
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&policy)
+                    .expect("invariant: JSON serialization of struct cannot fail")
+            );
         }
         OutputFormat::Compact => {
             println!(
@@ -826,7 +838,11 @@ fn validate_proposal(
         Ok(result) => {
             match format {
                 OutputFormat::Json | OutputFormat::Compact => {
-                    println!("{}", serde_json::to_string_pretty(&result).expect("invariant: JSON serialization of struct cannot fail"));
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&result)
+                            .expect("invariant: JSON serialization of struct cannot fail")
+                    );
                 }
                 OutputFormat::Text => {
                     println!("Proposal: {}", result.proposal_id);
@@ -990,7 +1006,11 @@ fn run_contract_tests(
 
     match format {
         OutputFormat::Json => {
-            println!("{}", serde_json::to_string_pretty(&summary).expect("invariant: JSON serialization of struct cannot fail"));
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&summary)
+                    .expect("invariant: JSON serialization of struct cannot fail")
+            );
         }
         OutputFormat::Compact => {
             println!(
@@ -1190,7 +1210,11 @@ fn eval_contract_request(request_path: &Path, format: &OutputFormat, include_aud
                     .expect("invariant: JSON serialization of struct cannot fail")
                 );
             } else {
-                println!("{}", serde_json::to_string_pretty(&decision).expect("invariant: JSON serialization of struct cannot fail"));
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&decision)
+                        .expect("invariant: JSON serialization of struct cannot fail")
+                );
             }
         }
         OutputFormat::Compact => {
@@ -1224,7 +1248,11 @@ fn eval_contract_request(request_path: &Path, format: &OutputFormat, include_aud
             if include_audit {
                 let audit = runner.audit(&request, &decision);
                 println!("\nAudit Log Entry:");
-                println!("{}", serde_json::to_string_pretty(&audit).expect("invariant: JSON serialization of struct cannot fail"));
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&audit)
+                        .expect("invariant: JSON serialization of struct cannot fail")
+                );
             }
         }
     }
@@ -1325,7 +1353,11 @@ fn show_contract_schema(format: &OutputFormat, section: Option<&str>) {
                 ],
             };
 
-            println!("{}", serde_json::to_string_pretty(&schema).expect("invariant: JSON serialization of struct cannot fail"));
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&schema)
+                    .expect("invariant: JSON serialization of struct cannot fail")
+            );
         }
         OutputFormat::Compact | OutputFormat::Text => {
             let show_all = section.is_none();
@@ -1428,7 +1460,8 @@ fn run_redteam_tests(
     }
 
     // Run all tests and collect results with category info
-    let mut category_results: HashMap<String, (Vec<bool>, Vec<bool>, Vec<bool>)> = HashMap::new();
+    type CategoryOutcomes = (Vec<bool>, Vec<bool>, Vec<bool>);
+    let mut category_results: HashMap<String, CategoryOutcomes> = HashMap::new();
     let mut bypasses = Vec::new();
     let mut false_positives = Vec::new();
 
@@ -1516,7 +1549,11 @@ fn run_redteam_tests(
 
     match format {
         OutputFormat::Json => {
-            println!("{}", serde_json::to_string_pretty(&summary).expect("invariant: JSON serialization of struct cannot fail"));
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&summary)
+                    .expect("invariant: JSON serialization of struct cannot fail")
+            );
         }
         OutputFormat::Compact => {
             println!(
@@ -1644,7 +1681,9 @@ fn load_redteam_file(
 
     // Skip non-redteam tests
     let redteam_cat = match &data.redteam_category {
-        Some(c) => RedTeamCategory::from_str(c),
+        Some(c) => c
+            .parse()
+            .expect("invariant: red-team category parsing is infallible"),
         None => return Ok(None),
     };
 
@@ -1768,7 +1807,11 @@ fn run_regression_tests(
 
     match format {
         OutputFormat::Json => {
-            println!("{}", serde_json::to_string_pretty(&report).expect("invariant: JSON serialization of struct cannot fail"));
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&report)
+                    .expect("invariant: JSON serialization of struct cannot fail")
+            );
         }
         OutputFormat::Compact => {
             println!(

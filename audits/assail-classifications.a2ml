@@ -1,4 +1,8 @@
 %A2ML
+(metadata
+  (name "assail-classifications")
+  (version "1.0")
+)
 - suppression:
     file: 'scripts/mass-apply-templates.sh'
     rule: 'CommandInjection'

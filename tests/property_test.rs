@@ -122,7 +122,11 @@ fn property_processing_time_bounded() {
         let elapsed = start.elapsed();
 
         // Processing time should be finite and reasonable (< 1 second)
-        assert!(elapsed.as_secs() < 1, "Processing took too long: {:?}", elapsed);
+        assert!(
+            elapsed.as_secs() < 1,
+            "Processing took too long: {:?}",
+            elapsed
+        );
 
         // Metadata should record duration
         assert!(decision.processing.duration_us > 0);
@@ -161,10 +165,10 @@ fn property_refusal_evidence_when_blocked() {
     let runner = ContractRunner::new();
 
     let blocking_proposals = vec![
-        ("main.ts", "const x: string = 'test';", true),  // TypeScript
-        ("script.py", "import os", true),                // Python
-        ("main.go", "func main() {}", true),             // Go
-        ("config.rs", r#"pwd = "secret123456""#, true),  // Secret
+        ("main.ts", "const x: string = 'test';", true), // TypeScript
+        ("script.py", "import os", true),               // Python
+        ("main.go", "func main() {}", true),            // Go
+        ("config.rs", r#"pwd = "secret123456""#, true), // Secret
     ];
 
     for (path, content, should_have_evidence) in blocking_proposals {

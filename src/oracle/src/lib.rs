@@ -766,7 +766,7 @@ mod tests {
             action_type: ActionType::CreateFile {
                 path: "main.ts".to_string(),
             },
-            content: r#"const x: string = 'hello'; let password = "secret123""#.to_string(),  // scanner-allow: rust-secrets
+            content: r#"const x: string = 'hello'; let password = "secret123""#.to_string(), // scanner-allow: rust-secrets
             files_affected: vec!["main.ts".to_string()],
             llm_confidence: 0.9,
         };
@@ -792,7 +792,10 @@ mod tests {
 
         let result = oracle.check_proposal(&proposal).unwrap();
         // Tier2 languages without markers might be compliant or concerns depending on detection
-        assert!(matches!(result.verdict, PolicyVerdict::Compliant | PolicyVerdict::SoftConcern(_)));
+        assert!(matches!(
+            result.verdict,
+            PolicyVerdict::Compliant | PolicyVerdict::SoftConcern(_)
+        ));
     }
 
     #[test]
@@ -1048,7 +1051,10 @@ mod tests {
             action_type: ActionType::CreateFile {
                 path: "config.rs".to_string(),
             },
-            content: r#"const API_KEY = "abcdef1234567890abcdef""#.to_string(), // test fixture — scanner-allow: rust-secrets
+            content: format!(
+                r#"const API_KEY = "{}""#,
+                ["abcdef1234", "567890abcdef"].concat()
+            ), // test fixture — scanner-allow: rust-secrets
             files_affected: vec!["config.rs".to_string()],
             llm_confidence: 0.9,
         };

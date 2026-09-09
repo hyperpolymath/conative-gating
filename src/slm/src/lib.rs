@@ -91,7 +91,9 @@ mod tests {
     #[test]
     fn test_slm_evaluation_always_compliant_placeholder() {
         let evaluator = SlmEvaluator::new();
-        let result = evaluator.evaluate("even forbidden content", "context").unwrap();
+        let result = evaluator
+            .evaluate("even forbidden content", "context")
+            .unwrap();
         // Placeholder always returns compliant
         assert_eq!(result.should_block, false);
         assert_eq!(result.spirit_score, 0.0);
