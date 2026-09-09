@@ -28,7 +28,8 @@ fn rust_proposal() -> Proposal {
         action_type: ActionType::CreateFile {
             path: "src/lib.rs".to_string(),
         },
-        content: "pub fn compute(x: u64) -> u64 { x.wrapping_mul(6364136223846793005) }".to_string(),
+        content: "pub fn compute(x: u64) -> u64 { x.wrapping_mul(6364136223846793005) }"
+            .to_string(),
         files_affected: vec!["src/lib.rs".to_string()],
         llm_confidence: 0.97,
     }
@@ -63,15 +64,11 @@ fn nickel_proposal() -> Proposal {
 
 /// Complex proposal touching many files and long content — stresses the inner loops.
 fn complex_proposal() -> Proposal {
-    let files: Vec<String> = (0..20)
-        .map(|i| format!("src/module_{}.rs", i))
-        .collect();
+    let files: Vec<String> = (0..20).map(|i| format!("src/module_{}.rs", i)).collect();
 
     let mut content = String::with_capacity(4096);
     for i in 0..50 {
-        content.push_str(&format!(
-            "pub fn func_{i}(x: u32) -> u32 {{ x + {i} }}\n"
-        ));
+        content.push_str(&format!("pub fn func_{i}(x: u32) -> u32 {{ x + {i} }}\n"));
     }
 
     Proposal {

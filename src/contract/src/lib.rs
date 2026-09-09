@@ -666,10 +666,8 @@ impl ContractRunner {
     /// Evaluate a gating request and return a decision
     pub fn evaluate(&self, request: &GatingRequest) -> Result<GatingDecision, ContractError> {
         let start = std::time::Instant::now();
-        let mut stages_executed = Vec::new();
-
         // Stage 1: Oracle evaluation
-        stages_executed.push("oracle".to_string());
+        let stages_executed = vec!["oracle".to_string()];
         let oracle_eval = self.oracle.check_proposal(&request.proposal)?;
 
         // Determine verdict based on oracle result
@@ -1415,9 +1413,11 @@ pub enum RedTeamCategory {
     Custom(String),
 }
 
-impl RedTeamCategory {
-    pub fn from_str(s: &str) -> Self {
-        match s.to_lowercase().as_str() {
+impl std::str::FromStr for RedTeamCategory {
+    type Err = std::convert::Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s.to_lowercase().as_str() {
             "documentation_bypass" | "doc_bypass" | "comment_bypass" => {
                 RedTeamCategory::DocumentationBypass
             }
@@ -1430,7 +1430,7 @@ impl RedTeamCategory {
             "secret_hiding" | "secret_splitting" => RedTeamCategory::SecretEvasion,
             "false_positive_avoidance" | "false_positive" => RedTeamCategory::FalsePositiveCheck,
             other => RedTeamCategory::Custom(other.to_string()),
-        }
+        })
     }
 }
 
@@ -1565,7 +1565,7 @@ mod tests {
         let runner = ContractRunner::new();
         let request = GatingRequest::new(create_proposal(
             "config.rs",
-            r#"let password = "supersecret123456""#,  // scanner-allow: rust-secrets
+            r#"let password = "supersecret123456""#, // scanner-allow: rust-secrets
         ));
 
         let decision = runner.evaluate(&request).unwrap();
@@ -1666,8 +1666,14 @@ mod tests {
 
     #[test]
     fn test_refusal_category_display() {
-        assert_eq!(RefusalCategory::ForbiddenLanguage.display_name(), "Forbidden Language");
-        assert_eq!(RefusalCategory::SecurityViolation.display_name(), "Security Violation");
+        assert_eq!(
+            RefusalCategory::ForbiddenLanguage.display_name(),
+            "Forbidden Language"
+        );
+        assert_eq!(
+            RefusalCategory::SecurityViolation.display_name(),
+            "Security Violation"
+        );
         assert_eq!(RefusalCategory::SystemError.display_name(), "System Error");
     }
 
@@ -1682,9 +1688,18 @@ mod tests {
 
     #[test]
     fn test_refusal_category_severity() {
-        assert_eq!(RefusalCategory::SecurityViolation.severity(), Severity::Critical);
-        assert_eq!(RefusalCategory::ForbiddenLanguage.severity(), Severity::Critical);
-        assert_eq!(RefusalCategory::ForbiddenToolchain.severity(), Severity::High);
+        assert_eq!(
+            RefusalCategory::SecurityViolation.severity(),
+            Severity::Critical
+        );
+        assert_eq!(
+            RefusalCategory::ForbiddenLanguage.severity(),
+            Severity::Critical
+        );
+        assert_eq!(
+            RefusalCategory::ForbiddenToolchain.severity(),
+            Severity::High
+        );
         assert_eq!(RefusalCategory::VerbositySmell.severity(), Severity::Low);
     }
 
@@ -1705,8 +1720,7 @@ mod tests {
             ..Default::default()
         };
 
-        let request = GatingRequest::new(proposal.clone())
-            .with_context(context.clone());
+        let request = GatingRequest::new(proposal.clone()).with_context(context.clone());
 
         assert_eq!(request.context.source, "test");
         assert_eq!(request.context.session_id, Some("session-123".to_string()));
@@ -1715,40 +1729,38 @@ mod tests {
     #[test]
     fn test_refusal_with_evidence() {
         let runner = ContractRunner::new();
-        let request = GatingRequest::new(create_proposal(
-            "main.ts",
-            "const x: string = 'hello';",
-        ));
+        let request = GatingRequest::new(create_proposal("main.ts", "const x: string = 'hello';"));
 
         let decision = runner.evaluate(&request).unwrap();
         assert!(decision.refusal.is_some());
 
         let refusal = decision.refusal.unwrap();
         assert!(!refusal.evidence.is_empty());
-        assert_eq!(refusal.evidence[0].evidence_type, EvidenceType::ContentMarker);
+        assert_eq!(
+            refusal.evidence[0].evidence_type,
+            EvidenceType::ContentMarker
+        );
     }
 
     #[test]
     fn test_python_forbidden_with_remediation() {
         let runner = ContractRunner::new();
-        let request = GatingRequest::new(create_proposal(
-            "script.py",
-            "import os",
-        ));
+        let request = GatingRequest::new(create_proposal("script.py", "import os"));
 
         let decision = runner.evaluate(&request).unwrap();
         let refusal = decision.refusal.unwrap();
         assert!(refusal.remediation.is_some());
-        assert!(refusal.remediation.unwrap().contains("only allowed in salt"));
+        assert!(refusal
+            .remediation
+            .unwrap()
+            .contains("only allowed in salt"));
     }
 
     #[test]
     fn test_go_forbidden_with_rust_remediation() {
         let runner = ContractRunner::new();
-        let request = GatingRequest::new(create_proposal(
-            "main.go",
-            "package main\nfunc main() {}",
-        ));
+        let request =
+            GatingRequest::new(create_proposal("main.go", "package main\nfunc main() {}"));
 
         let decision = runner.evaluate(&request).unwrap();
         let refusal = decision.refusal.unwrap();
@@ -1763,7 +1775,10 @@ mod tests {
         let request = GatingRequest::new(create_proposal("lib.rs", "pub fn foo() {}"));
 
         let decision = runner.evaluate(&request).unwrap();
-        assert!(decision.processing.stages_executed.contains(&"oracle".to_string()));
+        assert!(decision
+            .processing
+            .stages_executed
+            .contains(&"oracle".to_string()));
         assert!(decision.evaluations.oracle.is_some());
     }
 
@@ -1961,28 +1976,49 @@ mod tests {
 
     #[test]
     fn test_red_team_category_from_str() {
-        assert_eq!(RedTeamCategory::from_str("doc_bypass"), RedTeamCategory::DocumentationBypass);
-        assert_eq!(RedTeamCategory::from_str("marker_obfuscation"), RedTeamCategory::MarkerObfuscation);
-        assert_eq!(RedTeamCategory::from_str("encoding"), RedTeamCategory::EncodedContent);
-        assert_eq!(RedTeamCategory::from_str("boundary"), RedTeamCategory::BoundaryCondition);
-        assert_eq!(RedTeamCategory::from_str("polyglot"), RedTeamCategory::ContentInjection);
-        assert_eq!(RedTeamCategory::from_str("secret_hiding"), RedTeamCategory::SecretEvasion);
-        assert_eq!(RedTeamCategory::from_str("false_positive"), RedTeamCategory::FalsePositiveCheck);
+        assert_eq!(
+            "doc_bypass".parse::<RedTeamCategory>().unwrap(),
+            RedTeamCategory::DocumentationBypass
+        );
+        assert_eq!(
+            "marker_obfuscation".parse::<RedTeamCategory>().unwrap(),
+            RedTeamCategory::MarkerObfuscation
+        );
+        assert_eq!(
+            "encoding".parse::<RedTeamCategory>().unwrap(),
+            RedTeamCategory::EncodedContent
+        );
+        assert_eq!(
+            "boundary".parse::<RedTeamCategory>().unwrap(),
+            RedTeamCategory::BoundaryCondition
+        );
+        assert_eq!(
+            "polyglot".parse::<RedTeamCategory>().unwrap(),
+            RedTeamCategory::ContentInjection
+        );
+        assert_eq!(
+            "secret_hiding".parse::<RedTeamCategory>().unwrap(),
+            RedTeamCategory::SecretEvasion
+        );
+        assert_eq!(
+            "false_positive".parse::<RedTeamCategory>().unwrap(),
+            RedTeamCategory::FalsePositiveCheck
+        );
     }
 
     #[test]
     fn test_elixir_compliant() {
         let runner = ContractRunner::new();
         // Elixir with .ex extension and defmodule marker
-        let request = GatingRequest::new(create_proposal(
-            "app.ex",
-            "defmodule MyModule, do: :ok",
-        ));
+        let request = GatingRequest::new(create_proposal("app.ex", "defmodule MyModule, do: :ok"));
 
         let decision = runner.evaluate(&request).unwrap();
         // Should be allowed as tier1 language
-        assert!(matches!(decision.verdict, Verdict::Allow),
-            "Elixir should be allowed, got {:?}", decision.verdict);
+        assert!(
+            matches!(decision.verdict, Verdict::Allow),
+            "Elixir should be allowed, got {:?}",
+            decision.verdict
+        );
     }
 
     #[test]
@@ -2050,11 +2086,12 @@ mod tests {
     #[test]
     fn test_npm_with_deno_allowed() {
         let runner = ContractRunner::new();
-        let mut request = GatingRequest::new(create_proposal(
-            "package.json",
-            r#"{"name": "test"}"#,
-        ));
-        request.proposal.files_affected.push("deno.json".to_string());
+        let mut request =
+            GatingRequest::new(create_proposal("package.json", r#"{"name": "test"}"#));
+        request
+            .proposal
+            .files_affected
+            .push("deno.json".to_string());
 
         let decision = runner.evaluate(&request).unwrap();
         assert_eq!(decision.verdict, Verdict::Allow);

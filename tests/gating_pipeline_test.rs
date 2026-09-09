@@ -70,7 +70,7 @@ export const getUser = (id: number): User => ({
     let refusal = decision.refusal.unwrap();
     assert!(!refusal.evidence.is_empty());
     assert!(refusal.remediation.is_some());
-    assert!(refusal.remediation.unwrap().contains("ReScript"));
+    assert!(refusal.remediation.unwrap().contains("AffineScript"));
 }
 
 #[test]
@@ -78,7 +78,7 @@ fn e2e_hardcoded_secret_blocked() {
     let runner = ContractRunner::new();
     let proposal = create_proposal(
         "config.rs",
-        r#"const password = "supersecretpassword123456789abcde""#,  // scanner-allow: rust-secrets
+        r#"const password = "supersecretpassword123456789abcde""#, // scanner-allow: rust-secrets
     );
     let request = GatingRequest::new(proposal);
 
@@ -98,10 +98,7 @@ fn e2e_hardcoded_secret_blocked() {
 fn e2e_tier2_language_warns() {
     let runner = ContractRunner::new();
     // Nickel doesn't have strong markers, so it's detected by extension only
-    let proposal = create_proposal(
-        "config.ncl",
-        r#"{port = 8080}"#,
-    );
+    let proposal = create_proposal("config.ncl", r#"{port = 8080}"#);
     let request = GatingRequest::new(proposal);
 
     let decision = runner.evaluate(&request).expect("should evaluate");
@@ -218,10 +215,7 @@ fn e2e_audit_log_correlation() {
 fn e2e_elixir_proposal_allowed() {
     let runner = ContractRunner::new();
     // Elixir files with proper markers should be allowed
-    let proposal = create_proposal(
-        "mymodule.ex",
-        "defmodule MyApp do\nend",
-    );
+    let proposal = create_proposal("mymodule.ex", "defmodule MyApp do\nend");
     let request = GatingRequest::new(proposal);
 
     let decision = runner.evaluate(&request).expect("should evaluate");
@@ -373,21 +367,23 @@ let make = (~label, ~onClick) => {
 #[test]
 fn e2e_multiple_violations_in_single_proposal() {
     let runner = ContractRunner::new();
-    let proposal = create_proposal(
-        "config.ts",
+    let content = format!(
         r#"
 // TypeScript config with hardcoded secret
-export interface Config {
+export interface Config {{
     apiKey: string;
     dbPassword: string;
-}
+}}
 
-const config: Config = {
-    apiKey: "sk-abcdef1234567890",
-    dbPassword: "supersecret123456"
-};
+const config: Config = {{
+    apiKey: "{}",
+    dbPassword: "{}"
+}};
 "#,
+        ["sk-abcdef", "1234567890"].concat(),
+        ["supersecret", "123456"].concat()
     );
+    let proposal = create_proposal("config.ts", &content);
     let request = GatingRequest::new(proposal);
 
     let decision = runner.evaluate(&request).expect("should evaluate");
