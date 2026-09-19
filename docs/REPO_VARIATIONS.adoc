@@ -162,7 +162,7 @@ strategy:
 |Usage |VARIES |Examples
 |Configuration |VARIES |If applicable
 |License |COMMON |Reference to LICENSE.txt
-|Contributing |COMMON |Reference to CONTRIBUTING.adoc
+|Contributing |COMMON |Reference to ../.github/CONTRIBUTING.md
 |===
 
 ==== CLAUDE.adoc Content

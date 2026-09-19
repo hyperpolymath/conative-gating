@@ -93,7 +93,7 @@ dependabot.yml:: Dependency updates
 
 === Documentation Files (AsciiDoc)
 
-CONTRIBUTING.adoc:: Contribution guidelines
+../.github/CONTRIBUTING.md:: Contribution guidelines
 * RSR Policy reference
 * TPCF agreement
 * Code style requirements

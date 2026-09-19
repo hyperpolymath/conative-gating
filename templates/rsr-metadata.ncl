@@ -112,7 +112,7 @@ See link:LICENSE[LICENSE] for details.
 
 == Contributing
 
-Contributions welcome. Please read link:CONTRIBUTING.adoc[CONTRIBUTING.adoc] first.
+Contributions welcome. Please read link:../.github/CONTRIBUTING.md[../.github/CONTRIBUTING.md] first.
 
 == Metadata
 

@@ -66,5 +66,5 @@ This document describes the Rhodium Standard Repository (RSR) compliance status 
 == References
 
 * link:https://github.com/hyperpolymath/RSR-template-repo[RSR Template Repository]
-* link:../CONTRIBUTING.adoc[Contributing Guidelines]
+* link:../.github/CONTRIBUTING.md[Contributing Guidelines]
 * link:../CODE_OF_CONDUCT.adoc[Code of Conduct]
