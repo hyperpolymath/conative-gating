@@ -150,7 +150,7 @@ docs/
 ├── man/                   # Man pages
 │   └── project-name.1     # Main man page
 ├── ARCHITECTURE.adoc      # Technical design (optional)
-├── CONTRIBUTING.adoc      # Contribution guide
+├── ../.github/CONTRIBUTING.md      # Contribution guide
 ├── GOVERNANCE.adoc        # Decision-making process
 ├── just-cookbook.adoc     # Auto-generated Justfile docs
 ├── BADGE_SCHEMA.adoc      # Badge documentation
