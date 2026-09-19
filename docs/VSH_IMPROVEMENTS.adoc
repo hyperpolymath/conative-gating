@@ -276,7 +276,7 @@ guix shell rust cargo
 guix shell -m guix.scm
 
 # Build package
-guix build -f guix.scm
+guix build -f build/guix.scm
 
 # Update channels
 guix pull --channels=channels.scm
