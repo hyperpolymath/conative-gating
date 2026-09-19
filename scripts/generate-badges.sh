@@ -16,7 +16,7 @@ detect_tier() {
     if [ -f "*.adb" ] 2>/dev/null; then echo "1"; return; fi
     if [ -f "*.hs" ] 2>/dev/null; then echo "1"; return; fi
     if ls *.ncl >/dev/null 2>&1 || [ -d "config" ] && ls config/*.ncl >/dev/null 2>&1; then echo "2"; return; fi
-    if [ -f "flake.nix" ] || [ -f "guix.scm" ]; then echo "2"; return; fi
+    if [ -f "flake.nix" ] || [ -f "build/guix.scm" ]; then echo "2"; return; fi
     echo "Infra"
 }
 
@@ -120,7 +120,7 @@ MATURITY=$(read_maturity)
 MAT_COLOR=$(maturity_color "$MATURITY")
 
 # Check infrastructure
-HAS_GUIX=$( [ -f "guix.scm" ] || [ -f ".guix-channel" ] && echo "yes" || echo "no" )
+HAS_GUIX=$( [ -f "build/guix.scm" ] || [ -f ".guix-channel" ] && echo "yes" || echo "no" )
 HAS_NIX=$( [ -f "flake.nix" ] && echo "yes" || echo "no" )
 HAS_CONTAINER=$( [ -f "Containerfile" ] || [ -f "Dockerfile" ] && echo "yes" || echo "no" )
 HAS_GITHUB=$( [ -d ".github/workflows" ] && echo "yes" || echo "no" )

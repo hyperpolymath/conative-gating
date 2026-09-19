@@ -262,7 +262,7 @@ guix-build:
   extends: .guix-base
   stage: build
   script:
-    - guix build -f guix.scm
+    - guix build -f build/guix.scm
 
 guix-check:
   extends: .guix-base

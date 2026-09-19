@@ -112,7 +112,7 @@ One paragraph description.
 
 [source,bash]
 ----
-guix shell -D -f guix.scm  # Enter dev environment
+guix shell -D -f build/guix.scm  # Enter dev environment
 just setup                  # Initialize
 just build                  # Build
 just test                   # Test
