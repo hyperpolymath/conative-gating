@@ -115,7 +115,7 @@ struct Cli {
     #[arg(long, global = true)]
     no_color: bool,
 
-    /// Custom policy file (Nickel .ncl or JSON)
+    /// Custom policy file in JSON format (the embedded Nickel file is not loaded at runtime)
     #[arg(short, long, global = true)]
     policy_file: Option<PathBuf>,
 
@@ -413,7 +413,16 @@ fn main() {
     tracing_subscriber::fmt::init();
 
     let cli = Cli::parse();
-    let oracle = Oracle::with_rsr_defaults();
+    let oracle = match cli.policy_file.as_deref() {
+        Some(path) => match load_policy_oracle(path) {
+            Ok(oracle) => oracle,
+            Err(error) => {
+                eprintln!("Failed to load policy: {error}");
+                std::process::exit(3);
+            }
+        },
+        None => Oracle::with_rsr_defaults(),
+    };
 
     let exit_code = match cli.command {
         Commands::Scan {
@@ -555,6 +564,19 @@ fn main() {
     };
 
     std::process::exit(exit_code);
+}
+
+fn load_policy_oracle(path: &Path) -> Result<Oracle, String> {
+    let content = std::fs::read_to_string(path).map_err(|error| error.to_string())?;
+    if path.extension().is_some_and(|extension| extension == "ncl") {
+        return Err(
+            "Nickel policy loading is not available in the Rust CLI yet; provide a JSON policy export"
+                .to_string(),
+        );
+    }
+    let policy: Policy = serde_json::from_str(&content)
+        .map_err(|error| format!("invalid JSON policy {}: {error}", path.display()))?;
+    Ok(Oracle::new(policy))
 }
 
 fn scan_directory(
