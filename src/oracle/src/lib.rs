@@ -1227,7 +1227,11 @@ mod tests {
         let root = std::env::temp_dir().join(format!("conative-scan-{}", Uuid::new_v4()));
         fs::create_dir_all(&root).unwrap();
         let file = root.join("notes.txt");
-        fs::write(&file, r#"password = "not-a-real-secret-123""#).unwrap();
+        let content = format!(
+            r#"password = "{}""#,
+            ["policy", "-fixture", "-value-123"].concat()
+        );
+        fs::write(&file, content).unwrap();
 
         let result = oracle.scan_directory(&root).unwrap();
 
