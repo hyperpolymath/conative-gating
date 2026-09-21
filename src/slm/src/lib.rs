@@ -26,7 +26,11 @@ pub struct SlmEvaluation {
     pub should_block: bool,
 }
 
-/// SLM evaluator (placeholder for future implementation)
+/// SLM evaluator configuration.
+///
+/// The inference backend is intentionally not bundled yet. Until a model is
+/// loaded, evaluation fails closed with [`SlmError::ModelNotLoaded`] instead
+/// of returning a false compliant result.
 pub struct SlmEvaluator {
     #[allow(dead_code)]
     model_path: Option<String>,
@@ -50,17 +54,18 @@ impl SlmEvaluator {
         }
     }
 
-    /// Placeholder: In v2, this will run actual SLM inference
+    /// Evaluate content with the configured local model.
+    ///
+    /// The model backend is not implemented in this prototype. Returning an
+    /// error is deliberate: a missing evaluator must never be interpreted as
+    /// an affirmative policy decision by a downstream arbiter.
     pub fn evaluate(&self, _content: &str, _context: &str) -> Result<SlmEvaluation, SlmError> {
-        // Placeholder implementation - always returns compliant
-        // Real implementation will use llama.cpp bindings
-        Ok(SlmEvaluation {
-            proposal_id: Uuid::new_v4(),
-            spirit_score: 0.0,
-            confidence: 0.0,
-            reasoning: "SLM evaluation not yet implemented".to_string(),
-            should_block: false,
-        })
+        match self.model_path.as_deref() {
+            None => Err(SlmError::ModelNotLoaded),
+            Some(path) => Err(SlmError::InferenceError(format!(
+                "SLM backend is not available for model {path}"
+            ))),
+        }
     }
 }
 
@@ -75,54 +80,31 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_placeholder_evaluation() {
+    fn evaluation_fails_closed_when_model_is_missing() {
         let evaluator = SlmEvaluator::new();
-        let result = evaluator.evaluate("test content", "test context").unwrap();
-        assert!(!result.should_block);
+        assert!(matches!(
+            evaluator.evaluate("even forbidden content", "context"),
+            Err(SlmError::ModelNotLoaded)
+        ));
     }
 
     #[test]
-    fn test_evaluator_default() {
+    fn default_evaluator_is_not_silently_compliant() {
         let evaluator = SlmEvaluator::default();
-        let result = evaluator.evaluate("test", "ctx").unwrap();
-        assert!(!result.should_block);
+        let result = evaluator.evaluate("test", "ctx");
+        assert!(result.is_err());
     }
 
     #[test]
-    fn test_slm_evaluation_always_compliant_placeholder() {
-        let evaluator = SlmEvaluator::new();
-        let result = evaluator
-            .evaluate("even forbidden content", "context")
-            .unwrap();
-        // Placeholder always returns compliant
-        assert_eq!(result.should_block, false);
-        assert_eq!(result.spirit_score, 0.0);
-        assert_eq!(result.confidence, 0.0);
-    }
-
-    #[test]
-    fn test_slm_evaluation_has_valid_uuid() {
-        let evaluator = SlmEvaluator::new();
-        let result = evaluator.evaluate("test", "ctx").unwrap();
-        // UUID should be valid
-        assert!(!result.proposal_id.to_string().is_empty());
-    }
-
-    #[test]
-    fn test_slm_evaluation_includes_reasoning() {
-        let evaluator = SlmEvaluator::new();
-        let result = evaluator.evaluate("test", "ctx").unwrap();
-        assert!(!result.reasoning.is_empty());
-        assert!(result.reasoning.contains("not yet implemented"));
-    }
-
-    #[test]
-    fn test_slm_evaluation_different_ids_on_each_call() {
-        let evaluator = SlmEvaluator::new();
-        let result1 = evaluator.evaluate("test", "ctx").unwrap();
-        let result2 = evaluator.evaluate("test", "ctx").unwrap();
-        // Each evaluation should get a new UUID
-        assert_ne!(result1.proposal_id, result2.proposal_id);
+    fn configured_model_reports_unavailable_backend() {
+        let evaluator = SlmEvaluator {
+            model_path: Some("model.gguf".to_string()),
+            block_threshold: 0.7,
+        };
+        assert!(matches!(
+            evaluator.evaluate("test", "ctx"),
+            Err(SlmError::InferenceError(_))
+        ));
     }
 
     #[test]
