@@ -7,6 +7,7 @@
 //! before the SLM evaluates spirit violations.
 
 #![forbid(unsafe_code)]
+use glob::Pattern;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -188,6 +189,25 @@ pub struct DirectoryScanResult {
     pub concerns: Vec<FileConcern>,
 }
 
+/// Controls which files are visited by [`Oracle::scan_directory_with_options`].
+///
+/// Patterns use glob syntax and are matched against the path relative to the
+/// scan root, the complete path, and the file name. An empty `include` list
+/// includes every file that is not excluded. For a directory, `Some(1)` scans
+/// files immediately inside the root; `None` means unlimited depth. A root
+/// file is scanned regardless of the depth value.
+#[derive(Debug, Clone, Default)]
+pub struct ScanOptions {
+    /// Include dot-files and dot-directories (generated directories remain skipped).
+    pub include_hidden: bool,
+    /// Maximum directory depth, measured from the scan root.
+    pub max_depth: Option<usize>,
+    /// Glob patterns for files to include.
+    pub include: Vec<String>,
+    /// Glob patterns for files or directories to exclude.
+    pub exclude: Vec<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileViolation {
     pub file: PathBuf,
@@ -212,6 +232,8 @@ pub enum OracleError {
     IoError(#[from] std::io::Error),
     #[error("Invalid regex: {0}")]
     RegexError(#[from] regex::Error),
+    #[error("Invalid glob pattern: {0}")]
+    GlobError(String),
 }
 
 // ============ Oracle Implementation ============
@@ -348,51 +370,109 @@ impl Oracle {
         })
     }
 
-    /// Scan a directory for policy violations
+    /// Scan a directory for policy violations using the default scan options.
     pub fn scan_directory(&self, path: &Path) -> Result<DirectoryScanResult, OracleError> {
+        self.scan_directory_with_options(path, &ScanOptions::default())
+    }
+
+    /// Scan files for both path-based and content-based policy violations.
+    ///
+    /// The original scanner only inspected extensions. That made directory
+    /// scans materially weaker than `check` and allowed content-only rules,
+    /// including hard-coded-secret detection, to be bypassed by placing the
+    /// content in an otherwise innocuous file. This method deliberately uses
+    /// the same proposal evaluator as single-file checks.
+    pub fn scan_directory_with_options(
+        &self,
+        path: &Path,
+        options: &ScanOptions,
+    ) -> Result<DirectoryScanResult, OracleError> {
+        let include = compile_patterns(&options.include)?;
+        let exclude = compile_patterns(&options.exclude)?;
+        let files = collect_files(path, path, options, &include, &exclude, 0)?;
+        let files_scanned = files.len();
         let mut violations = Vec::new();
         let mut concerns = Vec::new();
-        let mut files_scanned = 0;
 
-        for entry in walkdir(path)? {
-            files_scanned += 1;
-            let file_path = entry.as_path();
+        for file_path in files {
+            let file = file_path.to_string_lossy().to_string();
 
-            // Check file extension against forbidden languages
+            // Extension checks are useful even when a file is empty or binary.
             for lang in &self.policy.languages.forbidden {
-                if self.file_matches_language(&file_path.to_string_lossy(), lang) {
-                    let is_excepted = self
-                        .check_exception(&[file_path.to_string_lossy().to_string()], &lang.name);
-                    if !is_excepted {
-                        violations.push(FileViolation {
-                            file: file_path.to_path_buf(),
+                if self.file_matches_language(&file, lang)
+                    && !self.check_exception(std::slice::from_ref(&file), &lang.name)
+                {
+                    push_unique_violation(
+                        &mut violations,
+                        FileViolation {
+                            file: file_path.clone(),
                             violation: ViolationType::ForbiddenLanguage {
                                 language: lang.name.clone(),
-                                file: file_path.to_string_lossy().to_string(),
+                                file: file.clone(),
                                 context: "File extension".to_string(),
                             },
-                        });
-                    }
+                        },
+                    );
                 }
             }
 
-            // Check tier2 languages
             for lang in &self.policy.languages.tier2 {
-                if self.file_matches_language(&file_path.to_string_lossy(), lang) {
-                    concerns.push(FileConcern {
-                        file: file_path.to_path_buf(),
-                        concern: ConcernType::Tier2Language {
-                            language: lang.name.clone(),
+                if self.file_matches_language(&file, lang)
+                    && !self.check_exception(std::slice::from_ref(&file), &lang.name)
+                {
+                    push_unique_concern(
+                        &mut concerns,
+                        FileConcern {
+                            file: file_path.clone(),
+                            concern: ConcernType::Tier2Language {
+                                language: lang.name.clone(),
+                            },
                         },
-                    });
+                    );
                 }
+            }
+
+            // Invalid UTF-8 is still scanned by path; content rules apply to
+            // text files only because the proposal contract is UTF-8 text.
+            let content = match fs::read_to_string(&file_path) {
+                Ok(content) => content,
+                Err(error) if error.kind() == std::io::ErrorKind::InvalidData => continue,
+                Err(error) => return Err(OracleError::IoError(error)),
+            };
+
+            let proposal = Proposal {
+                id: Uuid::new_v4(),
+                action_type: ActionType::CreateFile { path: file.clone() },
+                content,
+                files_affected: vec![file.clone()],
+                llm_confidence: 1.0,
+            };
+            let evaluation = self.check_proposal(&proposal)?;
+
+            for violation in evaluation.violations {
+                push_unique_violation(
+                    &mut violations,
+                    FileViolation {
+                        file: file_path.clone(),
+                        violation: violation.violation_type,
+                    },
+                );
+            }
+            for concern in evaluation.concerns {
+                push_unique_concern(
+                    &mut concerns,
+                    FileConcern {
+                        file: file_path.clone(),
+                        concern: concern.concern_type,
+                    },
+                );
             }
         }
 
-        let verdict = if !violations.is_empty() {
-            PolicyVerdict::HardViolation(violations[0].violation.clone())
-        } else if !concerns.is_empty() {
-            PolicyVerdict::SoftConcern(concerns[0].concern.clone())
+        let verdict = if let Some(first) = violations.first() {
+            PolicyVerdict::HardViolation(first.violation.clone())
+        } else if let Some(first) = concerns.first() {
+            PolicyVerdict::SoftConcern(first.concern.clone())
         } else {
             PolicyVerdict::Compliant
         };
@@ -467,36 +547,114 @@ impl Oracle {
     }
 }
 
-// Simple directory walker
-fn walkdir(path: &Path) -> Result<Vec<PathBuf>, OracleError> {
+fn compile_patterns(patterns: &[String]) -> Result<Vec<Pattern>, OracleError> {
+    patterns
+        .iter()
+        .map(|pattern| {
+            Pattern::new(pattern).map_err(|error| OracleError::GlobError(error.to_string()))
+        })
+        .collect()
+}
+
+fn collect_files(
+    root: &Path,
+    current: &Path,
+    options: &ScanOptions,
+    include: &[Pattern],
+    exclude: &[Pattern],
+    depth: usize,
+) -> Result<Vec<PathBuf>, OracleError> {
+    if !current.exists() {
+        return Ok(Vec::new());
+    }
+
+    if current.is_file() {
+        return if matches_scan_patterns(root, current, include, exclude) {
+            Ok(vec![current.to_path_buf()])
+        } else {
+            Ok(Vec::new())
+        };
+    }
+
+    if options
+        .max_depth
+        .is_some_and(|max_depth| depth >= max_depth)
+    {
+        return Ok(Vec::new());
+    }
+
+    let mut entries = fs::read_dir(current)?
+        .map(|entry| entry.map(|entry| entry.path()))
+        .collect::<Result<Vec<_>, _>>()?;
+    entries.sort();
+
     let mut files = Vec::new();
-
-    if path.is_file() {
-        files.push(path.to_path_buf());
-        return Ok(files);
-    }
-
-    if !path.exists() {
-        return Ok(files);
-    }
-
-    for entry in fs::read_dir(path)? {
-        let entry = entry?;
-        let entry_path = entry.path();
-
+    for entry_path in entries {
         let name = entry_path.file_name().unwrap_or_default().to_string_lossy();
-        if name.starts_with('.') || name == "node_modules" || name == "target" || name == "_build" {
+        let is_hidden = name.starts_with('.');
+        let is_generated =
+            name == "node_modules" || name == "target" || name == "_build" || name == ".git";
+
+        if is_generated || (is_hidden && !options.include_hidden) {
+            continue;
+        }
+        if matches_any_scan_pattern(root, &entry_path, exclude) {
             continue;
         }
 
         if entry_path.is_dir() {
-            files.extend(walkdir(&entry_path)?);
-        } else {
+            files.extend(collect_files(
+                root,
+                &entry_path,
+                options,
+                include,
+                exclude,
+                depth + 1,
+            )?);
+        } else if matches_scan_patterns(root, &entry_path, include, &[]) {
             files.push(entry_path);
         }
     }
 
     Ok(files)
+}
+
+fn matches_scan_patterns(
+    root: &Path,
+    path: &Path,
+    include: &[Pattern],
+    exclude: &[Pattern],
+) -> bool {
+    !matches_any_scan_pattern(root, path, exclude)
+        && (include.is_empty() || matches_any_scan_pattern(root, path, include))
+}
+
+fn matches_any_scan_pattern(root: &Path, path: &Path, patterns: &[Pattern]) -> bool {
+    let relative = path.strip_prefix(root).unwrap_or(path);
+    let file_name = path.file_name().unwrap_or_default();
+    let candidates = [relative, path, Path::new(file_name)];
+    patterns.iter().any(|pattern| {
+        candidates
+            .iter()
+            .any(|candidate| pattern.matches_path(candidate))
+    })
+}
+
+fn push_unique_violation(violations: &mut Vec<FileViolation>, candidate: FileViolation) {
+    if !violations.iter().any(|existing| {
+        existing.file == candidate.file && existing.violation == candidate.violation
+    }) {
+        violations.push(candidate);
+    }
+}
+
+fn push_unique_concern(concerns: &mut Vec<FileConcern>, candidate: FileConcern) {
+    if !concerns
+        .iter()
+        .any(|existing| existing.file == candidate.file && existing.concern == candidate.concern)
+    {
+        concerns.push(candidate);
+    }
 }
 
 // ============ Default Policy ============
@@ -1061,5 +1219,65 @@ mod tests {
 
         let result = oracle.check_proposal(&proposal).unwrap();
         assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
+    }
+
+    #[test]
+    fn test_directory_scan_evaluates_file_content() {
+        let oracle = oracle();
+        let root = std::env::temp_dir().join(format!("conative-scan-{}", Uuid::new_v4()));
+        fs::create_dir_all(&root).unwrap();
+        let file = root.join("notes.txt");
+        fs::write(&file, r#"password = "not-a-real-secret-123""#).unwrap();
+
+        let result = oracle.scan_directory(&root).unwrap();
+
+        assert_eq!(result.files_scanned, 1);
+        assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
+        assert!(result.violations.iter().any(|violation| {
+            matches!(violation.violation, ViolationType::ForbiddenPattern { .. })
+        }));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn test_directory_scan_options_control_hidden_and_depth() {
+        let oracle = oracle();
+        let root = std::env::temp_dir().join(format!("conative-scan-{}", Uuid::new_v4()));
+        fs::create_dir_all(root.join("nested")).unwrap();
+        fs::write(root.join("visible.rs"), "fn main() {}").unwrap();
+        fs::write(root.join(".hidden.ts"), "const x: string = 'blocked'").unwrap();
+        fs::write(root.join("nested/deep.py"), "import os").unwrap();
+
+        let default_result = oracle.scan_directory(&root).unwrap();
+        assert_eq!(default_result.files_scanned, 2);
+
+        let options = ScanOptions {
+            include_hidden: true,
+            max_depth: Some(1),
+            include: vec!["*.ts".to_string()],
+            exclude: Vec::new(),
+        };
+        let filtered_result = oracle.scan_directory_with_options(&root, &options).unwrap();
+        assert_eq!(filtered_result.files_scanned, 1);
+        assert!(matches!(
+            filtered_result.verdict,
+            PolicyVerdict::HardViolation(_)
+        ));
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn test_directory_scan_rejects_invalid_glob() {
+        let oracle = oracle();
+        let options = ScanOptions {
+            include: vec!["[".to_string()],
+            ..ScanOptions::default()
+        };
+
+        assert!(matches!(
+            oracle.scan_directory_with_options(Path::new("."), &options),
+            Err(OracleError::GlobError(_))
+        ));
     }
 }

@@ -25,7 +25,7 @@ use gating_contract::{
     AuditEntry, CategoryStats, ContractRunner, GatingRequest, RedTeamCategory, RedTeamSummary,
     RegressionBaseline, RegressionHarness, TestCase, TestHarness, Verdict,
 };
-use policy_oracle::{ActionType, DirectoryScanResult, Oracle, Policy, Proposal};
+use policy_oracle::{ActionType, DirectoryScanResult, Oracle, Policy, Proposal, ScanOptions};
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
@@ -419,17 +419,24 @@ fn main() {
         Commands::Scan {
             path,
             format,
-            include_hidden: _,
-            depth: _,
-            include: _,
-            exclude: _,
+            include_hidden,
+            depth,
+            include,
+            exclude,
         } => {
+            let scan_options = ScanOptions {
+                include_hidden,
+                max_depth: (depth != 0).then_some(depth),
+                include,
+                exclude,
+            };
             if cli.dry_run {
                 println!("[dry-run] Would scan: {}", path.display());
                 println!("[dry-run] Format: {:?}", format);
+                println!("[dry-run] Options: {:?}", scan_options);
                 0
             } else {
-                scan_directory(&oracle, &path, &format, &cli.verbosity)
+                scan_directory(&oracle, &path, &format, &cli.verbosity, &scan_options)
             }
         }
         Commands::Check {
@@ -555,12 +562,13 @@ fn scan_directory(
     path: &Path,
     format: &OutputFormat,
     verbosity: &Verbosity,
+    options: &ScanOptions,
 ) -> i32 {
     if matches!(verbosity, Verbosity::Verbose | Verbosity::Debug) {
         eprintln!("Scanning: {}", path.display());
     }
 
-    match oracle.scan_directory(path) {
+    match oracle.scan_directory_with_options(path, options) {
         Ok(result) => {
             match format {
                 OutputFormat::Json => {
