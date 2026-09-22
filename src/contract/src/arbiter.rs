@@ -186,13 +186,15 @@ impl ArbiterClient {
         Ok(Some(Self::new(&parts, DEFAULT_ARBITER_TIMEOUT)?))
     }
 
-    /// Ask the arbiter for a consensus decision.
+    /// Ask a short-lived arbiter process for one consensus decision.
     ///
-    /// If the arbiter closes its input before the request is fully written,
-    /// the response still determines the outcome: no response returns
-    /// [`ArbiterError::Closed`], while malformed output returns
-    /// [`ArbiterError::Malformed`]. Other request-write failures return
-    /// [`ArbiterError::Transport`].
+    /// A decision is returned only when the response uses protocol v1, matches
+    /// the generated request ID, and confirms that its audit record persisted.
+    /// If the arbiter closes its input before the request is written, response
+    /// handling still classifies an empty reply as [`ArbiterError::Closed`] or
+    /// malformed output as [`ArbiterError::Malformed`]. Other process I/O
+    /// failures return [`ArbiterError::Transport`], and an unresponsive arbiter
+    /// returns [`ArbiterError::Timeout`].
     pub fn decide(
         &self,
         llm_confidence: f64,
