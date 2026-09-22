@@ -1,0 +1,256 @@
+# This workflow is managed by gh actions-lock.
+# SPDX-License-Identifier: MPL-2.0
+# This workflow is managed by gh actions-lock.
+# This workflow is managed by gh actions-lock.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux x86_64
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            artifact: bunsenite
+            archive: tar.gz
+          # Linux aarch64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            artifact: bunsenite
+            archive: tar.gz
+            cross: true
+          # macOS x86_64 (use macos-15-intel for Intel-based runner)
+          - target: x86_64-apple-darwin
+            os: macos-15-intel
+            artifact: bunsenite
+            archive: tar.gz
+          # macOS aarch64 (Apple Silicon)
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            artifact: bunsenite
+            archive: tar.gz
+          # Windows x86_64
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            artifact: bunsenite.exe
+            archive: zip
+
+    steps:
+      - uses: actions/checkout@v6.0.1
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross (for cross-compilation)
+        if: matrix.cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Install Zig
+        uses: goto-bus-stop/setup-zig@v2.2.1
+        with:
+          version: 0.11.0
+
+      - name: Build Rust (native)
+        if: ${{ !matrix.cross }}
+        run: cargo build --release --features full --target ${{ matrix.target }}
+
+      - name: Build Rust (cross)
+        if: matrix.cross
+        run: cross build --release --features full --target ${{ matrix.target }}
+
+      - name: Prepare Rust library for Zig (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p target/release
+          cp target/${{ matrix.target }}/release/libbunsenite.* target/release/ || true
+
+      - name: Prepare Rust library for Zig (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path target/release
+          Copy-Item target/${{ matrix.target }}/release/bunsenite.* target/release/ -ErrorAction SilentlyContinue
+
+      - name: Build Zig FFI (Unix)
+        if: runner.os != 'Windows' && !matrix.cross
+        run: cd zig && zig build -Doptimize=ReleaseFast
+
+      # Skip Zig FFI on Windows - requires import library setup
+      # - name: Build Zig FFI (Windows)
+      #   if: runner.os == 'Windows'
+      #   run: cd zig && zig build -Doptimize=ReleaseFast
+
+      - name: Prepare archive (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/${{ matrix.artifact }} dist/
+          cp zig/zig-out/lib/libbunsenite.* dist/ || true
+          cp README.adoc LICENSE.txt dist/
+          cd dist && tar -czvf ../bunsenite-${{ github.ref_name }}-${{ matrix.target }}.${{ matrix.archive }} *
+
+      - name: Prepare archive (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Copy-Item target/${{ matrix.target }}/release/${{ matrix.artifact }} dist/
+          Copy-Item zig/zig-out/lib/bunsenite.* dist/ -ErrorAction SilentlyContinue
+          Copy-Item README.adoc,LICENSE.txt dist/
+          Compress-Archive -Path dist/* -DestinationPath bunsenite-${{ github.ref_name }}-${{ matrix.target }}.${{ matrix.archive }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: bunsenite-${{ matrix.target }}
+          path: bunsenite-*.${{ matrix.archive }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - uses: actions/checkout@v6.0.1
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4.1.8
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: find artifacts -type f
+
+      - name: Create checksums
+        run: |
+          cd artifacts
+          find . -name "bunsenite-*" -type f -exec sha256sum {} \; > ../SHA256SUMS.txt
+          cat ../SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          files: |
+            artifacts/**/*
+            SHA256SUMS.txt
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## Bunsenite ${{ github.ref_name }}
+
+            Nickel configuration file parser with multi-language FFI bindings.
+
+            ### Installation
+
+            **Cargo (Rust):**
+            ```bash
+            cargo install bunsenite
+            ```
+
+            **Homebrew (macOS):**
+            ```bash
+            brew install bunsenite
+            ```
+
+            **Download binaries:**
+            See assets below for pre-built binaries.
+
+            ### Features
+            - Parse and evaluate Nickel configuration files
+            - Watch mode for live reloading
+            - Interactive REPL
+            - JSON Schema validation
+            - FFI bindings for Deno, AffineScript, Node.js
+
+            RSR Compliance: Bronze Tier | TPCF Perimeter: 3
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2.4.0
+        with:
+          subject-path: |
+            artifacts/**/*
+            SHA256SUMS.txt
+
+  publish-crates:
+    name: Publish to crates.io
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v6.0.1
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@v1
+
+      - name: Package crate
+        run: cargo package
+
+      - name: Attest crate provenance
+        uses: actions/attest-build-provenance@v2.4.0
+        with:
+          subject-path: 'target/package/*.crate'
+
+      - name: Publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --no-verify
+        continue-on-error: true
+
+  publish-npm:
+    name: Publish to npm
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish to npm
+        working-directory: bindings/affinescript
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
+        continue-on-error: true

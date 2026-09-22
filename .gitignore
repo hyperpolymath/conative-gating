@@ -19,7 +19,10 @@ Thumbs.db
 
 # Dependencies
 /node_modules/
-/vendor/
+# /vendor/ is ignored except the reviewed Bunsenite vendor fork used by the
+# `nickel` feature (see vendor/bunsenite/VENDOR.adoc)
+/vendor/*
+!/vendor/bunsenite/
 /deps/
 /.elixir_ls/
 

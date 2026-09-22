@@ -332,6 +332,9 @@ Copyright (C) 2025 Jonathan D.A. Jewell
 * link:docs/ARCHITECTURE.md[Full Architecture Specification]
 * link:docs/MAAF_INTEGRATION.adoc[MAAF Integration]
 * link:docs/STATE_ECOSYSTEM_SCHEMA.adoc[STATE/ECOSYSTEM Schema]
+* link:docs/NICKEL-POLICY.adoc[Native Nickel Policy Backend]
+* link:docs/SLM_PROVIDERS.adoc[SLM Provider Backends]
+* link:docs/ARBITER_PROTOCOL.adoc[Consensus Arbiter Protocol]
 
 
 == Architecture

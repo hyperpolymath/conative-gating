@@ -13,4 +13,17 @@ serde_json.workspace = true
 uuid.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
-# llama-cpp-2 = "0.1"  # Uncomment when ready for SLM integration
+# Optional blocking HTTPS client for the remote (OpenAI-compatible) SLM
+# provider. Rustls only: no native TLS system dependency is introduced.
+reqwest = { version = "0.12", default-features = false, features = [
+    "blocking",
+    "rustls-tls",
+    "json",
+], optional = true }
+# llama-cpp-2 = "0.1"  # Uncomment when ready for in-process SLM integration
+
+[features]
+# Remote SLM provider over HTTPS. Off by default; local llama.cpp provider
+# works without it.
+default = []
+http = ["dep:reqwest"]

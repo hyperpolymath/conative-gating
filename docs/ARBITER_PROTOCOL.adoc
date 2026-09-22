@@ -1,0 +1,103 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= Consensus Arbiter Protocol (v1)
+:toc:
+
+The OTP consensus arbiter (`src/arbiter/`) is a standalone Elixir escript
+consuming newline-delimited JSON on stdin and answering on stdout. The
+Rust client (`src/contract/src/arbiter.rs`) spawns one process per
+decision; both sides fail closed.
+
+== Wire format
+
+=== Request
+
+[source,json]
+----
+{"protocol_version":1,"request_id":"<opaque correlation id, non-empty>",
+ "llm":{"confidence":0.95},
+ "slm":{"violation_confidence":0.05},
+ "oracle":{"verdict":"allow|soft_concern|hard_violation"}}
+----
+
+* `protocol_version` — must be integer `1`; any other version is a
+  protocol error (unknown versions never yield Allow).
+* `request_id` — non-empty; echoed verbatim in the response and the audit
+  record. Empty/missing ids are rejected.
+* `llm.confidence`, `slm.violation_confidence` — numbers in `[0, 1]`
+  (integers are coerced). Out-of-range values are rejected.
+* `oracle.verdict` — one of `allow`, `soft_concern`, `hard_violation`.
+
+=== Response (decision)
+
+[source,json]
+----
+{"protocol_version":1,"request_id":"…",
+ "verdict":"allow|escalate|block","reason":"…","audit_recorded":true}
+----
+
+`audit_recorded` is `true` iff the decision was durably appended to the
+audit log **before** the response was written (flush before ack).
+
+=== Response (service error)
+
+[source,json]
+----
+{"protocol_version":1,"request_id":"…","error":"…"}
+----
+
+Produced for malformed input, unsupported versions, and **any audit
+persistence failure**. No `verdict` key is ever present in a service
+error.
+
+== Decision matrix (consensus)
+
+* `hard_violation` → **block** (terminal; mirroring the Rust oracle).
+* `no_go = violation_confidence × 1.5 (SLM weight)`; `soft_concern` adds
+  0.2 to `no_go`.
+* `no_go >= 0.9` → **block**.
+* `llm.confidence <= 0.8` or `no_go >= 0.4` → **escalate**.
+* otherwise → the oracle verdict stands (allow / soft concern).
+
+The asymmetric matrix (SLM votes count 1.5× because abstaining is cheap
+and false-allows are expensive) is documented in
+`lib/conative_gating/consensus_arbiter.ex`.
+
+== Fail-closed guarantees
+
+* Malformed / wrong-version / out-of-range input → service error, never a
+  verdict; **no audit record is written for protocol errors** (the request
+  was never a decision).
+* Audit sink unavailable or a persistence failure at record time → service
+  error; neither an ack nor a verdict is emitted.
+* Exactly one audit record per accepted request (flush before ack —
+  enforced by design; the Rust client requires `audit_recorded: true`).
+* The audit record contains decision metadata only (ids, votes, verdict,
+  reason) — **no proposal content** is ever persisted.
+
+== Audit log (OTP sink)
+
+* One JSONL record per decision at `CONATIVE_AUDIT_PATH`
+  (default `./conative-gating-audit.jsonl`; the test env isolates this
+  under `_build/test/`).
+* Rotation: when the file exceeds `CONATIVE_AUDIT_MAX_BYTES`
+  (default 10 MiB), it is renamed to `<path>.1` before the next append
+  (last-generation retention; ship/rotate further in ops if required).
+* Invalid `CONATIVE_AUDIT_*` values fail closed at boot — a misconfigured
+  arbiter never silently runs without its sink.
+* In-memory history is bounded (last N records) for diagnostics.
+
+Hardening backlog (deliberately ops-owned, see
+`docs/UPSTREAM-DELIVERY.adoc`): file permissions/ownership policy,
+cross-process append locking for multi-instance deployments, disk-full
+behaviour drills, log shipping/backup, and optional tamper evidence
+(hash chaining) are documented there; the single-instance semantics above
+are the tested floor.
+
+== Concurrency
+
+One arbiter process per decision-stream; requests are answered in order.
+The Rust-side concurrency property (no correlation-ID mixing across
+in-flight requests) is tested in `tests/generative_test.rs` at the
+contract layer; the escript is single-request-stream per process, so
+cross-request mixing is structurally impossible.

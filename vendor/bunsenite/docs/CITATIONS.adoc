@@ -1,0 +1,38 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= bunsenite - Citation Guide
+:toc:
+
+== BibTeX
+
+[source,bibtex]
+----
+@software{bunsenite_2026,
+  author = {Jewell, Jonathan D.A.},
+  title = {bunsenite},
+  year = {2026},
+  url = {https://github.com/hyperpolymath/bunsenite},
+  license = {MPL-2.0}
+}
+----
+
+== Harvard Style
+
+Jewell, J.D.A. (2026) _bunsenite_ [Computer software]. Available at: https://github.com/hyperpolymath/bunsenite
+
+== OSCOLA
+
+Jonathan D.A. Jewell, 'bunsenite' (2026) <https://github.com/hyperpolymath/bunsenite>
+
+== MLA
+
+Jewell, Jonathan D.A. "bunsenite." 2026, github.com/hyperpolymath/bunsenite.
+
+== APA 7
+
+Jewell, J.D.A. (2026). _bunsenite_ [Computer software]. GitHub. https://github.com/hyperpolymath/bunsenite
+
+== See Also
+
+* link:../CITATION.cff[CITATION.cff]
+* link:../codemeta.json[codemeta.json]

@@ -269,7 +269,10 @@ NOTE: The `wordpress-wharf` (gitlab) and `wharf` (github) repositories need reco
 
 **Purpose**: Cross-language Nickel configuration loader with FFI bindings.
 
-**Repository**: https://gitlab.com/campaign-for-cooler-coding-and-programming/bunsenite
+**Repository**: https://gitlab.com/hyperpolymath/bunsenite (canonical;
+the former `campaign-for-cooler-coding-and-programming/bunsenite` path is
+a stale mirror — conative-gating vendors the canonical tree under
+`vendor/bunsenite/`, see `vendor/bunsenite/VENDOR.adoc`)
 
 **Key Features**:
 * Robust Nickel parsing via `nickel-lang-core`

@@ -1,0 +1,54 @@
+# Maintainer: Campaign for Cooler Coding and Programming
+# Arch Linux PKGBUILD for bunsenite
+
+pkgname=bunsenite
+pkgver=1.0.2
+pkgrel=1
+pkgdesc="Nickel configuration file parser with multi-language FFI bindings"
+arch=('x86_64' 'aarch64')
+url="https://github.com/hyperpolymath/bunsenite"
+license=('PMPL-1.0' 'custom:Palimpsest-0.8')
+depends=('gcc-libs')
+makedepends=('rust' 'cargo' 'zig')
+optdepends=(
+    'deno: For Deno TypeScript bindings'
+)
+provides=('bunsenite')
+conflicts=('bunsenite-git')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/hyperpolymath/bunsenite/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "$pkgname-$pkgver"
+
+    # Build Rust library and CLI with all features
+    cargo build --release --features full
+
+    # Build Zig FFI layer
+    cd zig
+    zig build -Doptimize=ReleaseFast
+}
+
+check() {
+    cd "$pkgname-$pkgver"
+    cargo test --release
+}
+
+package() {
+    cd "$pkgname-$pkgver"
+
+    # Install binary
+    install -Dm755 "target/release/bunsenite" "$pkgdir/usr/bin/bunsenite"
+
+    # Install shared library
+    install -Dm755 "zig/zig-out/lib/libbunsenite.so" "$pkgdir/usr/lib/libbunsenite.so"
+
+    # Install Rust library
+    install -Dm644 "target/release/libbunsenite.rlib" "$pkgdir/usr/lib/libbunsenite.rlib"
+
+    # Install license
+    install -Dm644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE.txt"
+
+    # Install documentation
+    install -Dm644 README.adoc "$pkgdir/usr/share/doc/$pkgname/README.adoc"
+}

@@ -1,0 +1,116 @@
+# SPDX-License-Identifier: MPL-2.0
+name: SLM Real Inference
+# Real-model smoke tests. Artifacts are pinned + SHA-256 verified and are
+# never committed to the repository (see .ci-artifact-pins.txt).
+#
+# - `local-gguf`: pinned llama.cpp binary + pinned Qwen2.5-0.5B GGUF, runs the
+#   ignored llama-cli round-trip AND the HTTP adapter against a loopback
+#   llama-server. Safe on every PR: no secrets involved.
+# - `remote-provider`: the live remote-provider smoke. Runs ONLY on
+#   workflow_dispatch or pushes to the protected main branch of the upstream
+#   repository, inside the `slm-remote-production` GitHub Environment (which
+#   holds CONATIVE_SLM_ENDPOINT / CONATIVE_SLM_MODEL_NAME / SLM_API_KEY and
+#   requires reviewer approval). Never on pull requests — fork PR code must
+#   never see these secrets.
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  local-gguf:
+    name: Local GGUF (pinned llama.cpp + pinned model)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      LLAMA_CPP_UBUNTU_X64_URL: https://github.com/ggml-org/llama.cpp/releases/download/b11100/llama-b11100-bin-ubuntu-x64.tar.gz
+      LLAMA_CPP_UBUNTU_X64_SHA256: a836c913236ab4533ef9aaf49f0e1ad2955c8159869d7eec1a9072a92e13d61b
+      GGUF_MODEL_URL: https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf
+      GGUF_MODEL_SHA256: 74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2
+        with:
+          key: slm-real-inference
+      - name: Cache pinned artifacts
+        id: artifacts
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ runner.temp }}/slm-artifacts
+          key: slm-artifacts-${{ env.LLAMA_CPP_UBUNTU_X64_SHA256 }}-${{ env.GGUF_MODEL_SHA256 }}
+      - name: Download + verify llama.cpp binary
+        if: steps.artifacts.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/slm-artifacts"
+          cd "$RUNNER_TEMP/slm-artifacts"
+          curl -fsSL --retry 3 -o llama-cli.tar.gz "$LLAMA_CPP_UBUNTU_X64_URL"
+          echo "$LLAMA_CPP_UBUNTU_X64_SHA256  llama-cli.tar.gz" | sha256sum -c -
+          mkdir -p bin && tar xzf llama-cli.tar.gz -C bin --strip-components=1
+      - name: Download + verify GGUF model
+        if: steps.artifacts.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/slm-artifacts"
+          curl -fsSL --retry 3 -o model.gguf "$GGUF_MODEL_URL"
+          echo "$GGUF_MODEL_SHA256  model.gguf" | sha256sum -c -
+      - name: llama-cli round-trip (real model, ignored-by-default test)
+        run: |
+          set -euo pipefail
+          export LD_LIBRARY_PATH="$RUNNER_TEMP/slm-artifacts/bin"
+          export CONATIVE_LLAMA_CLI="$RUNNER_TEMP/slm-artifacts/bin/llama-cli"
+          export CONATIVE_GGUF_MODEL="$RUNNER_TEMP/slm-artifacts/model.gguf"
+          cargo test -p slm-evaluator --test real_inference real_llama -- --ignored --nocapture
+      - name: HTTP adapter round-trip via loopback llama-server
+        run: |
+          set -euo pipefail
+          export LD_LIBRARY_PATH="$RUNNER_TEMP/slm-artifacts/bin"
+          "$RUNNER_TEMP/slm-artifacts/bin/llama-server" \
+            -m "$RUNNER_TEMP/slm-artifacts/model.gguf" \
+            --host 127.0.0.1 --port 18080 -t 4 -c 2048 --log-disable &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 120); do
+            curl -fsS http://127.0.0.1:18080/health >/dev/null 2>&1 && break
+            sleep 1
+          done
+          export CONATIVE_SLM_ENDPOINT=http://127.0.0.1:18080
+          cargo test -p slm-evaluator --features http --test real_inference real_http -- --ignored --nocapture
+  remote-provider:
+    name: Remote provider (protected environment, approval-gated)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    environment: slm-remote-production
+    # Never on pull requests (fork code must never touch secrets); never on
+    # forks of the repository. Only dispatched runs or protected main pushes.
+    if: >-
+      github.repository == 'hyperpolymath/conative-gating' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2
+        with:
+          key: slm-remote-provider
+      - name: Remote provider round-trip (creds from Environment secrets)
+        env:
+          CONATIVE_SLM_ENDPOINT: ${{ secrets.CONATIVE_SLM_ENDPOINT }}
+          CONATIVE_SLM_MODEL_NAME: ${{ secrets.CONATIVE_SLM_MODEL_NAME }}
+          SLM_API_KEY: ${{ secrets.SLM_API_KEY }}
+        run: |
+          set -euo pipefail
+          : "${CONATIVE_SLM_ENDPOINT:?set in the slm-remote-production environment}"
+          : "${SLM_API_KEY:?set in the slm-remote-production environment}"
+          cargo test -p slm-evaluator --features http --test real_inference real_http -- --ignored --nocapture

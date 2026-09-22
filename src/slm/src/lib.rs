@@ -16,6 +16,21 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
 
+/// Provider adapters for local and remote SLM backends.
+pub mod provider;
+
+/// Optional remote (OpenAI-compatible HTTPS) provider.
+#[cfg(feature = "http")]
+pub mod http;
+
+pub use provider::{
+    build_prompt, from_env, parse_verdict, LlamaCppProvider, ProviderVerdict, SlmProvider,
+    SlmRequest,
+};
+
+#[cfg(feature = "http")]
+pub use http::HttpSlmProvider;
+
 /// SLM evaluation result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SlmEvaluation {
@@ -44,6 +59,20 @@ pub enum SlmError {
     ModelNotLoaded,
     #[error("Inference error: {0}")]
     InferenceError(String),
+    /// Provider is not (or is wrongly) configured, e.g. missing model path,
+    /// missing endpoint, or a requested feature that was not compiled in.
+    #[error("SLM provider not configured: {0}")]
+    NotConfigured(String),
+    /// The provider did not answer within its timeout.
+    #[error("SLM provider timeout: {0}")]
+    Timeout(String),
+    /// Spawn/transport failure (process spawn, exit status, HTTP transport).
+    #[error("SLM provider transport failure: {0}")]
+    Transport(String),
+    /// The provider answered, but the answer failed contract validation
+    /// (non-JSON, schema mismatch, out-of-range scores). Always fail-closed.
+    #[error("SLM provider returned an invalid response: {0}")]
+    InvalidResponse(String),
 }
 
 impl SlmEvaluator {

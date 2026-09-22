@@ -34,12 +34,16 @@ Development roadmap for the SLM-as-Cerebellum policy enforcement system.
 | compliant/violations/edge_cases
 
 | SLM Evaluator
-| [yellow]#*PLACEHOLDER*#
-| Interface defined, needs llama.cpp
+| [green]#*BACKENDS LANDED*#
+| Real `llama-cli` + HTTP providers, contract-verified; model calibration open
 
 | Consensus Arbiter
-| [yellow]#*STARTED*#
-| GenServer skeleton, Application module, decide/3 logic
+| [green]#*BACKENDS LANDED*#
+| Protocol v1 escript + durable audit sink + Rust client; ops hardening open
+
+| Native Nickel policies
+| [green]#*FEATURE LANDED*#
+| Vendored Bunsenite backend; CI-verified build (memory-gated)
 
 | LLM Integration
 | [red]#*NOT STARTED*#

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 # Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
-# SPDX-FileCopyrightText: 2025 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+# SPDX-FileCopyrightText: 2025 Jonathan D.A. Jewell <jonathan@hyperpolymath.org>
 
 defmodule ConativeGating.MixProject do
   use Mix.Project
@@ -12,6 +12,7 @@ defmodule ConativeGating.MixProject do
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      escript: escript(),
       description: "Consensus Arbiter for Conative Gating",
       package: package()
     ]
@@ -19,9 +20,13 @@ defmodule ConativeGating.MixProject do
 
   def application do
     [
-      extra_applications: [:logger],
+      extra_applications: [:logger, :crypto],
       mod: {ConativeGating.Application, []}
     ]
+  end
+
+  defp escript do
+    [main_module: ConativeGating.CLI, name: "conative_arbiter"]
   end
 
   defp deps do

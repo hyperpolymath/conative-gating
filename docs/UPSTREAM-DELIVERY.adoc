@@ -1,0 +1,70 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= Upstream Delivery Notes (2026-09-22 rebuild)
+:toc:
+
+State of the feature set delivered by the
+`agent/native-nickel-slm-arbiter` branch, and what remains ops-owned.
+
+== Delivered
+
+* **Native Nickel backend** — vendored Bunsenite @ `f788de39…`
+  (default-features-off `nickel-lang-core 0.18.0`), `nickel` feature,
+  fail-closed import rejection, `Policy::from_policy_file` dispatch.
+  Verified by the `nickel-native` CI job (the parser cannot build under
+  ~2 GB — see `docs/NICKEL-POLICY.adoc`).
+* **SLM provider layer** — `SlmProvider` trait, verdict contract +
+  correlation preservation, `LlamaCppProvider` (`--single-turn` hardened),
+  `HttpSlmProvider` (`--features http`, https-or-loopback, `SLM_API_KEY`
+  env-only), `from_env()` selection, CLI `eval --slm` (loud exit 3 on
+  misconfiguration).
+* **Contract integration** — `evaluate_with_provider` (oracle Block
+  terminal, provider never called; Warn addend; threshold matrix;
+  provider failure → non-overridable `Sys902` Escalate), Rust arbiter
+  client with enforced `audit_recorded: true`.
+* **OTP arbiter** — protocol v1 decode/validate/encode, consensus
+  decision matrix (SLM weight 1.5, +0.2 soft-concern addend, 0.9/0.4
+  thresholds, `llm.confidence <= 0.8` escalate), stdio server, escript,
+  durable audit sink (JSONL, flush-before-ack, rotation at
+  `CONATIVE_AUDIT_MAX_BYTES`, fail-closed, bounded history, no content).
+* **Tests** — 187 Rust assertions green locally (incl. 22 http-feature,
+  11 generative/proptest covering terminality, threshold arithmetic at
+  0/1, low-confidence escalation, fail-closed failure modes, determinism,
+  request-ID preservation, concurrency correlation no-mixing), 28 ExUnit
+  tests for the arbiter (CI-verified; no local OTP toolchain existed).
+* **Real-model smokes** — llama-cli + Qwen2.5-0.5B Q4_K_M round-trip
+  (14.1 s on 2 vCPU) and llama-server HTTP round-trip (3.6 s warm), both
+  reproducible via pinned artifacts in `.ci-artifact-pins.txt` and the
+  `slm-real-inference` workflow.
+
+== Ops-owned setup (before merging)
+
+. **Rotate the PAT** used to push this branch
+  (https://github.com/settings/tokens) — it travelled through a chat
+  channel; treat as compromised.
+. **Create the `slm-remote-production` GitHub Environment** with required
+  reviewers and secrets `CONATIVE_SLM_ENDPOINT`, `CONATIVE_SLM_MODEL_NAME`,
+  `SLM_API_KEY`. The remote smoke job is inert until then (by design).
+. **Commit `src/arbiter/mix.lock`** — it cannot be generated without an
+  OTP toolchain; run `mix deps.get` once in `src/arbiter/` on any OTP-27
+  machine and commit the lockfile.
+. Audit-sink hardening for production multi-instance use: decide file
+  permissions/ownership (`umask`), add cross-process append locking if
+  more than one arbiter writes one file, wire log shipping/backup, and
+  consider hash-chained records for tamper evidence. The tested floor
+  (single instance, flush-before-ack, rotation) is documented in
+  `docs/ARBITER_PROTOCOL.adoc`.
+. Watch the first `nickel-native` CI run — it is the authoritative
+  verification vehicle for the feature build.
+
+== Known limitations / deliberate deferrals
+
+* Small-model verdict *quality* is advisory-grade; plumbing is verified,
+  calibration is future work (`docs/SLM_PROVIDERS.adoc` benchmark notes).
+* Nickel multi-file `import` is intentionally unsupported (decision +
+  alternatives in `docs/NICKEL-POLICY.adoc`).
+* `nickel-lang-core` pinned to 0.18.0 per spec; 0.19.0 upgrade is a PR
+  review point.
+* The audit "arbiter restart does not corrupt the log" invariant is
+  covered structurally (append-only JSONL + per-line records) and by the
+  rotation test; a chaos-restart drill belongs with ops hardening above.

@@ -73,3 +73,22 @@ jobs:
         with:
           name: conative-cli
           path: target/release/conative
+  nickel-native:
+    name: Native Nickel policy backend
+    # Dedicated job: nickel-lang-parser does not link-compile under ~2 GB
+    # (OOM-killed, reproduced), so this must run on a full-size hosted
+    # runner (16 GB). The exact command is part of the delivery contract —
+    # do not "optimise" it (single job, no debuginfo, warnings as errors,
+    # lib tests only, locked dependency set).
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2
+        with:
+          key: nickel-native
+      - name: Test policy-oracle with native Nickel (pinned command)
+        run: CARGO_BUILD_JOBS=1 RUSTFLAGS="-C debuginfo=0 -Dwarnings" cargo test -p policy-oracle --features nickel --lib --locked

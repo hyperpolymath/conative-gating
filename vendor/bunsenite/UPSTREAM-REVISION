@@ -1,0 +1,4 @@
+url=https://gitlab.com/hyperpolymath/bunsenite.git
+revision=f788de3950b7541354806299cc8605dcf1608d11
+vendored=2026-09-22
+note=Only the nickel-lang-core dependency line was changed from the upstream tree (default features disabled for the lean embedded build). See VENDOR.adoc.

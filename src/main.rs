@@ -115,7 +115,7 @@ struct Cli {
     #[arg(long, global = true)]
     no_color: bool,
 
-    /// Custom policy file in JSON format (the embedded Nickel file is not loaded at runtime)
+    /// Custom policy file (JSON; native .ncl when built with --features nickel)
     #[arg(short, long, global = true)]
     policy_file: Option<PathBuf>,
 
@@ -335,6 +335,15 @@ enum ContractAction {
         /// Include audit log entry in output
         #[arg(long)]
         audit: bool,
+
+        /// Route the request through the configured SLM provider
+        ///
+        /// Requires CONATIVE_SLM_PROVIDER=llama (with CONATIVE_GGUF_MODEL, and
+        /// optionally CONATIVE_LLAMA_CLI) or CONATIVE_SLM_PROVIDER=http (with
+        /// CONATIVE_SLM_ENDPOINT; SLM_API_KEY for auth; binary built with
+        /// --features slm-http). Provider failures escalate fail-closed.
+        #[arg(long)]
+        slm: bool,
     },
 
     /// Display contract schema information
@@ -514,12 +523,13 @@ fn main() {
                 request,
                 format,
                 audit,
+                slm,
             } => {
                 if cli.dry_run {
                     println!("[dry-run] Would evaluate request: {}", request.display());
                     0
                 } else {
-                    eval_contract_request(&request, &format, audit)
+                    eval_contract_request(&request, &format, audit, slm)
                 }
             }
             ContractAction::Schema { format, section } => {
@@ -567,16 +577,9 @@ fn main() {
 }
 
 fn load_policy_oracle(path: &Path) -> Result<Oracle, String> {
-    let content = std::fs::read_to_string(path).map_err(|error| error.to_string())?;
-    if path.extension().is_some_and(|extension| extension == "ncl") {
-        return Err(
-            "Nickel policy loading is not available in the Rust CLI yet; provide a JSON policy export"
-                .to_string(),
-        );
-    }
-    let policy: Policy = serde_json::from_str(&content)
-        .map_err(|error| format!("invalid JSON policy {}: {error}", path.display()))?;
-    Ok(Oracle::new(policy))
+    // Dispatch lives in the oracle: JSON everywhere, native `.ncl` when the
+    // binary was built with the `nickel` feature — failing closed otherwise.
+    Oracle::from_policy_file(path).map_err(|error| error.to_string())
 }
 
 fn scan_directory(
@@ -1196,7 +1199,12 @@ fn load_test_case_file(path: &Path) -> Result<TestCase, String> {
     })
 }
 
-fn eval_contract_request(request_path: &Path, format: &OutputFormat, include_audit: bool) -> i32 {
+fn eval_contract_request(
+    request_path: &Path,
+    format: &OutputFormat,
+    include_audit: bool,
+    use_slm: bool,
+) -> i32 {
     let content = match std::fs::read_to_string(request_path) {
         Ok(c) => c,
         Err(e) => {
@@ -1214,7 +1222,30 @@ fn eval_contract_request(request_path: &Path, format: &OutputFormat, include_aud
     };
 
     let runner = ContractRunner::new();
-    let decision = match runner.evaluate(&request) {
+    let decision_result = if use_slm {
+        // Explicit request for a live SLM stage: provider configuration is
+        // mandatory, misconfiguration is loud (exit 3), and provider failures
+        // escalate fail-closed inside the contract.
+        match slm_evaluator::from_env() {
+            Ok(Some(provider)) => runner.evaluate_with_provider(&request, provider.as_ref()),
+            Ok(None) => {
+                eprintln!(
+                    "--slm requested but no SLM provider is configured. Set \
+                     CONATIVE_SLM_PROVIDER=llama (+CONATIVE_GGUF_MODEL, CONATIVE_LLAMA_CLI) \
+                     or CONATIVE_SLM_PROVIDER=http (+CONATIVE_SLM_ENDPOINT; SLM_API_KEY; \
+                     build with --features slm-http)."
+                );
+                return 3;
+            }
+            Err(error) => {
+                eprintln!("SLM provider misconfigured: {error}");
+                return 3;
+            }
+        }
+    } else {
+        runner.evaluate(&request)
+    };
+    let decision = match decision_result {
         Ok(d) => d,
         Err(e) => {
             eprintln!("Error evaluating request: {}", e);

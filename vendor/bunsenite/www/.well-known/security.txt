@@ -1,0 +1,31 @@
+# Bunsenite Security Contact Information
+# RFC 9116 Compliant security.txt file
+# https://securitytxt.org/
+
+Contact: https://github.com/hyperpolymath/bunsenite/security/advisories/new
+Contact: https://gitlab.com/hyperpolymath/bunsenite/-/issues/new?issuable_template=security
+Expires: 2026-12-18T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://github.com/hyperpolymath/bunsenite/blob/main/.well-known/security.txt
+Policy: https://github.com/hyperpolymath/bunsenite/blob/main/SECURITY.md
+Acknowledgments: https://github.com/hyperpolymath/bunsenite/blob/main/SECURITY.md#attribution
+
+# Vulnerability Disclosure Program
+#
+# We take security seriously. Please report security vulnerabilities
+# via GitHub Security Advisories (preferred) or confidential GitLab issue.
+#
+# Response Timeline:
+# - Initial response: Within 48 hours
+# - Triage: Within 1 week
+# - Fix: Depends on severity (critical: days, low: weeks)
+# - Public disclosure: Coordinated, typically 90 days after fix
+#
+# Security Guarantees:
+# - Zero unsafe code (#![deny(unsafe_code)])
+# - Rust memory safety (ownership model)
+# - Type safety (compile-time guarantees)
+# - No network dependencies (offline-first)
+# - Minimal attack surface
+#
+# For more information, see: SECURITY.md

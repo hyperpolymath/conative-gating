@@ -1,0 +1,149 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= SLM Provider Backends
+:toc:
+
+`slm-evaluator` evaluates proposals through pluggable **providers**. Two
+real backends ship in this change: a local `llama.cpp` CLI adapter and an
+OpenAI-compatible HTTP adapter (behind the `http` cargo feature).
+
+== The provider contract (verbatim)
+
+Every provider must:
+
+* accept a `SlmRequest` carrying the **correlation ID**
+  (`proposal_id`) of the gating request, plus bounded `content`/`context`
+  (`MAX_CONTENT_CHARS` = 4096, `MAX_CONTEXT_CHARS` = 1024);
+* return a `SlmEvaluation` whose `proposal_id` **echoes the request** —
+  the ID is preserved end-to-end;
+* produce a verdict object with **exactly** the fields
+  `{"spirit_score": 0..1, "confidence": 0..1, "reasoning": string, "should_block": bool}`;
+* be **fail-closed**: timeouts, transport failure, malformed JSON, and
+  out-of-range scores are all `SlmError`s — the gating contract turns any
+  provider error into a non-overridable **Escalate** (`Sys902`), never an
+  Allow.
+
+`evaluate_with_provider` never calls a provider when the deterministic
+oracle already ruled Block — an SLM never re-litigates a terminal oracle
+decision, and proposal content never leaves the process needlessly.
+
+== LlamaCppProvider (local GGUF)
+
+Runs a pinned `llama-cli`:
+
+----
+llama-cli -m MODEL -p PROMPT -n TOKENS --temp 0 --no-display-prompt --single-turn
+----
+
+`--single-turn` is additive to the documented argument set: current
+`llama-cli` nightlies otherwise enter their interactive conversation loop
+and never exit (observed with b11100).
+
+Environment configuration (`LlamaCppProvider::from_env`:
+
+* `CONATIVE_GGUF_MODEL` — path to the GGUF model (required; unset =
+  provider not configured);
+* `CONATIVE_LLAMA_CLI` — executable path (default `llama-cli`);
+* `CONATIVE_SLM_MAX_TOKENS` — per-request decoding budget (default 256 —
+  small instruct models were observed truncated mid-JSON at 128);
+* `CONATIVE_SLM_TIMEOUT_SECS` — timeout (default 120).
+
+== HttpSlmProvider (OpenAI-compatible, `--features http`)
+
+Feature-gated. `reqwest` (blocking, rustls) to
+`{CONATIVE_SLM_ENDPOINT}/v1/chat/completions`.
+
+* `CONATIVE_SLM_ENDPOINT` — endpoint origin, e.g. `https://slm.example.com`
+  (required; **https, or loopback for development** — plain http to a
+  non-loopback host is refused at construction);
+* `CONATIVE_SLM_MODEL_NAME` — model id (default `local-slm`);
+* `SLM_API_KEY` — bearer token, **read from the environment only**, never
+  logged, never sent anywhere but the configured endpoint;
+* `CONATIVE_SLM_MAX_TOKENS` / `CONATIVE_SLM_TIMEOUT_SECS` as above.
+
+A loopback `llama-server` satisfies this adapter for development/CI:
+
+----
+llama-server -m model.gguf --host 127.0.0.1 --port 18080 &
+export CONATIVE_SLM_ENDPOINT=http://127.0.0.1:18080
+----
+
+== Pinned CI artifacts (SHA-256 verified, never committed)
+
+Recorded in `.ci-artifact-pins.txt`; downloaded + verified in the
+`slm-real-inference` workflow:
+
+[cols="2,3,1", options="header"]
+|===
+|Artifact |Source pinned |SHA-256
+
+|llama.cpp b11100 ubuntu-x64 binary
+|`github.com/ggml-org/llama.cpp` release `b11100`
+|`a836c913236ab4533ef9aaf49f0e1ad2955c8159869d7eec1a9072a92e13d61b`
+
+|Qwen2.5-0.5B-Instruct Q4_K_M GGUF
+|`huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF` @ `9217f5db…`
+|`74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db`
+|===
+
+Model choice note: `SmolLM2-135M-Instruct` (Q4_K_M) was tried first for
+size (105 MB) and **rejected empirically**: at `--temp 0` it emits
+`"spirit_score": 0.000000…` indefinitely and never closes the verdict
+object within the token budget. Qwen2.5-0.5B produces a valid verdict on
+the first attempt. The parser nevertheless scans *all* balanced objects
+and accepts the last schema-valid one, because current `llama-cli`
+pollutes stdout with a banner and a prompt echo containing the invalid
+template object. Fail-closed behaviour is unchanged.
+
+== Benchmarks (measured, 2 vCPU / 2 GB sandbox, 2026-09-22)
+
+[cols="2,2,3", options="header"]
+|===
+|Backend |Latency |Notes
+
+|llama-cli, Qwen2.5-0.5B Q4_K_M
+|*14.1 s* end-to-end (`temp 0`, 128-token answer)
+|includes process spawn + model mmap; generation ≈ 15 tok/s, prompt
+processing ≈ 80 tok/s
+
+|llama-server loopback, same model
+|*3.6 s* warm per evaluation
+|server amortises model load; identical deterministic verdict
+
+|SmolLM2-135M Q4_K_M
+|fails contract
+|token-loop (see above); kept out of CI
+|===
+
+These are floor numbers from a deliberately tiny environment; the CI
+runner (4 vCPU/16 GB) is expected to be several times faster. The gating
+CLI enforces the provider timeout regardless of wall-clock here.
+Verdict *quality* of a 0.5B model is advisory-grade only (it scored a
+clean hello-world 0.9 violation-confidence once) — treat small-model
+verdicts as a signal that must be backed by the oracle's hard rules and
+human escalation paths.
+
+== Running the real smoke tests
+
+----
+# local GGUF
+CONATIVE_LLAMA_CLI=./llama-cli CONATIVE_GGUF_MODEL=./model.gguf \
+  cargo test -p slm-evaluator --test real_inference real_llama -- --ignored --nocapture
+
+# HTTP adapter (loopback llama-server or any OpenAI-compatible endpoint)
+CONATIVE_SLM_ENDPOINT=http://127.0.0.1:18080 \
+  cargo test -p slm-evaluator --features http --test real_inference real_http -- --ignored --nocapture
+----
+
+== Live remote provider (protected)
+
+The genuine remote-provider smoke never runs on PRs. It runs only:
+
+* on `workflow_dispatch`, and
+* on pushes to the protected `main` branch,
+
+inside the `slm-remote-production` GitHub Environment, which must be
+configured with `CONATIVE_SLM_ENDPOINT`, `CONATIVE_SLM_MODEL_NAME`, and
+`SLM_API_KEY` secrets and a required-reviewers protection rule. See
+`.github/workflows/slm-real-inference.yml`. Fork PR code never receives
+these secrets.
