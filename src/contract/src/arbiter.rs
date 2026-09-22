@@ -187,6 +187,12 @@ impl ArbiterClient {
     }
 
     /// Ask the arbiter for a consensus decision.
+    ///
+    /// If the arbiter closes its input before the request is fully written,
+    /// the response still determines the outcome: no response returns
+    /// [`ArbiterError::Closed`], while malformed output returns
+    /// [`ArbiterError::Malformed`]. Other request-write failures return
+    /// [`ArbiterError::Transport`].
     pub fn decide(
         &self,
         llm_confidence: f64,
