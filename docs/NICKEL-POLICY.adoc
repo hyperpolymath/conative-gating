@@ -1,0 +1,101 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= Native Nickel Policy Backend
+:toc:
+
+The policy oracle can natively load and validate `.ncl` policy files by
+embedding https://nickel-lang.org[Nickel] through the vendored
+https://gitlab.com/hyperpolymath/bunsenite[Bunsenite] bindings.
+
+== Feature gate
+
+The native backend is behind the `nickel` cargo feature (off by default):
+
+----
+cargo build -p policy-oracle --features nickel
+cargo test  -p policy-oracle --features nickel --lib --locked
+conative scan --policy policy.ncl <path>     # binary built --features nickel
+----
+
+Without the feature, any `.ncl` policy path fails with an explicit
+error — **never** a silent JSON fallback.
+
+`Policy::from_policy_file(path)` dispatches on extension:
+`.ncl` → native Nickel evaluation; anything else → JSON
+(backward-compatible with every existing policy file).
+`Policy::from_nickel_source(source)` is available for embedded callers.
+
+== Vendored Bunsenite
+
+The dependency is `vendor/bunsenite/`, pinned to upstream rev
+`f788de3950b7541354806299cc8605dcf1608d11` (see
+`vendor/bunsenite/UPSTREAM-REVISION` and `vendor/bunsenite/VENDOR.adoc`).
+
+One deliberate local diff: `nickel-lang-core = "0.18.0"` with
+`default-features = false`, which drops the REPL/doc/format/markdown
+feature chain (tree-sitter, topiary, rustyline, comrak, their C
+toolchains) from the embedded evaluator. `nickel-lang-core 0.19.0` exists;
+the pin stays on 0.18.0 per the delivery spec — revisit at PR review.
+
+The vendor directory carries Apache-2.0/MIT licenses upstream; see
+`vendor/bunsenite/LICENSE*`.
+
+NOTE: The vendor tree is **excluded from workspace membership**
+(`exclude = ["vendor/bunsenite"]`) so plain `cargo check --workspace` does
+not pull the Nickel graph; it is built only via the `nickel` feature.
+
+== Build memory constraint (important)
+
+`nickel-lang-parser` (compiled by `nickel-lang-core` even with all default
+features off) does not link-compile reliably under ~2 GB RAM; the build is
+SIGKILLed (OOM), reproduced twice with `CARGO_BUILD_JOBS=1
+CARGO_INCREMENTAL=0 ... -Dwarnings`. The reduced-default-features fork
+shrinks the graph but cannot remove the parser crate.
+
+Therefore the authoritative verification of the `nickel` feature is the
+dedicated CI job (`nickel-native` in `.github/workflows/ci.yml`), which
+runs on a full-size hosted runner with the exact contracted command:
+
+----
+CARGO_BUILD_JOBS=1 RUSTFLAGS="-C debuginfo=0 -Dwarnings" \
+  cargo test -p policy-oracle --features nickel --lib --locked
+----
+
+== Multi-file imports: NOT supported (decision)
+
+**Decision: Nickel `import` statements are rejected. Policies must be a
+single self-contained `.ncl` file.**
+
+Rationale:
+
+* the audit boundary requires that exactly the bytes under review are what
+  was evaluated — resolving relative imports would make evaluation depend
+  on ambient filesystem state (symlinks, TOCTOU swaps,
+  include-what-you-didn't-review);
+* Bunsenite's `eval_for_nickel` evaluates an anonymous root term, so import
+  roots would need bespoke resolution policy anyway;
+* refusing early and loudly makes policy composition explicit: assemble the
+  final `.ncl` at policy-review time, commit the result.
+
+Implementation: `src/oracle/src/nickel.rs` pre-scans the source for
+top-level `import` expressions **outside of comments and string literals**
+and fails with `OracleError::NickelUnsupported` naming the offending
+import. No evaluation is attempted.
+
+If/when composition is genuinely needed, the sanctioned paths are:
+
+* generate the single-file policy from a policy repo (recommended), or
+* request a `Policy` multiple-file merge at the JSON model level
+  (languages/toolchain/patterns/enforcement lists are plain data).
+
+This decision, and how to revisit it, is recorded here per the delivery
+contract.
+
+== Validation contract
+
+A Nickel policy must evaluate to a record satisfying the strict
+`policy_oracle::Policy` contract (exact fields `name`, `languages`,
+`toolchain`, `patterns`, `enforcement`; the strict serde contract rejects
+unknown fields — Nickel refinements do not silently widen the model).
+Evaluation errors, contract errors and unsupported features all surface as
+explicit `OracleError`s; policy loading fails closed.

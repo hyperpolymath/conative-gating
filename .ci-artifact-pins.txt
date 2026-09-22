@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MPL-2.0
+# Pinned artifacts for the slm-real-inference CI job (SHA-256 verified at download time).
+# llama.cpp nightly binary (ggml-org/llama.cpp release b11100, 2026-09-22):
+LLAMA_CPP_TAG=b11100
+LLAMA_CPP_UBUNTU_X64_URL=https://github.com/ggml-org/llama.cpp/releases/download/b11100/llama-b11100-bin-ubuntu-x64.tar.gz
+LLAMA_CPP_UBUNTU_X64_SHA256=a836c913236ab4533ef9aaf49f0e1ad2955c8159869d7eec1a9072a92e13d61b
+# Smoke model: Qwen2.5-0.5B-Instruct Q4_K_M (official Qwen repo, commit 9217f5db79a29953eb74d5343926648285ec7e67).
+# Chosen over SmolLM2-135M-Instruct Q4_K_M (bartowski mirror) after on-runner evaluation:
+# the 135M model loops `0.000000...` at temp 0 and never closes the verdict JSON within
+# the token budget; Qwen2.5-0.5B emits a valid object on the first attempt.
+GGUF_MODEL_URL=https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf
+GGUF_MODEL_SHA256=74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db

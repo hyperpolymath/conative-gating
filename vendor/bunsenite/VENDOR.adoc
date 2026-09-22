@@ -1,0 +1,68 @@
+= VENDOR — bunsenite (reviewed vendor fork)
+:toc:
+
+== Provenance
+
+[cols="1,2"]
+|===
+|Upstream repository |https://gitlab.com/hyperpolymath/bunsenite.git
+|Pinned revision |`f788de3950b7541354806299cc8605dcf1608d11` (recorded verbatim in `UPSTREAM-REVISION`, generated from `git rev-parse HEAD` at vendor time)
+|Upstream version |1.0.2
+|Licence |MPL-2.0 (see `LICENSE`, unchanged)
+|Vendored on |2026-09-22
+|===
+
+The entire upstream tree at the pinned revision is vendored unmodified,
+including docs and licence, **except** for the single dependency change
+described below and the added `UPSTREAM-REVISION` marker file.
+
+== Local modification (deliberate, minimal)
+
+.`Cargo.toml`
+[source,diff]
+----
+-nickel-lang-core = "0.18.0"
++nickel-lang-core = { version = "0.18.0", default-features = false }
+----
+
+== Motivation
+
+`nickel-lang-core` 0.18.x enables by default the feature set
+`markdown, repl, doc, format`, which pulls in:
+
+* `rustyline` + `anstyle` (interactive REPL — irrelevant when embedding),
+* `comrak` (documentation engine),
+* `termimad` (markdown rendering),
+* `topiary-core`, `topiary-queries`, `tree-sitter-nickel` (formatter,
+  including a C toolchain build).
+
+None of these are needed to *evaluate* a policy file. Disabling default
+features reduces the transitive dependency graph substantially and removes a
+C-compiler requirement from the embedded path. The earlier
+sandbox out-of-memory failures while compiling `nickel-lang-parser` were the
+proximate motivation; note that `nickel-lang-parser` itself remains a
+non-optional dependency of `nickel-lang-core`, so very small builders may
+still need the constrained CI job
+(`CARGO_BUILD_JOBS=1`, `RUSTFLAGS="-C debuginfo=0"`).
+
+Additionally, consumers should depend on this vendored crate with
+`default-features = false` to drop bunsenite's own default `cli` feature
+(clap), keeping only: `error`, `loader`, `ffi` modules.
+
+== Review checklist (for maintainers touching this fork)
+
+* [ ] Any upstream sync must re-apply the `default-features = false` change
+      and update `UPSTREAM-REVISION`.
+* [ ] Diff scope stays limited to the dependency line; code changes belong
+      upstream (https://gitlab.com/hyperpolymath/bunsenite).
+* [ ] Re-run: `CARGO_BUILD_JOBS=1 RUSTFLAGS="-C debuginfo=0 -Dwarnings" \
+        cargo test -p policy-oracle --features nickel --lib --locked`
+
+== Multi-file Nickel imports
+
+Bunsenite's `NickelLoader` evaluates a single file through
+`Program::new_from_file`; nothing in this crate configures Nickel's import
+paths deliberately. conative-gating therefore takes the explicit position
+documented in `docs/NICKEL-POLICY.adoc`: **policy files with `import`
+statements are rejected fail-closed before evaluation**. This vendor fork
+inherits that policy by usage, not by code change.

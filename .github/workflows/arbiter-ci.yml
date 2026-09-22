@@ -1,0 +1,68 @@
+# SPDX-License-Identifier: MPL-2.0
+name: Arbiter CI
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "src/arbiter/**"
+      - "src/contract/src/arbiter.rs"
+      - ".github/workflows/arbiter-ci.yml"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "src/arbiter/**"
+      - ".github/workflows/arbiter-ci.yml"
+permissions:
+  contents: read
+jobs:
+  elixir:
+    name: OTP arbiter (format, deps, ExUnit, escript smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: src/arbiter
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: "27"
+          elixir-version: "1.18"
+      - name: Install build tooling
+        run: mix local.hex --force && mix local.rebar --force
+      - name: Check formatting
+        run: mix format --check-formatted
+      # NOTE: no mix.lock is committed yet (cannot be generated without a
+      # local OTP toolchain). deps are resolved fresh; lockfile to be added
+      # by a maintainer — see docs/UPSTREAM-DELIVERY.adoc.
+      - name: Fetch dependencies
+        run: mix deps.get
+      - name: Run ExUnit suite
+        run: mix test
+      - name: Build escript
+        run: mix escript.build
+      - name: Protocol smoke — valid allow round-trip, exactly one audit record
+        run: |
+          set -euo pipefail
+          AUDIT_DIR="$(mktemp -d)"
+          export CONATIVE_AUDIT_PATH="$AUDIT_DIR/audit.jsonl"
+          RESPONSE="$(printf '%s\n' \
+            '{"protocol_version":1,"request_id":"smoke-1","llm":{"confidence":0.95},"slm":{"violation_confidence":0.05},"oracle":{"verdict":"allow"}}' \
+            | ./conative_arbiter)"
+          echo "response: $RESPONSE"
+          echo "$RESPONSE" | grep -q '"verdict":"allow"'
+          echo "$RESPONSE" | grep -q '"request_id":"smoke-1"'
+          echo "$RESPONSE" | grep -q '"audit_recorded":true'
+          test "$(wc -l < "$CONATIVE_AUDIT_PATH")" -eq 1
+      - name: Protocol smoke — malformed input fails closed (error, never a verdict)
+        run: |
+          set -euo pipefail
+          AUDIT_DIR="$(mktemp -d)"
+          export CONATIVE_AUDIT_PATH="$AUDIT_DIR/audit.jsonl"
+          RESPONSE="$(printf '%s\n' 'not json' | ./conative_arbiter || true)"
+          echo "response: $RESPONSE"
+          echo "$RESPONSE" | grep -q '"error"'
+          ! echo "$RESPONSE" | grep -q '"verdict"'
+          test ! -s "$CONATIVE_AUDIT_PATH" || test "$(wc -l < "$CONATIVE_AUDIT_PATH")" -eq 0

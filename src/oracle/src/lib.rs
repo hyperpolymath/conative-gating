@@ -15,6 +15,10 @@ use std::path::{Path, PathBuf};
 use thiserror::Error;
 use uuid::Uuid;
 
+/// Native Nickel policy loading (requires the `nickel` feature).
+#[cfg(feature = "nickel")]
+pub mod nickel;
+
 // ============ Core Types ============
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -234,6 +238,19 @@ pub enum OracleError {
     RegexError(#[from] regex::Error),
     #[error("Invalid glob pattern: {0}")]
     GlobError(String),
+    /// Native Nickel evaluation failed: parse error, evaluation error, or the
+    /// evaluated record does not match the `Policy` contract.
+    #[cfg(feature = "nickel")]
+    #[error("native Nickel policy evaluation failed: {0}")]
+    NickelEvaluation(String),
+    /// A Nickel policy containing an `import` statement was rejected
+    /// fail-closed. Multi-file Nickel policies are intentionally unsupported;
+    /// see `docs/NICKEL-POLICY.adoc`.
+    #[cfg(feature = "nickel")]
+    #[error(
+        "Nickel policy imports are not supported (fail-closed); inline the policy or export JSON (found: {0})"
+    )]
+    NickelImportUnsupported(String),
 }
 
 // ============ Oracle Implementation ============
@@ -249,6 +266,16 @@ impl Oracle {
 
     pub fn with_rsr_defaults() -> Self {
         Self::new(Policy::rsr_default())
+    }
+
+    /// Construct an oracle from a policy file on disk.
+    ///
+    /// Dispatch is extension-based: `.ncl` files use
+    /// [`Policy::from_policy_file`]'s native Nickel path (which requires the
+    /// `nickel` feature and fails closed without it); everything else is
+    /// parsed as JSON.
+    pub fn from_policy_file(path: &Path) -> Result<Self, OracleError> {
+        Ok(Self::new(Policy::from_policy_file(path)?))
     }
 
     /// Check a proposal against policy
@@ -658,6 +685,54 @@ fn push_unique_concern(concerns: &mut Vec<FileConcern>, candidate: FileConcern) 
 }
 
 // ============ Default Policy ============
+
+impl Policy {
+    /// Load a policy from disk, dispatching on the file extension.
+    ///
+    /// * `.ncl` — evaluated as native Nickel. Requires the `nickel` feature;
+    ///   without it this is a fail-closed error rather than a silent fallback
+    ///   to a compiled-in policy.
+    /// * anything else — deserialised as JSON.
+    pub fn from_policy_file(path: &Path) -> Result<Self, OracleError> {
+        if path.extension().is_some_and(|extension| extension == "ncl") {
+            #[cfg(feature = "nickel")]
+            {
+                return Self::from_nickel_file(path);
+            }
+            #[cfg(not(feature = "nickel"))]
+            {
+                return Err(OracleError::PolicyParseError(format!(
+                    "native Nickel policy support is not compiled in; rebuild with \
+                     --features nickel (see docs/NICKEL-POLICY.adoc) or export the \
+                     policy as JSON: {}",
+                    path.display()
+                )));
+            }
+        }
+        let content = fs::read_to_string(path)?;
+        serde_json::from_str(&content).map_err(|error| {
+            OracleError::PolicyParseError(format!(
+                "invalid JSON policy {}: {error}",
+                path.display()
+            ))
+        })
+    }
+
+    /// Evaluate Nickel source to a policy (requires the `nickel` feature).
+    ///
+    /// Sources containing `import` statements are rejected fail-closed; see
+    /// [`nickel::reject_imports`].
+    #[cfg(feature = "nickel")]
+    pub fn from_nickel_source(content: &str, source_name: &str) -> Result<Self, OracleError> {
+        nickel::policy_from_nickel_source(content, source_name)
+    }
+
+    /// Load and evaluate a `.ncl` policy file (requires the `nickel` feature).
+    #[cfg(feature = "nickel")]
+    pub fn from_nickel_file(path: &Path) -> Result<Self, OracleError> {
+        nickel::policy_from_nickel_file(path)
+    }
+}
 
 impl Policy {
     /// RSR-compliant default policy
@@ -1283,5 +1358,139 @@ mod tests {
             oracle.scan_directory_with_options(Path::new("."), &options),
             Err(OracleError::GlobError(_))
         ));
+    }
+}
+
+// ============ Native Nickel feature tests ============
+//
+// These run under the dedicated CI job:
+//   CARGO_BUILD_JOBS=1 RUSTFLAGS="-C debuginfo=0 -Dwarnings" \
+//     cargo test -p policy-oracle --features nickel --lib --locked
+
+#[cfg(all(test, feature = "nickel"))]
+mod nickel_feature_tests {
+    use super::*;
+
+    /// The repository policy is the native fixture: it must evaluate and must
+    /// agree exactly with the compiled-in RSR default policy.
+    #[test]
+    fn repository_policy_ncl_matches_rsr_default() {
+        let policy_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("..")
+            .join("config")
+            .join("policy.ncl");
+        let policy = Policy::from_nickel_file(&policy_path).unwrap_or_else(|error| {
+            panic!(
+                "repository policy {} failed to evaluate: {error}",
+                policy_path.display()
+            )
+        });
+
+        let expected = serde_json::to_value(Policy::rsr_default()).unwrap();
+        let actual = serde_json::to_value(policy).unwrap();
+        assert_eq!(
+            actual, expected,
+            "config/policy.ncl and Policy::rsr_default() diverged"
+        );
+    }
+
+    #[test]
+    fn from_policy_file_dispatches_ncl_extension() {
+        let policy_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("..")
+            .join("config")
+            .join("policy.ncl");
+        let oracle = Oracle::from_policy_file(&policy_path).expect("dispatch and evaluate");
+        let proposal = Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: "util.ts".to_string(),
+            },
+            content: "const x: string = 'y'".to_string(),
+            files_affected: vec!["util.ts".to_string()],
+            llm_confidence: 0.9,
+        };
+        let result = oracle.check_proposal(&proposal).unwrap();
+        assert!(matches!(result.verdict, PolicyVerdict::HardViolation(_)));
+    }
+
+    #[test]
+    fn import_statement_is_rejected_fail_closed() {
+        let source = r#"
+let base = import "./shared.ncl" in
+{ name = "Uses shared base" }
+"#;
+        let result = Policy::from_nickel_source(source, "<import-fixture>");
+        assert!(
+            matches!(result, Err(OracleError::NickelImportUnsupported(_))),
+            "import must be rejected fail-closed, got: {result:?}"
+        );
+    }
+
+    #[test]
+    fn import_mention_in_comment_is_not_rejected() {
+        let source = "# to reuse the base, `import \"shared.ncl\"` — kept as prose\n";
+        assert!(
+            nickel::reject_imports(source).is_ok(),
+            "comment-only import mention must not trip the scanner"
+        );
+    }
+
+    #[test]
+    fn invalid_nickel_is_an_evaluation_error() {
+        let result = Policy::from_nickel_source("{ this is not = valid nickel", "<bad-syntax>");
+        assert!(matches!(result, Err(OracleError::NickelEvaluation(_))));
+    }
+
+    #[test]
+    fn evaluated_record_must_match_policy_contract() {
+        let source = "{ name = 5 }";
+        let result = Policy::from_nickel_source(source, "<contract-mismatch>");
+        assert!(matches!(result, Err(OracleError::NickelEvaluation(_))));
+    }
+
+    #[test]
+    fn json_policy_files_still_load() {
+        let path = std::env::temp_dir().join(format!("conative-policy-{}.json", Uuid::new_v4()));
+        let json = serde_json::to_string_pretty(&Policy::rsr_default()).unwrap();
+        fs::write(&path, &json).unwrap();
+        let loaded = Policy::from_policy_file(&path).expect("JSON policy loads");
+        assert_eq!(
+            serde_json::to_value(loaded).unwrap(),
+            serde_json::to_value(Policy::rsr_default()).unwrap()
+        );
+        let _ = fs::remove_file(path);
+    }
+}
+
+/// Without the `nickel` feature, `.ncl` dispatch must fail closed: it is an
+/// explicit error, never a silent fallback to any compiled-in policy.
+#[cfg(all(test, not(feature = "nickel")))]
+mod nickel_guard_tests {
+    use super::*;
+
+    #[test]
+    fn ncl_policy_dispatch_fails_closed_without_feature() {
+        let path = std::env::temp_dir().join(format!("conative-policy-{}.ncl", Uuid::new_v4()));
+        fs::write(&path, "{ name = \"fixture\" }").unwrap();
+        let result = Policy::from_policy_file(&path);
+        let _ = fs::remove_file(&path);
+        match result {
+            Err(OracleError::PolicyParseError(message)) => {
+                assert!(message.contains("--features nickel"));
+            }
+            other => panic!("expected fail-closed PolicyParseError, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn json_policy_files_load_without_feature() {
+        let path = std::env::temp_dir().join(format!("conative-policy-{}.json", Uuid::new_v4()));
+        let json = serde_json::to_string(&Policy::rsr_default()).unwrap();
+        fs::write(&path, json).unwrap();
+        assert!(Policy::from_policy_file(&path).is_ok());
+        let _ = fs::remove_file(path);
     }
 }

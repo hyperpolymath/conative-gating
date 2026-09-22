@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: MPL-2.0
+version: 2
+updates:
+  - package-ecosystem: "bundler"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # `open-pull-requests-limit: 0` suppresses routine version-update PRs
+    # while leaving Dependabot SECURITY PRs flowing. The previous
+    # `ignore: "*" patch` rule also silenced security PRs under GitHub\'s
+    # current Dependabot behaviour. See rsr-template-repo commit 78b050e
+    # and 007-lang/audits/audit-dependabot-automation-gap-2026-04-17.md.
+    open-pull-requests-limit: 10
+    groups:
+      cargo:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 2
+  - package-ecosystem: "guix"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3

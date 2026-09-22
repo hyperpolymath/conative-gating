@@ -13,6 +13,13 @@ members = [
     "src/slm",
     "src/contract",
 ]
+# The vendored Bunsenite fork is a path dependency of policy-oracle (optional,
+# behind the `nickel` feature). Exclude it from workspace membership so that
+# plain `cargo check/test --workspace` does not pull in the Nickel dependency
+# tree; it is built only when the `nickel` feature is enabled.
+exclude = [
+    "vendor/bunsenite",
+]
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["full"] }
@@ -29,9 +36,17 @@ clap = { version = "4", features = ["derive", "env", "unicode", "wrap_help"] }
 clap_complete = "4"
 clap_mangen = "0.3"
 
+[features]
+# Native Nickel (.ncl) policy loading in the CLI (policy-oracle/nickel).
+default = []
+nickel = ["policy-oracle/nickel"]
+# Real HTTP SLM provider for `contract eval --slm` (slm-evaluator/http).
+slm-http = ["slm-evaluator/http"]
+
 [dependencies]
 policy-oracle = { path = "src/oracle" }
 gating-contract = { path = "src/contract" }
+slm-evaluator = { path = "src/slm" }
 clap.workspace = true
 chrono.workspace = true
 clap_complete.workspace = true
@@ -44,6 +59,7 @@ tracing-subscriber.workspace = true
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
+proptest = "1"
 
 [[bench]]
 name = "oracle_bench"

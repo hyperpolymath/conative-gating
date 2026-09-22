@@ -15,3 +15,14 @@ thiserror.workspace = true
 tracing.workspace = true
 glob = "0.3"
 regex = "1"
+# Native Nickel policy evaluation via the reviewed vendor fork in
+# vendor/bunsenite (see vendor/bunsenite/VENDOR.adoc). Default features are
+# disabled on the vendor fork: no REPL/format/doc/markdown feature load.
+bunsenite = { path = "../../vendor/bunsenite", optional = true, default-features = false }
+
+[features]
+# Native Nickel (.ncl) policy loading. Off by default: default builds compile
+# without the Nickel dependency tree, and .ncl policy files are rejected
+# fail-closed instead of being silently ignored.
+default = []
+nickel = ["dep:bunsenite"]

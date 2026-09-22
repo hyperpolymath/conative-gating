@@ -19,9 +19,18 @@ use policy_oracle::{
     ViolationType,
 };
 use serde::{Deserialize, Serialize};
+use slm_evaluator::{SlmProvider, SlmRequest};
 use std::collections::HashMap;
 use thiserror::Error;
 use uuid::Uuid;
+
+/// Client for the OTP Consensus Arbiter (JSON-lines protocol v1).
+pub mod arbiter;
+
+pub use arbiter::{
+    ArbiterClient, ArbiterDecision, ArbiterError, ArbiterVerdict, OracleVote,
+    ARBITER_PROTOCOL_VERSION,
+};
 
 // ============================================================================
 // CONTRACT VERSION
@@ -1510,6 +1519,207 @@ impl RedTeamSummary {
 }
 
 // ============================================================================
+// SLM STAGE - optional live provider evaluation
+// ============================================================================
+
+impl ContractRunner {
+    /// Evaluate a request through the contract **with a live SLM provider**.
+    ///
+    /// Stages: `oracle` → `slm` (`slm_error` recorded when the provider
+    /// fails). Verdict combination mirrors the OTP arbiter's decision matrix
+    /// with the policy's asymmetric SLM weight (`enforcement.slm_weight`,
+    /// default 1.5 — inhibition is privileged over GO signals):
+    ///
+    /// * an oracle **Block** is terminal and is returned before the provider
+    ///   is ever called (no proposal content leaves the process for a
+    ///   decision already made);
+    /// * otherwise the weighted no-go score
+    ///   (`spirit_score * slm_weight`, plus 0.2 when the oracle raised a soft
+    ///   concern) is compared against `enforcement.block_threshold` →
+    ///   **Block** (5xx spirit code); a `should_block` recommendation blocks
+    ///   regardless of score;
+    /// * a no-go at/above `enforcement.escalate_threshold`, or low LLM
+    ///   confidence (`llm_confidence <= 0.8`), → **Escalate**;
+    /// * otherwise the oracle verdict stands (Allow, or Warn with its
+    ///   original soft refusal).
+    ///
+    /// **Fail-closed**: any provider error (timeout, transport, malformed or
+    /// out-of-range output) prevents Allow/Warn and yields an **Escalate**
+    /// with a 9xx system code — an SLM outage is never an all-clear.
+    pub fn evaluate_with_provider(
+        &self,
+        request: &GatingRequest,
+        provider: &dyn SlmProvider,
+    ) -> Result<GatingDecision, ContractError> {
+        let start = std::time::Instant::now();
+
+        // Stage 1: Oracle (identical semantics to `evaluate`).
+        let mut stages_executed = vec!["oracle".to_string()];
+        let oracle_eval = self.oracle.check_proposal(&request.proposal)?;
+        let (oracle_verdict, oracle_refusal) = self.process_oracle_result(&oracle_eval);
+
+        // An oracle BLOCK is terminal: never re-litigated by the SLM, and the
+        // proposal content is never forwarded to a provider needlessly.
+        if oracle_verdict == Verdict::Block {
+            let duration = start.elapsed();
+            return Ok(GatingDecision {
+                request_id: request.request_id,
+                decision_id: Uuid::new_v4(),
+                timestamp: Utc::now(),
+                verdict: oracle_verdict,
+                refusal: oracle_refusal,
+                evaluations: EvaluationChain {
+                    oracle: Some(oracle_eval.clone()),
+                    slm: None,
+                    arbiter: None,
+                },
+                processing: ProcessingMetadata {
+                    duration_us: duration.as_micros() as u64,
+                    contract_version: CONTRACT_VERSION.to_string(),
+                    policy_name: self.policy.name.clone(),
+                    rules_checked: oracle_eval.rules_checked.len(),
+                    stages_executed,
+                },
+            });
+        }
+
+        // Stage 2: SLM (correlated with the proposal under evaluation).
+        stages_executed.push("slm".to_string());
+        let slm_request = SlmRequest {
+            proposal_id: request.proposal.id,
+            content: request.proposal.content.clone(),
+            context: format!(
+                "policy={} source={} session={} agent={}",
+                self.policy.name,
+                request.context.source,
+                request.context.session_id.as_deref().unwrap_or("-"),
+                request.context.agent_id.as_deref().unwrap_or("-"),
+            ),
+            // Provider-configured budget applies (0 = provider default).
+            max_tokens: 0,
+        };
+
+        let mut slm_vote: Option<Verdict> = None;
+        let (slm_stage, verdict, refusal) = match provider.evaluate(&slm_request) {
+            Ok(evaluation) => {
+                let slm_result = SlmEvaluationResult {
+                    spirit_score: evaluation.spirit_score,
+                    confidence: evaluation.confidence,
+                    reasoning: evaluation.reasoning.clone(),
+                    should_block: evaluation.should_block,
+                };
+
+                // Asymmetric no-go (mirrors the OTP arbiter's decision matrix).
+                let weight = self.policy.enforcement.slm_weight;
+                let mut no_go = evaluation.spirit_score * weight;
+                if matches!(oracle_verdict, Verdict::Warn) {
+                    // Oracle soft concerns add 0.2 to the no-go score.
+                    no_go += 0.2;
+                }
+                let go = request.proposal.llm_confidence;
+                let escalate_at = self.policy.enforcement.escalate_threshold;
+                let block_at = self.policy.enforcement.block_threshold;
+
+                if evaluation.should_block || no_go >= block_at {
+                    slm_vote = Some(Verdict::Block);
+                    (
+                        Some(slm_result),
+                        Verdict::Block,
+                        Some(Refusal {
+                            category: RefusalCategory::IntentViolation,
+                            code: RefusalCode::Spirit599OtherSpirit,
+                            message: format!(
+                                "SLM spirit violation (score {:.2}, weighted no-go {:.2}): {}",
+                                evaluation.spirit_score, no_go, evaluation.reasoning
+                            ),
+                            remediation: Some(
+                                "Revise the proposal to match the spirit of the policy".to_string(),
+                            ),
+                            evidence: Vec::new(),
+                            overridable: true,
+                            override_level: Some(AuthorizationLevel::Maintainer),
+                        }),
+                    )
+                } else if no_go >= escalate_at || go <= 0.8 {
+                    slm_vote = Some(Verdict::Escalate);
+                    (
+                        Some(slm_result),
+                        Verdict::Escalate,
+                        Some(Refusal {
+                            category: RefusalCategory::IntentViolation,
+                            code: RefusalCode::Spirit505IntentMismatch,
+                            message: format!(
+                                "uncertain spirit assessment (LLM go {go:.2}, weighted no-go {no_go:.2}): {}",
+                                evaluation.reasoning
+                            ),
+                            remediation: Some(
+                                "Route to human review per the gating policy".to_string(),
+                            ),
+                            evidence: Vec::new(),
+                            overridable: true,
+                            override_level: Some(AuthorizationLevel::User),
+                        }),
+                    )
+                } else {
+                    slm_vote = Some(Verdict::Allow);
+                    // Oracle verdict stands (Allow, or Warn with its soft refusal).
+                    (Some(slm_result), oracle_verdict, oracle_refusal)
+                }
+            }
+            Err(error) => {
+                stages_executed.push("slm_error".to_string());
+                (
+                    None,
+                    Verdict::Escalate,
+                    Some(Refusal {
+                        category: RefusalCategory::SystemError,
+                        code: RefusalCode::Sys902InternalError,
+                        message: format!(
+                            "SLM evaluation failed; failing closed rather than allowing: {error}"
+                        ),
+                        remediation: Some(
+                            "Restore the SLM provider, or review the proposal manually".to_string(),
+                        ),
+                        evidence: Vec::new(),
+                        overridable: false,
+                        override_level: Some(AuthorizationLevel::Admin),
+                    }),
+                )
+            }
+        };
+
+        let arbiter = slm_vote.map(|vote| ArbiterResult {
+            consensus_reached: true,
+            oracle_vote: oracle_verdict,
+            slm_vote: vote,
+            final_verdict: verdict,
+            slm_weight: self.policy.enforcement.slm_weight,
+        });
+
+        let duration = start.elapsed();
+        Ok(GatingDecision {
+            request_id: request.request_id,
+            decision_id: Uuid::new_v4(),
+            timestamp: Utc::now(),
+            verdict,
+            refusal,
+            evaluations: EvaluationChain {
+                oracle: Some(oracle_eval.clone()),
+                slm: slm_stage,
+                arbiter,
+            },
+            processing: ProcessingMetadata {
+                duration_us: duration.as_micros() as u64,
+                contract_version: CONTRACT_VERSION.to_string(),
+                policy_name: self.policy.name.clone(),
+                rules_checked: oracle_eval.rules_checked.len(),
+                stages_executed,
+            },
+        })
+    }
+}
+
+// ============================================================================
 // UNIT TESTS
 // ============================================================================
 
@@ -1865,8 +2075,8 @@ mod tests {
 
         let results = harness.run_all(&tests);
         assert_eq!(results.len(), 2);
-        assert_eq!(results[0].passed, true);
-        assert_eq!(results[1].passed, true);
+        assert!(results[0].passed);
+        assert!(results[1].passed);
     }
 
     #[test]
@@ -2116,5 +2326,251 @@ mod tests {
         assert_eq!(metadata.policy_name, "");
         assert_eq!(metadata.rules_checked, 0);
         assert!(metadata.stages_executed.is_empty());
+    }
+}
+
+// ============================================================================
+// SLM STAGE TESTS — evaluate_with_provider with mock providers
+// ============================================================================
+
+#[cfg(test)]
+mod slm_stage_tests {
+    use super::*;
+    use policy_oracle::ActionType;
+    use slm_evaluator::{SlmError, SlmEvaluation, SlmProvider, SlmRequest};
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    /// Configurable canned-verdict provider; counts invocations.
+    struct MockSlm {
+        spirit_score: f64,
+        should_block: bool,
+        calls: AtomicUsize,
+    }
+
+    impl MockSlm {
+        fn verdict(spirit_score: f64, should_block: bool) -> Self {
+            Self {
+                spirit_score,
+                should_block,
+                calls: AtomicUsize::new(0),
+            }
+        }
+
+        fn clean() -> Self {
+            Self::verdict(0.05, false)
+        }
+
+        fn calls(&self) -> usize {
+            self.calls.load(Ordering::SeqCst)
+        }
+    }
+
+    impl SlmProvider for MockSlm {
+        fn name(&self) -> &str {
+            "mock-slm"
+        }
+
+        fn evaluate(&self, request: &SlmRequest) -> Result<SlmEvaluation, SlmError> {
+            self.calls.fetch_add(1, Ordering::SeqCst);
+            Ok(SlmEvaluation {
+                proposal_id: request.proposal_id,
+                spirit_score: self.spirit_score,
+                confidence: 0.9,
+                reasoning: "mock verdict".to_string(),
+                should_block: self.should_block,
+            })
+        }
+    }
+
+    struct FailingSlm;
+
+    impl SlmProvider for FailingSlm {
+        fn name(&self) -> &str {
+            "failing-mock-slm"
+        }
+
+        fn evaluate(&self, _request: &SlmRequest) -> Result<SlmEvaluation, SlmError> {
+            Err(SlmError::Timeout("mock provider timeout".to_string()))
+        }
+    }
+
+    fn request_for(path: &str, content: &str, llm_confidence: f32) -> GatingRequest {
+        GatingRequest::new(Proposal {
+            id: Uuid::new_v4(),
+            action_type: ActionType::CreateFile {
+                path: path.to_string(),
+            },
+            content: content.to_string(),
+            files_affected: vec![path.to_string()],
+            llm_confidence,
+        })
+    }
+
+    #[test]
+    fn oracle_block_is_terminal_and_never_calls_provider() {
+        let runner = ContractRunner::new();
+        let provider = MockSlm::clean();
+        let request = request_for("util.ts", "const x: string = 'y';", 0.95);
+
+        let decision = runner.evaluate_with_provider(&request, &provider).unwrap();
+
+        assert_eq!(decision.verdict, Verdict::Block);
+        assert_eq!(provider.calls(), 0, "provider must not run on oracle block");
+        assert!(decision.evaluations.slm.is_none());
+        assert!(decision.evaluations.arbiter.is_none());
+        assert_eq!(
+            decision.processing.stages_executed,
+            vec!["oracle".to_string()]
+        );
+    }
+
+    #[test]
+    fn clean_slm_keeps_oracle_allow() {
+        let runner = ContractRunner::new();
+        let provider = MockSlm::clean();
+        let request = request_for("src/main.rs", "fn main() {}", 0.95);
+
+        let decision = runner.evaluate_with_provider(&request, &provider).unwrap();
+
+        assert_eq!(decision.verdict, Verdict::Allow);
+        assert!(decision.refusal.is_none());
+        assert!(decision.evaluations.slm.is_some());
+        let arbiter = decision.evaluations.arbiter.expect("arbiter result");
+        assert!(arbiter.consensus_reached);
+        assert_eq!(arbiter.oracle_vote, Verdict::Allow);
+        assert_eq!(arbiter.slm_vote, Verdict::Allow);
+        assert_eq!(arbiter.final_verdict, Verdict::Allow);
+        assert!((arbiter.slm_weight - 1.5).abs() < f64::EPSILON);
+        assert_eq!(
+            decision.processing.stages_executed,
+            vec!["oracle".to_string(), "slm".to_string()]
+        );
+    }
+
+    #[test]
+    fn high_weighted_spirit_score_blocks() {
+        let runner = ContractRunner::new();
+        // 0.9 * 1.5 = 1.35 >= block_threshold (0.7)
+        let provider = MockSlm::verdict(0.9, false);
+        let request = request_for("src/main.rs", "fn main() {}", 0.95);
+
+        let decision = runner.evaluate_with_provider(&request, &provider).unwrap();
+
+        assert_eq!(decision.verdict, Verdict::Block);
+        let refusal = decision.refusal.expect("spirit refusal");
+        assert_eq!(refusal.category, RefusalCategory::IntentViolation);
+        assert_eq!(refusal.code, RefusalCode::Spirit599OtherSpirit);
+        assert!(refusal.overridable);
+        assert_eq!(refusal.override_level, Some(AuthorizationLevel::Maintainer));
+        assert_eq!(
+            decision.evaluations.arbiter.unwrap().slm_vote,
+            Verdict::Block
+        );
+    }
+
+    #[test]
+    fn should_block_flag_blocks_regardless_of_score() {
+        let runner = ContractRunner::new();
+        // Low score but the model's hard recommendation is to block.
+        let provider = MockSlm::verdict(0.01, true);
+        let request = request_for("src/main.rs", "fn main() {}", 0.95);
+
+        let decision = runner.evaluate_with_provider(&request, &provider).unwrap();
+
+        assert_eq!(decision.verdict, Verdict::Block);
+        assert_eq!(
+            decision.refusal.unwrap().code,
+            RefusalCode::Spirit599OtherSpirit
+        );
+    }
+
+    #[test]
+    fn mid_weighted_score_escalates() {
+        let runner = ContractRunner::new();
+        // 0.35 * 1.5 = 0.525 >= escalate_threshold (0.4), below block (0.7)
+        let provider = MockSlm::verdict(0.35, false);
+        let request = request_for("src/main.rs", "fn main() {}", 0.95);
+
+        let decision = runner.evaluate_with_provider(&request, &provider).unwrap();
+
+        assert_eq!(decision.verdict, Verdict::Escalate);
+        let refusal = decision.refusal.expect("escalation refusal");
+        assert_eq!(refusal.code, RefusalCode::Spirit505IntentMismatch);
+        assert_eq!(
+            decision.evaluations.arbiter.unwrap().slm_vote,
+            Verdict::Escalate
+        );
+    }
+
+    #[test]
+    fn low_llm_confidence_escalates_despite_clean_slm() {
+        let runner = ContractRunner::new();
+        let provider = MockSlm::clean();
+        let request = request_for("src/main.rs", "fn main() {}", 0.5);
+
+        let decision = runner.evaluate_with_provider(&request, &provider).unwrap();
+
+        assert_eq!(decision.verdict, Verdict::Escalate);
+    }
+
+    #[test]
+    fn oracle_soft_concern_is_escalated_by_slm_weighting() {
+        let runner = ContractRunner::new();
+        // Tier-2 language fixture: oracle Warn (racket marker present).
+        let warn_request = request_for("script.rkt", "#lang racket", 0.95);
+
+        // Clean SLM (0.05*1.5 + 0.2 = 0.275 < 0.4): Warn stands.
+        let provider = MockSlm::clean();
+        let decision = runner
+            .evaluate_with_provider(&warn_request, &provider)
+            .unwrap();
+        assert_eq!(decision.verdict, Verdict::Warn);
+
+        // Moderate SLM (0.15*1.5 + 0.2 = 0.425 >= 0.4): Escalate.
+        let provider = MockSlm::verdict(0.15, false);
+        let decision = runner
+            .evaluate_with_provider(&warn_request, &provider)
+            .unwrap();
+        assert_eq!(decision.verdict, Verdict::Escalate);
+    }
+
+    #[test]
+    fn provider_failure_escalates_fail_closed() {
+        let runner = ContractRunner::new();
+        let request = request_for("src/main.rs", "fn main() {}", 0.95);
+
+        let decision = runner
+            .evaluate_with_provider(&request, &FailingSlm)
+            .unwrap();
+
+        assert_eq!(decision.verdict, Verdict::Escalate);
+        let refusal = decision.refusal.expect("system refusal");
+        assert_eq!(refusal.category, RefusalCategory::SystemError);
+        assert_eq!(refusal.code, RefusalCode::Sys902InternalError);
+        assert!(
+            !refusal.overridable,
+            "system failure must not be overridable"
+        );
+        assert!(refusal.message.contains("failing closed"));
+        assert!(decision.evaluations.slm.is_none());
+        assert!(decision.evaluations.arbiter.is_none());
+        assert!(decision
+            .processing
+            .stages_executed
+            .contains(&"slm_error".to_string()));
+    }
+
+    #[test]
+    fn warnings_do_not_lose_their_soft_refusal_when_slm_is_clean() {
+        let runner = ContractRunner::new();
+        let provider = MockSlm::clean();
+        let request = request_for("script.rkt", "#lang racket", 0.95);
+
+        let decision = runner.evaluate_with_provider(&request, &provider).unwrap();
+
+        assert_eq!(decision.verdict, Verdict::Warn);
+        let refusal = decision.refusal.expect("soft refusal preserved");
+        assert_eq!(refusal.category, RefusalCategory::ForbiddenLanguage);
+        assert_eq!(refusal.code, RefusalCode::Lang199OtherForbidden);
     }
 }

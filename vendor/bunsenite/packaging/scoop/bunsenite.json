@@ -1,0 +1,23 @@
+{
+    "version": "1.0.0",
+    "description": "Nickel configuration file parser with multi-language FFI bindings",
+    "homepage": "https://github.com/hyperpolymath/bunsenite",
+    "license": "PMPL-1.0",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/hyperpolymath/bunsenite/releases/download/v1.0.0/bunsenite-1.0.0-x86_64-pc-windows-msvc.zip",
+            "hash": "TODO",
+            "bin": "bunsenite.exe"
+        }
+    },
+    "checkver": {
+        "github": "https://github.com/hyperpolymath/bunsenite"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/hyperpolymath/bunsenite/releases/download/v$version/bunsenite-$version-x86_64-pc-windows-msvc.zip"
+            }
+        }
+    }
+}

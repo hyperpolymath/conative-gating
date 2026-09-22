@@ -9,6 +9,26 @@
 * *Property tests*: 10 pass (determinism, outcomes, performance)
 * *Security aspect tests*: 20 pass (bypass prevention, manipulation
 detection)
+
+=== 2026-09-22 update — SLM backends + arbiter
+
+* *Rust suites*: 187 assertions green locally
+  (15 slm units incl. provider contract + timeout, 22 slm `http`
+  feature, 60 contract units incl. 9 SLM-stage + arbiter client
+  validation, 30 oracle, 19 pipeline, 10 property, 20 security,
+  11 generative/proptest: terminality under arbitrary outcomes,
+  threshold arithmetic at 0/1, low-confidence escalation, fail-closed
+  failure modes, determinism, request-ID preservation, concurrent
+  correlation no-mixing)
+* *Real-inference smokes* (env-gated, `--ignored` in CI-driven jobs):
+  local Qwen2.5-0.5B GGUF round-trip (14.1 s / 2 vCPU) and llama-server
+  HTTP round-trip (3.6 s warm) — both green on 2026-09-22
+* *Elixir (OTP arbiter)*: 28 ExUnit tests written (consensus decision
+  matrix, protocol validation, audit sink incl. rotation + fail-closed,
+  server round-trips) — verified by the `arbiter-ci` workflow; no local
+  OTP toolchain existed
+* *Native Nickel*: feature tests run in the dedicated `nickel-native`
+  CI job (parser cannot compile under ~2 GB)
 * *Integration tests*: 1 Zig template placeholder (ready for expansion)
 * *Benchmarks*: Baseline infrastructure in place (criterion-ready)
 * *panic-attack scan*: Ready to run

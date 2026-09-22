@@ -1,0 +1,74 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= RSR Compliance: bunsenite
+:toc:
+:sectnums:
+
+== Overview
+
+This document describes the Rhodium Standard Repository (RSR) compliance status for *bunsenite*.
+
+== Classification
+
+[cols="1,2"]
+|===
+|Attribute |Value
+
+|Project |bunsenite
+|Primary Language |rust
+|RSR Tier |1
+|Compliance Status |Compliant
+|Last Updated |2025-12-10
+|===
+
+== Language Tier Classification
+
+=== Tier 1 Languages (Preferred)
+* Rust
+* Elixir
+* Zig
+* Ada
+* Haskell
+* AffineScript
+
+=== Tier 2 Languages (Acceptable)
+* Nickel (configuration)
+* Racket (scripting)
+* Guile Scheme (state management)
+* Guix (derivations)
+
+=== Restricted Languages
+* Python - Only allowed in salt/ directories for SaltStack
+* TypeScript/JavaScript - Legacy only, convert to AffineScript
+* CUE - Not permitted, use Nickel or Guile
+
+== Compliance Checklist
+
+[cols="1,1,2"]
+|===
+|Requirement |Status |Notes
+
+|Primary language is Tier 1/2 |✓ |rust
+|No restricted languages outside exemptions |✓ |
+|.editorconfig present |✓ |
+|.well-known/ directory |✓ |
+|justfile present |✗ |
+|LICENSE (MPL-2.0) |✓ |
+|Containerfile present |✗ |
+|flake.guix present |✓ |
+|===
+
+== Exemptions
+
+None
+
+== Action Items
+
+* Add Justfile
+* Add Containerfile
+
+== References
+
+* link:https://github.com/hyperpolymath/RSR-template-repo[RSR Template Repository]
+* link:.github/CONTRIBUTING.md[Contributing Guidelines]
+* link:../CODE_OF_CONDUCT.adoc[Code of Conduct]

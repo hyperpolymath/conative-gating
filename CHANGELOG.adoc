@@ -18,6 +18,27 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 ==== Added
 
+* feat(oracle): native Nickel policy backend via vendored Bunsenite
+  (`nickel` feature, default-features-off `nickel-lang-core 0.18.0`),
+  fail-closed `import` rejection, `Policy::from_policy_file` dispatch —
+  see `docs/NICKEL-POLICY.adoc`
+* feat(slm): provider layer with verdict contract + correlation
+  preservation; `LlamaCppProvider` (pinned llama.cpp CLI, `--single-turn`
+  hardened) and feature-gated `HttpSlmProvider` (`http`, https-or-loopback,
+  `SLM_API_KEY` env-only) — see `docs/SLM_PROVIDERS.adoc`
+* feat(contract): `ContractRunner::evaluate_with_provider` — terminal
+  oracle blocks, asymmetric Warn addend, threshold matrix, fail-closed
+  provider errors (`Sys902` Escalate)
+* feat(arbiter): OTP consensus arbiter escript (protocol v1) with durable
+  JSONL audit sink (flush-before-ack, rotation, fail-closed, bounded
+  history, no proposal content) — see `docs/ARBITER_PROTOCOL.adoc`
+* feat(contract): Rust arbiter client enforcing `audit_recorded: true`
+* test(slm): env-gated real-inference smokes (local GGUF + HTTP adapter)
+  with pinned, SHA-256-verified CI artifacts
+* test(contract): generative proptest suite (terminality, thresholds,
+  fail-closed, determinism, correlation, concurrency)
+* ci: `nickel-native` job (exact pinned command), `arbiter-ci` workflow,
+  `slm-real-inference` workflow with approval-gated remote-provider job
 * feat(crg): add crg-grade and crg-badge justfile recipes
 * feat: add stapeln.toml container definition
 * feat: deploy UX Manifesto infrastructure

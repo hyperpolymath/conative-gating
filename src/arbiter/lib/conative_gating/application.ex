@@ -15,7 +15,9 @@ defmodule ConativeGating.Application do
   def start(_type, _args) do
     children = [
       # Start the Consensus Arbiter GenServer
-      ConativeGating.ConsensusArbiter
+      ConativeGating.ConsensusArbiter,
+      # Durable JSONL audit sink (CONATIVE_AUDIT_PATH / CONATIVE_AUDIT_MAX_BYTES)
+      {ConativeGating.AuditLog, []}
     ]
 
     opts = [strategy: :one_for_one, name: ConativeGating.Supervisor]
