@@ -108,7 +108,10 @@ defmodule ConativeGating.AuditLog do
 
     case persist(state.path, state.max_bytes, line) do
       :ok ->
-        history = (state.history ++ [sanitized]) |> Enum.take(-state.history_capacity)
+        # Mirror the WIRE shape (string keys) so diagnostics see exactly what
+        # was persisted — no atom/string key duality for callers.
+        mirrored = Jason.decode!(line)
+        history = (state.history ++ [mirrored]) |> Enum.take(-state.history_capacity)
         {:reply, :ok, %{state | history: history}}
 
       {:error, reason} = error ->
@@ -159,7 +162,7 @@ defmodule ConativeGating.AuditLog do
     end
   end
 
-  defp maybe_rotate(path, max_bytes, projected_size)
+  defp maybe_rotate(_path, max_bytes, projected_size)
        when projected_size <= max_bytes,
        do: :ok
 

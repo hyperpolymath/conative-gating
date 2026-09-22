@@ -74,6 +74,11 @@ jobs:
           fi
       - name: Validate K9 contracts
         if: steps.detect.outputs.k9_count > 0
+        env:
+          # The vendored Bunsenite tree ships upstream k9 contractiles that
+          # are curated in that repo, not here; vendored code is validated
+          # upstream (see vendor/bunsenite/VENDOR.adoc).
+          INPUT_PATHS_IGNORE: "/vendor/bunsenite/"
         run: bash .github/hooks/validate-k9.sh
       - name: Write summary
         run: |

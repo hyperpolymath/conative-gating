@@ -31,8 +31,9 @@ defmodule ConativeGating.MixProject do
 
   defp deps do
     [
-      {:rustler, "~> 0.30"},  # For Rust NIF integration
-      {:jason, "~> 1.4"},
+      # For Rust NIF integration
+      {:rustler, "~> 0.30"},
+      {:jason, "~> 1.4"}
     ]
   end
 

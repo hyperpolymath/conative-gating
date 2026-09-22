@@ -8,7 +8,12 @@ defmodule ConativeGating.ProtocolServerTest do
   alias ConativeGating.{AuditLog, ProtocolServer}
 
   defp tmpdir!(tag) do
-    dir = Path.join(System.tmp_dir!(), "conative-server-test-#{tag}-#{System.unique_integer([:positive])}")
+    dir =
+      Path.join(
+        System.tmp_dir!(),
+        "conative-server-test-#{tag}-#{System.unique_integer([:positive])}"
+      )
+
     File.mkdir_p!(dir)
     on_exit(fn -> File.rm_rf(dir) end)
     dir
@@ -44,10 +49,11 @@ defmodule ConativeGating.ProtocolServerTest do
     assert response["verdict"] == "allow"
     assert response["audit_recorded"] == true
 
-    # Exactly one audit record for the accepted request.
+    # Exactly one audit record for the accepted request. History mirrors the
+    # persisted wire shape (string keys) by design.
     [entry] = AuditLog.history(sink)
-    assert entry.request_id == "req-allow-1"
-    assert entry.verdict == "allow"
+    assert entry["request_id"] == "req-allow-1"
+    assert entry["verdict"] == "allow"
   end
 
   test "hard oracle violation blocks" do
@@ -88,12 +94,16 @@ defmodule ConativeGating.ProtocolServerTest do
   end
 
   test "audit failure yields an error response, never an unaudited verdict" do
-    missing_parent = Path.join(System.tmp_dir!(), "conative-missing-#{System.unique_integer([:positive])}")
+    missing_parent =
+      Path.join(System.tmp_dir!(), "conative-missing-#{System.unique_integer([:positive])}")
+
     {:ok, sink} = AuditLog.start_link(path: Path.join(missing_parent, "audit.jsonl"), name: nil)
 
     on_exit(fn -> if Process.alive?(sink), do: GenServer.stop(sink) end)
 
-    response = ProtocolServer.process_line(request_line("req-audit-fail"), sink) |> Jason.decode!()
+    response =
+      ProtocolServer.process_line(request_line("req-audit-fail"), sink) |> Jason.decode!()
+
     assert response["request_id"] == "req-audit-fail"
     assert response["error"] =~ "audit persistence failed"
     refute Map.has_key?(response, "verdict")

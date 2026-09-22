@@ -186,7 +186,15 @@ impl ArbiterClient {
         Ok(Some(Self::new(&parts, DEFAULT_ARBITER_TIMEOUT)?))
     }
 
-    /// Ask the arbiter for a consensus decision.
+    /// Ask a short-lived arbiter process for one consensus decision.
+    ///
+    /// A decision is returned only when the response uses protocol v1, matches
+    /// the generated request ID, and confirms that its audit record persisted.
+    /// If the arbiter closes its input before the request is written, response
+    /// handling still classifies an empty reply as [`ArbiterError::Closed`] or
+    /// malformed output as [`ArbiterError::Malformed`]. Other process I/O
+    /// failures return [`ArbiterError::Transport`], and an unresponsive arbiter
+    /// returns [`ArbiterError::Timeout`].
     pub fn decide(
         &self,
         llm_confidence: f64,
@@ -223,12 +231,28 @@ impl ArbiterClient {
             })?;
 
         // Write the request and close stdin so stream-driven servers exit.
-        child
+        //
+        // A BrokenPipe here is NOT fatal: a fast, broken, or non-protocol
+        // arbiter may exit before the write lands, closing the read end of
+        // our stdin pipe. That is exactly the failure mode the read/validate
+        // path below already classifies correctly (no answer → `Closed`,
+        // garbage answer → `Malformed`), so swallow EPIPE and let the
+        // exit/read path decide. Any other write error is a real transport
+        // failure.
+        let write_result = child
             .stdin
             .take()
             .expect("invariant: stdin piped")
-            .write_all(line.as_bytes())
-            .map_err(|error| ArbiterError::Transport(format!("write to arbiter stdin: {error}")))?;
+            .write_all(line.as_bytes());
+        if let Err(error) = write_result {
+            if error.kind() != std::io::ErrorKind::BrokenPipe {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(ArbiterError::Transport(format!(
+                    "write to arbiter stdin: {error}"
+                )));
+            }
+        }
 
         let mut stdout = child.stdout.take().expect("invariant: stdout piped");
         let reader = std::thread::spawn(move || {
@@ -442,10 +466,11 @@ mod tests {
         let dir = fixture_dir();
         let script = make_script(&dir, "arbiter-garbage.sh", "echo 'not json at all'\n");
         let client = client_for(&script);
-        assert!(matches!(
-            client.decide(0.5, 0.5, OracleVote::Allow),
-            Err(ArbiterError::Malformed(_))
-        ));
+        let result = client.decide(0.5, 0.5, OracleVote::Allow);
+        assert!(
+            matches!(result, Err(ArbiterError::Malformed(_))),
+            "garbage output must classify as Malformed, got {result:?}"
+        );
         std::fs::remove_dir_all(&dir).ok();
     }
 
@@ -455,10 +480,11 @@ mod tests {
         let dir = fixture_dir();
         let script = make_script(&dir, "arbiter-closed.sh", "exit 0\n");
         let client = client_for(&script);
-        assert!(matches!(
-            client.decide(0.5, 0.5, OracleVote::Allow),
-            Err(ArbiterError::Closed(_))
-        ));
+        let result = client.decide(0.5, 0.5, OracleVote::Allow);
+        assert!(
+            matches!(result, Err(ArbiterError::Closed(_))),
+            "immediate exit must classify as Closed, got {result:?}"
+        );
         std::fs::remove_dir_all(&dir).ok();
     }
 

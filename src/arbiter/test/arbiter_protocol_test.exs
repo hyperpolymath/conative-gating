@@ -48,12 +48,14 @@ defmodule ConativeGating.ArbiterProtocolTest do
     assert {:error, {:out_of_range, "llm.confidence"}} = ArbiterProtocol.decode_request(line)
 
     line = request_json(%{"slm" => %{"violation_confidence" => -0.1}})
+
     assert {:error, {:out_of_range, "slm.violation_confidence"}} =
              ArbiterProtocol.decode_request(line)
   end
 
   test "unknown oracle verdict is rejected" do
     line = request_json(%{"oracle" => %{"verdict" => "uncertain"}})
+
     assert {:error, {:unknown_oracle_verdict, "uncertain"}} =
              ArbiterProtocol.decode_request(line)
   end

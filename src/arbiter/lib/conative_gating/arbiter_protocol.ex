@@ -70,7 +70,7 @@ defmodule ConativeGating.ArbiterProtocol do
            "llm" => %{"confidence" => confidence},
            "slm" => %{"violation_confidence" => violation_confidence},
            "oracle" => %{"verdict" => oracle_verdict}
-         } = request
+         } = _request
        )
        when is_binary(request_id) and is_number(confidence) and
               is_number(violation_confidence) do

@@ -12,7 +12,8 @@ defmodule ConativeGating.ConsensusArbiter do
 
   use GenServer
 
-  @slm_weight 1.5  # SLM votes count 1.5x (asymmetric)
+  # SLM votes count 1.5x (asymmetric)
+  @slm_weight 1.5
 
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -52,10 +53,11 @@ defmodule ConativeGating.ConsensusArbiter do
     no_go_score = slm.violation_confidence * @slm_weight
 
     # Add oracle soft concerns to no_go
-    no_go_score = case oracle.verdict do
-      {:soft_concern, _} -> no_go_score + 0.2
-      _ -> no_go_score
-    end
+    no_go_score =
+      case oracle.verdict do
+        {:soft_concern, _} -> no_go_score + 0.2
+        _ -> no_go_score
+      end
 
     cond do
       # Clear violation
@@ -68,13 +70,14 @@ defmodule ConativeGating.ConsensusArbiter do
 
       # Uncertain - escalate to human
       true ->
-        {:escalate, %{
-          go_score: go_score,
-          no_go_score: no_go_score,
-          llm: llm,
-          slm: slm,
-          oracle: oracle
-        }}
+        {:escalate,
+         %{
+           go_score: go_score,
+           no_go_score: no_go_score,
+           llm: llm,
+           slm: slm,
+           oracle: oracle
+         }}
     end
   end
 end
