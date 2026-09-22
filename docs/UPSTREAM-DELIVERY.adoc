@@ -45,17 +45,22 @@ State of the feature set delivered by the
 . **Create the `slm-remote-production` GitHub Environment** with required
   reviewers and secrets `CONATIVE_SLM_ENDPOINT`, `CONATIVE_SLM_MODEL_NAME`,
   `SLM_API_KEY`. The remote smoke job is inert until then (by design).
-. **Commit `src/arbiter/mix.lock`** — it cannot be generated without an
-  OTP toolchain; run `mix deps.get` once in `src/arbiter/` on any OTP-27
-  machine and commit the lockfile.
+. ~~Commit `src/arbiter/mix.lock`~~ — **done**: an OTP-27/Elixir-1.18
+  toolchain was installed in the sandbox; `mix.lock` is committed,
+  `mix format` passes, 28/28 ExUnit tests pass locally, and the escript
+  protocol smokes were verified by hand.
 . Audit-sink hardening for production multi-instance use: decide file
   permissions/ownership (`umask`), add cross-process append locking if
   more than one arbiter writes one file, wire log shipping/backup, and
   consider hash-chained records for tamper evidence. The tested floor
   (single instance, flush-before-ack, rotation) is documented in
   `docs/ARBITER_PROTOCOL.adoc`.
-. Watch the first `nickel-native` CI run — it is the authoritative
-  verification vehicle for the feature build.
+. ~~Watch the first `nickel-native` CI run~~ — **done: green** on
+  2026-09-22 (PR #121). The `slm-real-inference` local jobs are also
+  green there.
+. Review the `.cargo/audit.toml` advisory exceptions (four advisories in
+  the optional `nickel` closure — im/imbl/bitmaps/paste — none reachable
+  from the default build; fixes need upstream nickel-lang-core dep moves).
 
 == Known limitations / deliberate deferrals
 

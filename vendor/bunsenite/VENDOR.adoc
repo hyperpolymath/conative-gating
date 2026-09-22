@@ -66,3 +66,11 @@ paths deliberately. conative-gating therefore takes the explicit position
 documented in `docs/NICKEL-POLICY.adoc`: **policy files with `import`
 statements are rejected fail-closed before evaluation**. This vendor fork
 inherits that policy by usage, not by code change.
+
+== Estate CI interactions
+
+The dogfood K9-contract validator scans every `.k9.ncl` in the repo; the
+upstream contractiles under `vendor/bunsenite/**` are curated (and
+validated) upstream, so the repo workflow passes
+`INPUT_PATHS_IGNORE: "/vendor/bunsenite/"` to `validate-k9.sh`
+(see `.github/workflows/dogfood-gate.yml`).

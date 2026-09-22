@@ -34,6 +34,8 @@ Thumbs.db
 /doc/
 *.ez
 erl_crash.dump
+# Built OTP arbiter escript artifact (rebuilt by `mix escript.build`)
+/src/arbiter/conative_arbiter
 
 # Julia
 *.jl.cov

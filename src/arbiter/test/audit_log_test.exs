@@ -8,14 +8,20 @@ defmodule ConativeGating.AuditLogTest do
   alias ConativeGating.AuditLog
 
   defp tmpdir!(tag) do
-    dir = Path.join(System.tmp_dir!(), "conative-audit-test-#{tag}-#{System.unique_integer([:positive])}")
+    dir =
+      Path.join(
+        System.tmp_dir!(),
+        "conative-audit-test-#{tag}-#{System.unique_integer([:positive])}"
+      )
+
     File.mkdir_p!(dir)
     on_exit(fn -> File.rm_rf(dir) end)
     dir
   end
 
   defp start_sink(dir, opts) do
-    {:ok, pid} = AuditLog.start_link(Keyword.merge([path: Path.join(dir, "audit.jsonl"), name: nil], opts))
+    {:ok, pid} =
+      AuditLog.start_link(Keyword.merge([path: Path.join(dir, "audit.jsonl"), name: nil], opts))
 
     on_exit(fn ->
       if Process.alive?(pid), do: GenServer.stop(pid)
@@ -51,10 +57,13 @@ defmodule ConativeGating.AuditLogTest do
     sink = start_sink(dir, [])
 
     entry = %{
+      "content" => "super-secret-proposal-body-xyzzy",
       request_id: "req-secret",
       verdict: "block",
-      "content" => "super-secret-proposal-body-xyzzy",
-      votes: %{"content" => "nested-secret-xyzzy", slm: %{violation_confidence: 0.9}}
+      votes: %{
+        "content" => "nested-secret-xyzzy",
+        slm: %{violation_confidence: 0.9}
+      }
     }
 
     assert :ok = AuditLog.record(entry, sink)
@@ -82,14 +91,24 @@ defmodule ConativeGating.AuditLogTest do
     refute active =~ "req-1"
     assert active =~ "req-2"
 
-    # A third record also fits (rotation happens lazily per record).
+    # A third ~107-byte record exceeds the budget AGAIN (107+107 > 200), so
+    # rotation is lazy-per-record: audit.jsonl.1 now holds req-2 and the
+    # active file contains only req-3. No record is ever lost.
     assert :ok = AuditLog.record(%{request_id: "req-3", reason: filler}, sink)
     lines = path |> File.read!() |> String.split("\n", trim: true)
-    assert length(lines) == 2
+    assert length(lines) == 1
+    assert File.read!(path <> ".1") =~ "req-2"
+    assert hd(lines) =~ "req-3"
+
+    # Union of active + rotated still carries every record written.
+    rotated2 = File.read!(path <> ".1")
+    assert rotated =~ "req-1" and rotated2 =~ "req-2" and hd(lines) =~ "req-3"
   end
 
   test "persistence failure fails closed" do
-    missing_parent = Path.join(System.tmp_dir!(), "conative-missing-#{System.unique_integer([:positive])}")
+    missing_parent =
+      Path.join(System.tmp_dir!(), "conative-missing-#{System.unique_integer([:positive])}")
+
     bad_path = Path.join(missing_parent, "audit.jsonl")
     {:ok, sink} = AuditLog.start_link(path: bad_path, name: nil)
 
