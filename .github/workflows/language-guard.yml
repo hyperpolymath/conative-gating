@@ -35,9 +35,9 @@ jobs:
             exit 1
           fi
 
-          # npm without deno.json (not allowed)
-          if [ -f "package.json" ] && [ ! -f "deno.json" ]; then
-            echo "::error::package.json without deno.json detected."
+          # package.json needs bun.lock (Bun first per canonical LANGUAGE-POLICY)
+          if [ -f "package.json" ] && [ ! -f "bun.lock" ]; then
+            echo "::error::package.json without bun.lock detected."
             exit 1
           fi
 
