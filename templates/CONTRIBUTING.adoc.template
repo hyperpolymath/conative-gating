@@ -17,7 +17,7 @@ This project follows the **Rhodium Standard Repository** (RSR) conventions.
 |===
 | Technology | Purpose | Status
 
-| ReScript | Frontend/Logic | ✅ Preferred
+| AffineScript | Frontend/Logic | ✅ Preferred
 | Deno | JS Runtime | ✅ Preferred
 | WASM | Performance-critical | ✅ Allowed
 | Rust | Systems/WASM source | ✅ Allowed

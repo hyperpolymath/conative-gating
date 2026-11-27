@@ -91,7 +91,7 @@ check-languages:
     @echo "Checking for prohibited languages..."
     @FOUND=0; \
     if find . -name "*.ts" -not -path "./node_modules/*" | head -1 | grep -q .; then \
-        echo "✗ TypeScript files found (use ReScript)"; FOUND=1; \
+        echo "✗ TypeScript files found (use AffineScript)"; FOUND=1; \
     fi; \
     if find . -name "*.go" | head -1 | grep -q .; then \
         echo "✗ Go files found (use Rust/Elixir/Zig)"; FOUND=1; \

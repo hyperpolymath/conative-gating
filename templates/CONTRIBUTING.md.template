@@ -60,7 +60,7 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 ### Code Standards
 
-- **Tier 1 Languages Only**: Rust, Elixir, Zig, Ada, Haskell, ReScript
+- **Tier 1 Languages Only**: Rust, Elixir, Zig, Ada, Haskell, AffineScript
 - **Config**: Nickel, Racket (Tier 2)
 - **Format**: Run `just fmt` before committing
 - **Lint**: Run `just lint` with zero warnings

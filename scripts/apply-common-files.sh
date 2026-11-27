@@ -149,7 +149,7 @@ This document describes the Rhodium Standard Repository (RSR) compliance status 
 * Zig
 * Ada
 * Haskell
-* ReScript
+* AffineScript
 
 === Tier 2 Languages (Acceptable)
 * Nickel (configuration)
@@ -159,7 +159,7 @@ This document describes the Rhodium Standard Repository (RSR) compliance status 
 
 === Restricted Languages
 * Python - Only allowed in salt/ directories for SaltStack
-* TypeScript/JavaScript - Legacy only, convert to ReScript
+* TypeScript/JavaScript - Legacy only, convert to AffineScript
 * CUE - Not permitted, use Nickel or Guile
 
 == Compliance Checklist
@@ -185,7 +185,7 @@ RSREOF
             if [ "$lang" = "python" ]; then
                 echo "* Python permitted in salt/ directories only" >> "$repo/RSR_COMPLIANCE.adoc"
             elif [ "$lang" = "javascript" ]; then
-                echo "* JavaScript/TypeScript: Legacy code, conversion to ReScript planned" >> "$repo/RSR_COMPLIANCE.adoc"
+                echo "* JavaScript/TypeScript: Legacy code, conversion to AffineScript planned" >> "$repo/RSR_COMPLIANCE.adoc"
             else
                 echo "None" >> "$repo/RSR_COMPLIANCE.adoc"
             fi

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 #
 # Enforces: No TypeScript, No Go, No Python (except SaltStack), No npm
-# Allows: ReScript, Deno, WASM, Rust, OCaml, Haskell, Guile/Scheme
+# Allows: AffineScript, Deno, WASM, Rust, OCaml, Haskell, Guile/Scheme
 
 set -e
 
@@ -60,7 +60,7 @@ fi
 
 # Check for tsconfig.json
 if echo "$STAGED" | grep -q 'tsconfig\.json$'; then
-    echo -e "${RED}❌ tsconfig.json detected (use ReScript bsconfig.json/rescript.json instead):${NC}"
+    echo -e "${RED}❌ tsconfig.json detected (use AffineScript instead):${NC}"
     ERRORS=$((ERRORS + 1))
 fi
 
@@ -83,7 +83,7 @@ fi
 if [ $ERRORS -gt 0 ]; then
     echo ""
     echo -e "${RED}Commit blocked: $ERRORS anti-pattern violation(s) found${NC}"
-    echo "RSR Stack: ReScript + Deno + WASM + Rust + OCaml + Haskell + Guile"
+    echo "RSR Stack: AffineScript + Deno + WASM + Rust + OCaml + Haskell + Guile"
     exit 1
 fi
 
