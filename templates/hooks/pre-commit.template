@@ -55,7 +55,7 @@ if [ -f ".well-known/aibdp.json" ]; then
 fi
 
 # === 3. Check for Prohibited Languages ===
-# RSR Prohibited: TypeScript, JavaScript (use ReScript), Python (except salt/), Go, CUE
+# RSR Prohibited: TypeScript, JavaScript (use AffineScript), Python (except salt/), Go, CUE
 
 # Check TypeScript
 TS_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' | grep -v 'node_modules' || true)
